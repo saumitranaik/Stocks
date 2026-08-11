@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Sector Research Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .empty[hidden]{display:none}
+    .quick-ref{display:flex;gap:8px;overflow:auto;margin:0 0 16px;padding-bottom:2px}
+    .quick-ref-card{min-width:172px;background:#10192b;border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+    .quick-ref-card strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .quick-ref-card small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+    .quick-ref-card .card-metrics{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+    .quick-ref-card .metric-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px}
+    .quick-ref-card .metric-label{color:var(--muted)}
+    .quick-ref-card .metric-value{font-weight:700}
+    .quick-ref-card .metric-value.tag{font-size:10px}
+  </style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <div class="title">
+      <div>
+        <h1 id="dashboard-title">Sector Research Dashboard</h1>
+        <p>Institutional equity research | public web and market-data sources</p>
+      </div>
+      <div class="badge" id="status">Ready to research</div>
+    </div>
+    <form id="search-form">
+      <input id="sector" list="sector-options" required value="Sugar & Biofuel" placeholder="Specify a sector, e.g. sugar & biofuel">
+      <datalist id="sector-options">
+        <option value="Banking"></option>
+        <option value="Financial Services"></option>
+        <option value="Insurance"></option>
+        <option value="Information Technology"></option>
+        <option value="Software & Services"></option>
+        <option value="Telecommunications"></option>
+        <option value="Pharmaceuticals"></option>
+        <option value="Healthcare"></option>
+        <option value="FMCG / Consumer Staples"></option>
+        <option value="Consumer Discretionary"></option>
+        <option value="Retail"></option>
+        <option value="Automobiles"></option>
+        <option value="Auto Components"></option>
+        <option value="Capital Goods"></option>
+        <option value="Industrials"></option>
+        <option value="Infrastructure"></option>
+        <option value="Construction"></option>
+        <option value="Cement"></option>
+        <option value="Metals & Mining"></option>
+        <option value="Chemicals"></option>
+        <option value="Fertilizers"></option>
+        <option value="Oil & Gas"></option>
+        <option value="Power"></option>
+        <option value="Utilities"></option>
+        <option value="Renewable Energy"></option>
+        <option value="Real Estate"></option>
+        <option value="Textiles"></option>
+        <option value="Sugar & Biofuel"></option>
+        <option value="Aviation"></option>
+        <option value="Logistics"></option>
+        <option value="Media & Entertainment"></option>
+        <option value="Hospitality"></option>
+        <option value="Semiconductor"></option>
+        <option value="Electronics Manufacturing"></option>
+        <option value="Defence"></option>
+        <option value="Agriculture"></option>
+        <option value="Diversified Conglomerates"></option>
+      </datalist>
+      <select id="market">
+        <option>India</option>
+        <option>Global</option>
+        <option>United States</option>
+      </select>
+      <button>Research sector</button>
+    </form>
+    <nav class="tabs">
+      <button class="active" data-tab="overview">Overview</button>
+      <button data-tab="leaders">Top stocks</button>
+      <button data-tab="metrics">Stock metrics</button>
+      <button data-tab="valuation">Valuation</button>
+      <button data-tab="technical">Technical</button>
+      <button data-tab="portfolio">Portfolio</button>
+      <button data-tab="risks">Risk matrix</button>
+      <button data-tab="news">News & sources</button>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <div class="empty" id="empty">
+    <b>Enter a sector and click Research sector.</b>
+    <span>The report retrieves current public market data and recent web news when available.</span>
+  </div>
+
+  <section class="tab active" id="overview">
+    <div class="quick-ref" data-quick-ref></div>
+    <div class="grid four" id="overview-kpis"></div>
+    <div class="two-col">
+      <article class="card">
+        <h3>Executive summary</h3>
+        <p id="summary">Run a research query to populate the dashboard.</p>
+        <h3>Research methodology</h3>
+        <ul>
+          <li>Market quotes and company fundamentals from Yahoo Finance public endpoints</li>
+          <li>Recent sector coverage from Google News RSS</li>
+          <li>Scores are transparent screening proxies, not analyst ratings</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Sector allocation lens</h3>
+        <div class="donut"><span id="allocation">-</span></div>
+        <p class="small">Diversify by business model, balance-sheet quality and earnings drivers. The model portfolio is a screen-derived starting point.</p>
+      </article>
+    </div>
+    <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at the time of the query. "N/A" means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.</div>
+  </section>
+
+  <section class="tab" id="leaders">
+    <article class="card">
+      <h3>Top screened stocks</h3>
+      <div class="scroll">
+        <table id="leaders-table">
+          <thead><tr><th>#</th><th>Company</th><th>Symbol</th><th>Price</th><th>P/E</th><th>Quality score</th><th>ROE</th><th>ROCE</th><th>Debt (Rs Cr)</th><th>Debt / equity</th><th>Trend</th><th>Signal</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="tab" id="metrics">
+    <article class="card">
+      <h3>Current public market metrics</h3>
+      <div class="scroll">
+        <table id="metrics-table">
+          <thead><tr><th>Company</th><th>Signal</th><th>Price</th><th>P/E</th><th>Day move</th><th>52W high</th><th>52W low</th><th>50-day average</th><th>200-day average</th><th>Volume</th><th>Market cap</th><th>Debt / equity</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="small">Price and trend fields use Yahoo Finance's public chart feed. Fundamental fields are shown only when supplied by a public source.</p>
+    </article>
+  </section>
+
+  <section class="tab" id="valuation">
+    <div class="grid four" id="valuation-kpis"></div>
+    <article class="card">
+      <h3>Stock-by-stock valuation</h3>
+      <div class="scroll">
+        <table id="valuation-table">
+          <thead><tr><th>Company</th><th>Signal</th><th>Price</th><th>Market cap</th><th>P/E</th><th>P/B</th><th>ROE</th><th>ROCE</th><th>Dividend yield</th><th>52W high discount</th><th>Valuation view</th><th>Data source</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="tab" id="technical">
+    <div class="grid four" id="technical-kpis"></div>
+    <article class="card">
+      <h3>Technical analysis</h3>
+      <div class="scroll">
+        <table id="technical-table" class="tech-table">
+          <thead><tr><th>Company</th><th>Signal</th><th class="num">Price</th><th class="num">P/E</th><th class="num">Industry P/E</th><th class="num">RSI (14)</th><th class="num">50 DMA</th><th class="num">200 DMA</th><th class="num">52W High</th><th class="num">52W Low</th><th class="num">Distance from 52W High</th><th>Trend</th><th>Momentum</th><th>Volume Trend</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="small">Technical fields are derived from Yahoo Finance's public chart feed (daily closes and volume over the trailing year). No company overview data is shown on this tab.</p>
+    </article>
+  </section>
+
+  <section class="tab" id="portfolio">
+    <div class="two-col">
+      <article class="card">
+        <h3>Screen-derived model allocation</h3>
+        <p class="small">Weights favor stronger composite screens and are capped to avoid concentration. This is an illustrative research output, not personalized investment advice.</p>
+        <table id="portfolio-table">
+          <thead><tr><th>Holding</th><th>Signal</th><th>Price</th><th>P/E</th><th>Quality score</th><th>Illustrative weight</th><th>Bucket</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </article>
+      <article class="card">
+        <h3>Portfolio construction notes</h3>
+        <ul>
+          <li>Review position size against liquidity and risk tolerance.</li>
+          <li>Use staged entries rather than relying on a single price point.</li>
+          <li>Track earnings, cash flow, policy and commodity catalysts.</li>
+          <li>Refresh this dashboard before each allocation review.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab" id="risks">
+    <div class="grid four" id="risk-cards"></div>
+    <article class="card">
+      <h3>Stock-by-stock risk matrix</h3>
+      <div class="scroll">
+        <table id="risk-table">
+          <thead><tr><th>Company</th><th>Signal</th><th>Price</th><th>P/E</th><th>Valuation risk</th><th>Balance-sheet risk</th><th>Trend risk</th><th>Drawdown risk</th><th>Composite</th><th>Primary monitorable</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+    <article class="card">
+      <h3>Institutional risk view</h3>
+      <p id="risk-summary">Risk analysis will appear once securities are loaded.</p>
+    </article>
+  </section>
+
+  <section class="tab" id="news">
+    <article class="card">
+      <h3>Recent web coverage</h3>
+      <div id="news-list" class="news-list"></div>
+      <p class="small">News links open their original sources. Titles are supplied by Google News RSS and should be independently evaluated.</p>
+    </article>
+  </section>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
