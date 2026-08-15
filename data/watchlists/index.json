@@ -1,0 +1,55 @@
+{
+  "activeWatchlist": "sameer",
+  "watchlists": [
+    {
+      "id": "core-portfolio",
+      "name": "Core Portfolio",
+      "file": "core-portfolio.json",
+      "companyCount": 6,
+      "updatedAt": "2026-08-14T04:58:43.553Z"
+    },
+    {
+      "id": "banking",
+      "name": "Banking",
+      "file": "banking.json",
+      "companyCount": 8,
+      "updatedAt": "2026-08-13T13:31:11.106Z"
+    },
+    {
+      "id": "power",
+      "name": "Power",
+      "file": "power.json",
+      "companyCount": 8,
+      "updatedAt": "2026-08-13T14:09:41.444Z"
+    },
+    {
+      "id": "defence",
+      "name": "Defence",
+      "file": "defence.json",
+      "companyCount": 7,
+      "updatedAt": "2026-08-14T10:54:21.516Z"
+    },
+    {
+      "id": "test",
+      "name": "Test",
+      "file": "test.json",
+      "companyCount": 1,
+      "updatedAt": "2026-08-14T11:10:54.084Z"
+    },
+    {
+      "id": "sagar",
+      "name": "Sagar",
+      "file": "sagar.json",
+      "companyCount": 8,
+      "updatedAt": "2026-08-14T12:23:01.300Z"
+    },
+    {
+      "id": "sameer",
+      "name": "Sameer",
+      "file": "sameer.json",
+      "companyCount": 4,
+      "updatedAt": "2026-08-14T11:16:48.945Z"
+    }
+  ],
+  "updatedAt": "2026-08-14T12:44:00.899Z"
+}

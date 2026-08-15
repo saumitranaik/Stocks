@@ -1,0 +1,96 @@
+{
+  "id": "banking",
+  "name": "Banking",
+  "createdAt": "2026-08-13T13:06:38.735Z",
+  "updatedAt": "2026-08-13T13:31:11.106Z",
+  "companies": [
+    {
+      "symbol": "HDFCBANK.NS",
+      "name": "HDFC Bank Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Private Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "ICICIBANK.NS",
+      "name": "ICICI Bank Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Private Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "SBIN.NS",
+      "name": "State Bank of India",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Public Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "KOTAKBANK.NS",
+      "name": "Kotak Mahindra Bank Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Private Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "AXISBANK.NS",
+      "name": "Axis Bank Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Private Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "INDUSINDBK.NS",
+      "name": "IndusInd Bank Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Private Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "BANKBARODA.NS",
+      "name": "Bank of Baroda Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Public Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "PNB.NS",
+      "name": "Punjab National Bank",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Public Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    }
+  ]
+}

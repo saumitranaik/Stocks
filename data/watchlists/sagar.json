@@ -1,0 +1,97 @@
+{
+  "id": "sagar",
+  "name": "Sagar",
+  "createdAt": "2026-08-14T11:11:16.480Z",
+  "updatedAt": "2026-08-14T12:23:01.300Z",
+  "companies": [
+    {
+      "symbol": "AZAD.NS",
+      "name": "AZAD ENGINEERING LIMITED",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Heavy Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:16:03.871Z"
+    },
+    {
+      "symbol": "DATAPATTNS.NS",
+      "name": "Data Patterns (India) Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:16:15.671Z"
+    },
+    {
+      "symbol": "TATAINVEST.NS",
+      "name": "Tata Investment Corporation Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Investment Company",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:16:27.051Z"
+    },
+    {
+      "symbol": "HAL.NS",
+      "name": "Hindustan Aeronautics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T12:22:17.429Z"
+    },
+    {
+      "symbol": "BEL.NS",
+      "name": "Bharat Electronics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T12:22:27.175Z"
+    },
+    {
+      "symbol": "BDL.NS",
+      "name": "Bharat Dynamics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T12:22:34.688Z"
+    },
+    {
+      "symbol": "MAZDOCK.NS",
+      "name": "Mazagon Dock Shipbuilders Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Ship Building & Allied Services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T12:22:49.659Z"
+    },
+    {
+      "symbol": "COCHINSHIP.NS",
+      "name": "Cochin Shipyard Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Ship Building & Allied Services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T12:22:55.783Z"
+    }
+  ],
+  "cashTargetPct": 0
+}

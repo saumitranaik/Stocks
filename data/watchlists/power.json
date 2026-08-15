@@ -1,0 +1,96 @@
+{
+  "id": "power",
+  "name": "Power",
+  "createdAt": "2026-08-13T13:06:38.735Z",
+  "updatedAt": "2026-08-13T14:09:41.444Z",
+  "companies": [
+    {
+      "symbol": "PGCIL.NS",
+      "name": "PGCIL.NS",
+      "exchange": null,
+      "market": "India",
+      "sector": null,
+      "industry": null,
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "NTPC.NS",
+      "name": "NTPC Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Generation",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "TATAPOWER.NS",
+      "name": "The Tata Power Company Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "ADANIPOWER.NS",
+      "name": "Adani Power Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "TORNTPOWER.NS",
+      "name": "Torrent Power Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "CESC.NS",
+      "name": "CESC Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "JSWENERGY.NS",
+      "name": "JSW Energy Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Generation",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "NHPC.NS",
+      "name": "NHPC Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Generation",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    }
+  ]
+}

@@ -3,216 +3,798 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Sector Research Dashboard</title>
+  <title>Watchlist Research Workspace</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .empty[hidden]{display:none}
-    .quick-ref{display:flex;gap:8px;overflow:auto;margin:0 0 16px;padding-bottom:2px}
-    .quick-ref-card{min-width:172px;background:#10192b;border:1px solid var(--border);border-radius:8px;padding:9px 11px}
-    .quick-ref-card strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .quick-ref-card small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
-    .quick-ref-card .card-metrics{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-    .quick-ref-card .metric-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px}
-    .quick-ref-card .metric-label{color:var(--muted)}
-    .quick-ref-card .metric-value{font-weight:700}
-    .quick-ref-card .metric-value.tag{font-size:10px}
-  </style>
 </head>
 <body>
 <header>
   <div class="container">
     <div class="title">
       <div>
-        <h1 id="dashboard-title">Sector Research Dashboard</h1>
-        <p>Institutional equity research | public web and market-data sources</p>
+        <h1 id="dashboard-title">Watchlist Research Workspace</h1>
+        <p>Institutional equity research | your saved companies, every tab in sync</p>
       </div>
-      <div class="badge" id="status">Ready to research</div>
+      <div class="badge" id="status">Loading watchlist...</div>
     </div>
-    <form id="search-form">
-      <input id="sector" list="sector-options" required value="Sugar & Biofuel" placeholder="Specify a sector, e.g. sugar & biofuel">
-      <datalist id="sector-options">
-        <option value="Banking"></option>
-        <option value="Financial Services"></option>
-        <option value="Insurance"></option>
-        <option value="Information Technology"></option>
-        <option value="Software & Services"></option>
-        <option value="Telecommunications"></option>
-        <option value="Pharmaceuticals"></option>
-        <option value="Healthcare"></option>
-        <option value="FMCG / Consumer Staples"></option>
-        <option value="Consumer Discretionary"></option>
-        <option value="Retail"></option>
-        <option value="Automobiles"></option>
-        <option value="Auto Components"></option>
-        <option value="Capital Goods"></option>
-        <option value="Industrials"></option>
-        <option value="Infrastructure"></option>
-        <option value="Construction"></option>
-        <option value="Cement"></option>
-        <option value="Metals & Mining"></option>
-        <option value="Chemicals"></option>
-        <option value="Fertilizers"></option>
-        <option value="Oil & Gas"></option>
-        <option value="Power"></option>
-        <option value="Utilities"></option>
-        <option value="Renewable Energy"></option>
-        <option value="Real Estate"></option>
-        <option value="Textiles"></option>
-        <option value="Sugar & Biofuel"></option>
-        <option value="Aviation"></option>
-        <option value="Logistics"></option>
-        <option value="Media & Entertainment"></option>
-        <option value="Hospitality"></option>
-        <option value="Semiconductor"></option>
-        <option value="Electronics Manufacturing"></option>
-        <option value="Defence"></option>
-        <option value="Agriculture"></option>
-        <option value="Diversified Conglomerates"></option>
-      </datalist>
-      <select id="market">
-        <option>India</option>
-        <option>Global</option>
-        <option>United States</option>
-      </select>
-      <button>Research sector</button>
-    </form>
+
+    <div id="watchlist-bar" class="toolbar">
+      <select id="watchlist-select" aria-label="Active watchlist"></select>
+      <button type="button" id="refresh-btn" class="primary">Refresh Data</button>
+    </div>
+
+    <div id="company-context-bar" class="toolbar company-context-bar">
+      <div class="company-selector">
+        <button type="button" id="company-selector-toggle" class="company-selector-btn" aria-haspopup="listbox" aria-expanded="false">
+          <span id="company-selector-name">Select a company</span>
+          <span id="company-selector-meta" class="small"></span>
+        </button>
+        <div id="company-selector-dropdown" class="company-selector-dropdown suggestions" role="listbox" hidden></div>
+      </div>
+      <div id="quick-jump" class="quick-jump" role="group" aria-label="Quick jump to this company's other tabs">
+        <button type="button" data-jump="fundamentals">Fundamentals</button>
+        <button type="button" data-jump="valuation">Valuation</button>
+        <button type="button" data-jump="technical">Technicals</button>
+        <button type="button" data-jump="risks">Risks</button>
+        <button type="button" data-jump="report">Report</button>
+      </div>
+      <button type="button" id="compare-toggle" class="pill" aria-pressed="false">Compare</button>
+      <div id="compare-chip-row" class="compare-chip-row" hidden></div>
+    </div>
+
     <nav class="tabs">
-      <button class="active" data-tab="overview">Overview</button>
-      <button data-tab="leaders">Top stocks</button>
-      <button data-tab="metrics">Stock metrics</button>
+      <button class="active" data-tab="dashboard">Dashboard</button>
+      <button data-tab="watchlists">Watchlists</button>
+      <button data-tab="fundamentals">Fundamentals</button>
       <button data-tab="valuation">Valuation</button>
-      <button data-tab="technical">Technical</button>
+      <button data-tab="profitability">Profitability</button>
+      <button data-tab="balance-sheet">Balance sheet</button>
+      <button data-tab="growth">Growth</button>
+      <button data-tab="ownership">Ownership</button>
+      <button data-tab="technical">Technicals</button>
       <button data-tab="portfolio">Portfolio</button>
-      <button data-tab="risks">Risk matrix</button>
-      <button data-tab="news">News & sources</button>
+      <button data-tab="risks">Risks</button>
     </nav>
   </div>
 </header>
-<main class="container">
-  <div class="empty" id="empty">
-    <b>Enter a sector and click Research sector.</b>
-    <span>The report retrieves current public market data and recent web news when available.</span>
+<main class="container" id="main">
+  <div class="empty" id="empty" hidden>
+    <b>This watchlist is empty.</b>
+    <span>Use the Watchlists tab's "Add a company" box to build your research universe.</span>
   </div>
 
-  <section class="tab active" id="overview">
-    <div class="quick-ref" data-quick-ref></div>
-    <div class="grid four" id="overview-kpis"></div>
-    <div class="two-col">
+  <section class="tab" id="watchlists">
+    <div class="wl-search-bar">
+      <div class="add-company">
+        <input id="wl-company-search" type="text" autocomplete="off" spellcheck="false"
+          placeholder="Add a company: name or ticker (e.g. Reliance, TCS, HDFC Bank, Power, Bank)"
+          aria-label="Add a company to the active watchlist" role="combobox" aria-expanded="false"
+          aria-controls="wl-company-suggestions" aria-autocomplete="list">
+        <div id="wl-company-suggestions" class="suggestions" role="listbox" hidden></div>
+      </div>
+      <div id="wl-notice" class="notice amber" hidden></div>
+    </div>
+
+    <div id="wl-limits-banner" class="notice amber" hidden>Recommended portfolio size is 20 companies. Larger portfolios may reduce analytical focus and refresh performance.</div>
+
+    <article class="card">
+      <h3>Portfolio summary</h3>
+      <div class="grid four" id="wl-summary"></div>
+      <div id="wl-concentration-warning"></div>
+    </article>
+
+    <article class="card">
+      <div class="section-head">
+        <h3>Watchlist</h3>
+        <span class="small">Active: <b id="wl-active-name">—</b></span>
+      </div>
+      <div class="manage-row">
+        <select id="wl-select" aria-label="Active watchlist"></select>
+        <button type="button" id="wl-new-btn">+ New</button>
+        <input id="wl-rename-input" placeholder="Watchlist name">
+        <button type="button" id="wl-rename-btn">Rename</button>
+        <button type="button" id="wl-duplicate-btn">Duplicate</button>
+        <button type="button" id="wl-delete-btn">Delete</button>
+        <button type="button" id="wl-export-btn">Export</button>
+        <button type="button" id="wl-import-btn">Import</button>
+        <input type="file" id="wl-import-file" accept="application/json" hidden>
+        <label class="cash-target-label">Cash target %
+          <input type="number" id="wl-cash-target" min="0" max="100" step="1" title="Illustrative cash allocation target — invested company weights normalize against the remainder">
+        </label>
+      </div>
+    </article>
+
+    <article class="card wl-table-card">
+      <div class="section-head">
+        <h3>Companies</h3>
+        <div class="wl-filters">
+          <input id="wl-search" placeholder="Search company or ticker" aria-label="Search companies">
+          <select id="wl-filter-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
+          <select id="wl-filter-recommendation" aria-label="Filter by recommendation"><option value="">All recommendations</option></select>
+        </div>
+      </div>
+      <div id="wl-bulk-bar" class="wl-bulk-bar" hidden>
+        <span id="wl-bulk-count" class="small"></span>
+        <button type="button" id="wl-bulk-refresh">Refresh selected</button>
+        <button type="button" id="wl-bulk-remove">Remove selected</button>
+      </div>
+      <div class="scroll wl-scroll">
+        <table id="wl-table" class="tech-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="wl-select-all" aria-label="Select all companies"></th>
+              <th data-sort="name">Company</th>
+              <th data-sort="sector">Sector</th>
+              <th class="num" data-sort="price">CMP (Rs.)</th>
+              <th class="num" data-sort="pe">P/E</th>
+              <th data-sort="signal">Recommendation</th>
+              <th data-sort="confidence">Confidence</th>
+              <th class="num" data-sort="weight">Weight %</th>
+              <th class="num" data-sort="marketCap">Market Cap</th>
+              <th class="num" data-sort="roe">ROE</th>
+              <th class="num" data-sort="roce">ROCE</th>
+              <th class="num" data-sort="growth">Growth</th>
+              <th class="num" data-sort="risk">Risk</th>
+              <th data-sort="updated">Last Updated</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="tab active" id="dashboard">
+    <nav class="subtabs" role="tablist" aria-label="Dashboard sections">
+      <button type="button" role="tab" data-subtab="executive-summary">Executive summary</button>
+      <button type="button" role="tab" data-subtab="kpi-ribbon">KPI ribbon</button>
+      <button type="button" role="tab" data-subtab="top-opportunities">Top opportunities</button>
+      <button type="button" role="tab" data-subtab="news-catalysts">News &amp; catalysts</button>
+      <button type="button" role="tab" data-subtab="sector-allocation">Sector allocation</button>
+      <button type="button" role="tab" data-subtab="watchlist-snapshot">Watchlist snapshot</button>
+      <button type="button" role="tab" data-subtab="key-risks">Key risks</button>
+      <button type="button" role="tab" data-subtab="upcoming-earnings">Upcoming earnings</button>
+    </nav>
+
+    <div class="subsection" data-subtab="executive-summary" role="tabpanel">
       <article class="card">
         <h3>Executive summary</h3>
-        <p id="summary">Run a research query to populate the dashboard.</p>
-        <h3>Research methodology</h3>
+        <p id="summary">Loading...</p>
+        <div class="grid four" id="exec-status"></div>
         <ul>
-          <li>Market quotes and company fundamentals from Yahoo Finance public endpoints</li>
-          <li>Recent sector coverage from Google News RSS</li>
-          <li>Scores are transparent screening proxies, not analyst ratings</li>
+          <li>Unified institutional recommendation engine, used everywhere in this app: Quality 35% (business quality, financial strength, profitability, growth, cash-flow quality, balance sheet) + Valuation 25% (P/E-P/B-yield-PEG vs. sector, blended with margin-of-safety from the sector-appropriate valuation model) + Technical 15% (technical scorecard) + Risk 15%, inverted (institutional composite risk score) + Relative positioning 10% (vs. sector peers), renormalized over only the buckets this data source can verify &mdash; a missing bucket is never defaulted to a neutral value</li>
+          <li>A stock cannot show Buy or better while its own composite risk score is elevated or its own valuation is materially overvalued, and Strong Buy requires High confidence &mdash; any such cap is shown on the Valuation tab's Recommendation card. Below 40% bucket-weight coverage, no composite score or rating is shown</li>
+          <li>Banks, NBFCs, insurers and asset managers are valued with a justified Price-to-Book / excess-return model instead of DCF (see the Valuation tab) &mdash; a levered-free-cash-flow model doesn't map to their balance sheets</li>
+          <li>10-year financials, ownership history, ratios and sector classification for India from Screener.in; prices and technicals from Yahoo Finance's public chart feed; recent company news from Google News RSS</li>
         </ul>
       </article>
+    </div>
+
+    <div class="subsection" data-subtab="kpi-ribbon" role="tabpanel">
+      <div class="grid four" id="dashboard-kpis"></div>
+    </div>
+
+    <div class="subsection" data-subtab="top-opportunities" role="tabpanel">
       <article class="card">
-        <h3>Sector allocation lens</h3>
-        <div class="donut"><span id="allocation">-</span></div>
-        <p class="small">Diversify by business model, balance-sheet quality and earnings drivers. The model portfolio is a screen-derived starting point.</p>
+        <div class="section-head">
+          <h3>Top opportunities</h3>
+          <select id="opportunities-sort" aria-label="Sort top opportunities">
+            <option value="recommendation">Sort: Recommendation</option>
+            <option value="upside">Sort: Upside</option>
+            <option value="conviction">Sort: Confidence</option>
+            <option value="valuation">Sort: Valuation</option>
+            <option value="growth">Sort: Growth</option>
+            <option value="quality">Sort: Quality</option>
+            <option value="technical">Sort: Technical strength</option>
+          </select>
+        </div>
+        <div class="scroll">
+          <table id="opportunities-table">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>Recommendation</th><th>Upside %</th><th>Confidence</th><th>Primary driver</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </article>
     </div>
-    <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at the time of the query. "N/A" means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.</div>
+
+    <div class="subsection" data-subtab="news-catalysts" role="tabpanel">
+      <article class="card">
+        <h3>Recent news &amp; catalysts</h3>
+        <div id="dashboard-news" class="news-list"></div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="sector-allocation" role="tabpanel">
+      <article class="card">
+        <h3>Sector allocation</h3>
+        <div id="dashboard-allocation"></div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="watchlist-snapshot" role="tabpanel">
+      <article class="card">
+        <h3>Watchlist snapshot</h3>
+        <div id="dashboard-snapshot" class="grid two"></div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="key-risks" role="tabpanel">
+      <article class="card">
+        <h3>Key risks</h3>
+        <div id="dashboard-risks" class="scroll"></div>
+        <div id="dashboard-risk-flags" class="risk-flags"></div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="upcoming-earnings" role="tabpanel">
+      <article class="card">
+        <h3>Upcoming earnings &amp; events</h3>
+        <p class="small">No earnings/events calendar data source is configured in this app &mdash; dates are never estimated or fabricated here.</p>
+      </article>
+
+      <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. "N/A" means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
+        <ul id="data-limitations"></ul>
+      </div>
+    </div>
   </section>
 
-  <section class="tab" id="leaders">
-    <article class="card">
-      <h3>Top screened stocks</h3>
-      <div class="scroll">
-        <table id="leaders-table">
-          <thead><tr><th>#</th><th>Company</th><th>Symbol</th><th>Price</th><th>P/E</th><th>Quality score</th><th>ROE</th><th>ROCE</th><th>Debt (Rs Cr)</th><th>Debt / equity</th><th>Trend</th><th>Signal</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </article>
-  </section>
-
-  <section class="tab" id="metrics">
-    <article class="card">
-      <h3>Current public market metrics</h3>
-      <div class="scroll">
-        <table id="metrics-table">
-          <thead><tr><th>Company</th><th>Signal</th><th>Price</th><th>P/E</th><th>Day move</th><th>52W high</th><th>52W low</th><th>50-day average</th><th>200-day average</th><th>Volume</th><th>Market cap</th><th>Debt / equity</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p class="small">Price and trend fields use Yahoo Finance's public chart feed. Fundamental fields are shown only when supplied by a public source.</p>
-    </article>
+  <section class="tab" id="fundamentals">
+    <nav class="subtabs" role="tablist" aria-label="Fundamentals sections">
+      <button type="button" role="tab" data-subtab="business-quality">Business quality</button>
+      <button type="button" role="tab" data-subtab="financial-quality">Financial quality</button>
+      <button type="button" role="tab" data-subtab="cash-flow">Cash flow</button>
+      <button type="button" role="tab" data-subtab="capital-allocation">Capital allocation</button>
+      <button type="button" role="tab" data-subtab="historical-financials">Historical financials</button>
+      <button type="button" role="tab" data-subtab="key-metrics">Key metrics</button>
+    </nav>
+    <div class="pill-row" id="fundamentals-selector"></div>
+    <div id="fundamentals-content">
+      <div class="subsection" data-subtab="business-quality" role="tabpanel" id="fundamentals-business-quality"></div>
+      <div class="subsection" data-subtab="financial-quality" role="tabpanel" id="fundamentals-financial-quality"></div>
+      <div class="subsection" data-subtab="cash-flow" role="tabpanel" id="fundamentals-cash-flow"></div>
+      <div class="subsection" data-subtab="capital-allocation" role="tabpanel" id="fundamentals-capital-allocation"></div>
+      <div class="subsection" data-subtab="historical-financials" role="tabpanel" id="fundamentals-historical-financials"></div>
+      <div class="subsection" data-subtab="key-metrics" role="tabpanel" id="fundamentals-key-metrics"></div>
+    </div>
   </section>
 
   <section class="tab" id="valuation">
-    <div class="grid four" id="valuation-kpis"></div>
-    <article class="card">
-      <h3>Stock-by-stock valuation</h3>
+    <nav class="subtabs" role="tablist" aria-label="Valuation sections">
+      <button type="button" role="tab" data-subtab="overview">Overview</button>
+      <button type="button" role="tab" data-subtab="dcf">DCF</button>
+      <button type="button" role="tab" data-subtab="reverse-dcf">Reverse DCF</button>
+      <button type="button" role="tab" data-subtab="sensitivity">Sensitivity</button>
+      <button type="button" role="tab" data-subtab="relative-valuation">Relative valuation</button>
+      <button type="button" role="tab" data-subtab="historical-valuation">Historical valuation</button>
+    </nav>
+    <p class="small">Fair Value, Target Price, Upside and Margin of Safety are an in-house P/E and P/B reversion heuristic against this watchlist's own peer average &mdash; not analyst consensus or a DCF model. Forward P/E and EV/EBITDA are "N/A" where this data source cannot verify them &mdash; see Dashboard for why. Sector premium/discount and rankings are computed against this watchlist's own same-sector peers, not a market-wide sector.</p>
+
+    <div class="subsection" data-subtab="overview" role="tabpanel">
       <div class="scroll">
         <table id="valuation-table">
-          <thead><tr><th>Company</th><th>Signal</th><th>Price</th><th>Market cap</th><th>P/E</th><th>P/B</th><th>ROE</th><th>ROCE</th><th>Dividend yield</th><th>52W high discount</th><th>Valuation view</th><th>Data source</th></tr></thead>
+          <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Forward P/E</th><th>P/B</th><th>EV/EBITDA</th><th>PEG</th><th>Fair value</th><th>Target price</th><th>Upside</th><th>Margin of safety</th><th>Sector premium/discount</th><th>Earnings yield</th><th>FCF yield</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
+
+      <article class="card">
+        <h3>Sector valuation dispersion <span id="valuation-dispersion-info"></span></h3>
+        <p class="small">Spread of P/E across each sector's own watchlist peers — a tightly bunched sector vs. a widely scattered one.</p>
+        <div class="scroll" id="valuation-dispersion"></div>
+      </article>
+    </div>
+
+    <article class="card">
+      <div class="section-head">
+        <h3>Valuation deep-dive <span id="valuation-info"></span></h3>
+      </div>
+      <div class="pill-row" id="valuation-selector"></div>
+      <div class="subsection" data-subtab="dcf reverse-dcf sensitivity relative-valuation historical-valuation" role="tabpanel" id="valuation-recommendation"></div>
+      <div class="subsection" data-subtab="dcf" role="tabpanel" id="valuation-detail-dcf"></div>
+      <div class="subsection" data-subtab="reverse-dcf" role="tabpanel" id="valuation-detail-reverse-dcf"></div>
+      <div class="subsection" data-subtab="sensitivity" role="tabpanel" id="valuation-detail-sensitivity"></div>
+      <div class="subsection" data-subtab="relative-valuation" role="tabpanel" id="valuation-detail-relative"></div>
+      <div class="subsection" data-subtab="historical-valuation" role="tabpanel" id="valuation-detail-historical"></div>
     </article>
+  </section>
+
+  <section class="tab" id="profitability">
+    <nav class="subtabs" role="tablist" aria-label="Profitability sections">
+      <button type="button" role="tab" data-subtab="margins">Margins</button>
+      <button type="button" role="tab" data-subtab="returns">Returns</button>
+      <button type="button" role="tab" data-subtab="dupont">DuPont</button>
+      <button type="button" role="tab" data-subtab="efficiency">Efficiency</button>
+      <button type="button" role="tab" data-subtab="quality">Quality</button>
+    </nav>
+
+    <div class="subsection" data-subtab="margins" role="tabpanel">
+      <article class="card">
+        <h3>Margins</h3>
+        <div class="scroll">
+          <table id="profitability-table-margins">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Gross margin</th><th>EBITDA margin</th><th>Operating margin</th><th>Net margin</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="small">Gross margin is "N/A": Screener.in does not expose a separate cost-of-goods-sold line to derive it from. EBITDA margin and operating margin show the same reported figure (Screener's Operating Profit is the only proxy this source has for either).</p>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="returns" role="tabpanel">
+      <article class="card">
+        <h3>Returns</h3>
+        <div class="scroll">
+          <table id="profitability-table-returns">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>ROE</th><th>ROCE</th><th>ROA</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="dupont" role="tabpanel">
+      <article class="card">
+        <h3>DuPont</h3>
+        <div class="scroll">
+          <table id="profitability-table-dupont">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>ROE</th><th>Net margin</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="small">Full DuPont ROE decomposition (net margin &times; asset turnover &times; equity multiplier) is on the Fundamentals tab's Business quality sub-tab, per company.</p>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="efficiency" role="tabpanel">
+      <article class="card">
+        <h3>Efficiency</h3>
+        <div class="scroll">
+          <table id="profitability-table-efficiency">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>ROCE</th><th>ROA</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="quality" role="tabpanel">
+      <article class="card">
+        <h3>Quality</h3>
+        <div class="scroll">
+          <table id="profitability-table-quality">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Earnings quality</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab" id="balance-sheet">
+    <nav class="subtabs" role="tablist" aria-label="Balance sheet sections">
+      <button type="button" role="tab" data-subtab="capital-structure">Capital structure</button>
+      <button type="button" role="tab" data-subtab="liquidity">Liquidity</button>
+      <button type="button" role="tab" data-subtab="leverage">Leverage</button>
+      <button type="button" role="tab" data-subtab="working-capital">Working capital</button>
+      <button type="button" role="tab" data-subtab="financial-resilience">Financial resilience</button>
+    </nav>
+    <p class="small">Interest coverage and solvency indicators (Piotroski F-Score, Altman Z-Score) are risk metrics and are shown on the Risks tab instead.</p>
+
+    <div class="subsection" data-subtab="capital-structure" role="tabpanel">
+      <article class="card">
+        <h3>Capital structure</h3>
+        <div class="scroll">
+          <table id="balance-sheet-table-capital-structure">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Total debt (Rs Cr)</th><th>Cash</th><th>Net debt</th><th>Capital structure</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="liquidity" role="tabpanel">
+      <article class="card">
+        <h3>Liquidity</h3>
+        <div class="scroll">
+          <table id="balance-sheet-table-liquidity">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Cash</th><th>Current ratio</th><th>Quick ratio</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="leverage" role="tabpanel">
+      <article class="card">
+        <h3>Leverage</h3>
+        <div class="scroll">
+          <table id="balance-sheet-table-leverage">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Total debt (Rs Cr)</th><th>Net debt</th><th>Debt / equity</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="working-capital" role="tabpanel">
+      <article class="card">
+        <h3>Working capital</h3>
+        <div class="scroll">
+          <table id="balance-sheet-table-working-capital">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Working capital (days)</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="financial-resilience" role="tabpanel">
+      <article class="card">
+        <h3>Financial resilience</h3>
+        <div class="scroll">
+          <table id="balance-sheet-table-financial-resilience">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Debt / equity</th><th>Current ratio</th><th>Net debt</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab" id="growth">
+    <nav class="subtabs" role="tablist" aria-label="Growth sections">
+      <button type="button" role="tab" data-subtab="revenue">Revenue</button>
+      <button type="button" role="tab" data-subtab="ebitda">EBITDA</button>
+      <button type="button" role="tab" data-subtab="earnings">Earnings</button>
+      <button type="button" role="tab" data-subtab="cash-flow">Cash flow</button>
+      <button type="button" role="tab" data-subtab="long-term-growth">Long-term growth</button>
+    </nav>
+
+    <div class="subsection" data-subtab="revenue" role="tabpanel">
+      <article class="card">
+        <h3>Revenue growth</h3>
+        <div class="scroll">
+          <table id="growth-table-revenue">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Revenue growth 3Y</th><th>Revenue growth 5Y</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="ebitda" role="tabpanel">
+      <article class="card">
+        <h3>EBITDA growth</h3>
+        <div class="scroll">
+          <table id="growth-table-ebitda">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>EBITDA growth 3Y</th><th>EBITDA growth 5Y</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="earnings" role="tabpanel">
+      <article class="card">
+        <h3>Earnings growth</h3>
+        <div class="scroll">
+          <table id="growth-table-earnings">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Profit growth 3Y</th><th>Profit growth 5Y</th><th>EPS CAGR</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="cash-flow" role="tabpanel">
+      <article class="card">
+        <h3>Cash flow growth</h3>
+        <div class="scroll">
+          <table id="growth-table-cash-flow">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>FCF CAGR</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="long-term-growth" role="tabpanel">
+      <article class="card">
+        <h3>Long-term growth</h3>
+        <div class="scroll">
+          <table id="growth-table-long-term">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Revenue growth 5Y</th><th>EBITDA growth 5Y</th><th>Profit growth 5Y</th><th>EPS CAGR</th><th>Book value CAGR</th><th>FCF CAGR</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab" id="ownership">
+    <nav class="subtabs" role="tablist" aria-label="Ownership sections">
+      <button type="button" role="tab" data-subtab="shareholding">Shareholding</button>
+      <button type="button" role="tab" data-subtab="promoter">Promoter</button>
+      <button type="button" role="tab" data-subtab="institutional">Institutional</button>
+      <button type="button" role="tab" data-subtab="ownership-trends">Ownership trends</button>
+    </nav>
+    <p class="small">Ownership fields are shown only when supplied by a public source (India only in this phase).</p>
+
+    <div class="subsection" data-subtab="shareholding" role="tabpanel">
+      <article class="card">
+        <h3>Shareholding</h3>
+        <div class="scroll">
+          <table id="ownership-table-shareholding">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Promoter holding</th><th>FII holding</th><th>DII holding</th><th>Mutual fund holding</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="promoter" role="tabpanel">
+      <article class="card">
+        <h3>Promoter</h3>
+        <div class="scroll">
+          <table id="ownership-table-promoter">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Promoter holding</th><th>Promoter trend</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="institutional" role="tabpanel">
+      <article class="card">
+        <h3>Institutional</h3>
+        <div class="scroll">
+          <table id="ownership-table-institutional">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>FII holding</th><th>DII holding</th><th>Mutual fund holding</th><th>Institutional ownership</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="ownership-trends" role="tabpanel">
+      <article class="card">
+        <h3>Ownership trends</h3>
+        <div class="scroll">
+          <table id="ownership-table-trends">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Promoter trend</th><th>Ownership concentration</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
   </section>
 
   <section class="tab" id="technical">
-    <div class="grid four" id="technical-kpis"></div>
-    <article class="card">
-      <h3>Technical analysis</h3>
-      <div class="scroll">
-        <table id="technical-table" class="tech-table">
-          <thead><tr><th>Company</th><th>Signal</th><th class="num">Price</th><th class="num">P/E</th><th class="num">Industry P/E</th><th class="num">RSI (14)</th><th class="num">50 DMA</th><th class="num">200 DMA</th><th class="num">52W High</th><th class="num">52W Low</th><th class="num">Distance from 52W High</th><th>Trend</th><th>Momentum</th><th>Volume Trend</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p class="small">Technical fields are derived from Yahoo Finance's public chart feed (daily closes and volume over the trailing year). No company overview data is shown on this tab.</p>
-    </article>
+    <nav class="subtabs" role="tablist" aria-label="Technicals sections">
+      <button type="button" role="tab" data-subtab="trend">Trend</button>
+      <button type="button" role="tab" data-subtab="momentum">Momentum</button>
+      <button type="button" role="tab" data-subtab="volume">Volume</button>
+      <button type="button" role="tab" data-subtab="relative-strength">Relative strength</button>
+      <button type="button" role="tab" data-subtab="volatility">Volatility</button>
+      <button type="button" role="tab" data-subtab="signals">Signals</button>
+    </nav>
+    <p class="small">Relative strength is trailing-1-year return vs. a market benchmark (NIFTY 50 for India, S&amp;P 500 for US; "N/A" for Global &mdash; no single defensible benchmark spans every exchange). Trend/Momentum/Volatility/Breakout scores are an in-house 0-100 screening blend, not statistical probabilities &mdash; see the deep-dive panel below for the underlying indicators.</p>
+    <div class="pill-row" id="technical-selector"></div>
+
+    <div class="subsection" data-subtab="trend" role="tabpanel">
+      <article class="card">
+        <h3>Trend</h3>
+        <div class="scroll">
+          <table id="technical-table-trend" class="tech-table">
+            <thead><tr><th>Company</th><th>Sector</th><th class="num">CMP</th><th class="num">P/E</th><th>Trend</th><th class="num">20 DMA</th><th class="num">50 DMA</th><th class="num">100 DMA</th><th class="num">200 DMA</th><th class="num">Trend score</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <div id="technical-detail-multi-timeframe"></div>
+    </div>
+
+    <div class="subsection" data-subtab="momentum" role="tabpanel">
+      <article class="card">
+        <h3>Momentum</h3>
+        <div class="scroll">
+          <table id="technical-table-momentum" class="tech-table">
+            <thead><tr><th>Company</th><th>Sector</th><th class="num">CMP</th><th class="num">P/E</th><th class="num">RSI (14)</th><th class="num">Momentum score</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <div id="technical-detail-indicators"></div>
+    </div>
+
+    <div class="subsection" data-subtab="volume" role="tabpanel">
+      <article class="card">
+        <h3>Volume</h3>
+        <div class="scroll">
+          <table id="technical-table-volume" class="tech-table">
+            <thead><tr><th>Company</th><th>Sector</th><th class="num">CMP</th><th class="num">P/E</th><th>Volume trend</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <div id="technical-detail-volume-profile"></div>
+    </div>
+
+    <div class="subsection" data-subtab="relative-strength" role="tabpanel">
+      <article class="card">
+        <h3>Relative strength</h3>
+        <div class="scroll">
+          <table id="technical-table-relative-strength" class="tech-table">
+            <thead><tr><th>Company</th><th>Sector</th><th class="num">CMP</th><th class="num">P/E</th><th class="num">Relative strength</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="volatility" role="tabpanel">
+      <article class="card">
+        <h3>Volatility</h3>
+        <div class="scroll">
+          <table id="technical-table-volatility" class="tech-table">
+            <thead><tr><th>Company</th><th>Sector</th><th class="num">CMP</th><th class="num">P/E</th><th class="num">Volatility score</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="signals" role="tabpanel">
+      <article class="card">
+        <h3>Signals</h3>
+        <div class="scroll">
+          <table id="technical-table-signals" class="tech-table">
+            <thead><tr><th>Company</th><th>Sector</th><th class="num">CMP</th><th class="num">P/E</th><th class="num">Breakout probability</th><th>Regime</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <div id="technical-detail-advanced-scores"></div>
+    </div>
   </section>
 
   <section class="tab" id="portfolio">
-    <div class="two-col">
+    <nav class="subtabs" role="tablist" aria-label="Portfolio sections">
+      <button type="button" role="tab" data-subtab="overview">Overview</button>
+      <button type="button" role="tab" data-subtab="diversification">Diversification</button>
+      <button type="button" role="tab" data-subtab="correlation">Correlation</button>
+      <button type="button" role="tab" data-subtab="factor-exposure">Factor exposure</button>
+      <button type="button" role="tab" data-subtab="scenarios">Scenarios</button>
+      <button type="button" role="tab" data-subtab="attribution">Attribution</button>
+    </nav>
+    <p class="small">Allocation weights are an optional, user-entered target % per company (set via Manage &rarr; company rows). Unset companies split the remaining weight equally; the full vector is normalized to sum to 100%. An all-unset watchlist is treated as equal-weighted. These are illustrative allocation percentages, not real currency holdings.</p>
+
+    <div class="subsection" data-subtab="overview" role="tabpanel">
+      <div class="grid four" id="portfolio-kpis"></div>
+      <div class="two-col">
+        <article class="card">
+          <h3>Screen-derived model allocation</h3>
+          <p class="small">Weights favor stronger composite screens and are capped to avoid concentration. Rows follow the watchlist's own order &mdash; this tab does not re-rank your companies. This is an illustrative research output, not personalized investment advice.</p>
+          <div class="scroll">
+            <table id="portfolio-table">
+              <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Quality score</th><th>Target weight</th><th>Bucket</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </article>
+        <article class="card">
+          <h3>Portfolio construction notes</h3>
+          <ul>
+            <li>Review position size against liquidity and risk tolerance.</li>
+            <li>Use staged entries rather than relying on a single price point.</li>
+            <li>Track earnings, cash flow, policy and commodity catalysts.</li>
+            <li>Refresh this dashboard before each allocation review.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+
+    <div class="subsection" data-subtab="diversification" role="tabpanel">
+      <div class="two-col">
+        <article class="card">
+          <h3>Diversification</h3>
+          <div class="grid two" id="portfolio-diversification"></div>
+        </article>
+        <article class="card">
+          <h3>Portfolio quality</h3>
+          <div class="grid two" id="portfolio-quality"></div>
+        </article>
+      </div>
+    </div>
+
+    <div class="subsection" data-subtab="correlation" role="tabpanel">
       <article class="card">
-        <h3>Screen-derived model allocation</h3>
-        <p class="small">Weights favor stronger composite screens and are capped to avoid concentration. This is an illustrative research output, not personalized investment advice.</p>
-        <table id="portfolio-table">
-          <thead><tr><th>Holding</th><th>Signal</th><th>Price</th><th>P/E</th><th>Quality score</th><th>Illustrative weight</th><th>Bucket</th></tr></thead>
-          <tbody></tbody>
-        </table>
+        <h3>Correlation matrix</h3>
+        <p class="small">Pairwise correlation of weekly returns over the trailing overlapping price history per pair.</p>
+        <div class="scroll"><div id="portfolio-correlation"></div></div>
+        <div class="two-col" id="portfolio-correlation-lists"></div>
+        <div id="portfolio-rolling-correlation"></div>
       </article>
+    </div>
+
+    <div class="subsection" data-subtab="factor-exposure" role="tabpanel">
       <article class="card">
-        <h3>Portfolio construction notes</h3>
-        <ul>
-          <li>Review position size against liquidity and risk tolerance.</li>
-          <li>Use staged entries rather than relying on a single price point.</li>
-          <li>Track earnings, cash flow, policy and commodity catalysts.</li>
-          <li>Refresh this dashboard before each allocation review.</li>
-        </ul>
+        <h3>Factor exposure <span id="factor-exposure-info"></span></h3>
+        <p class="small">In-house within-watchlist percentile tilt per factor — 50 = neutral, not a commercial risk-factor model.</p>
+        <div id="portfolio-factor-exposure"></div>
       </article>
+    </div>
+
+    <div class="subsection" data-subtab="scenarios" role="tabpanel">
+      <article class="card">
+        <h3>Scenario analysis</h3>
+        <p class="small">Illustrative stress test built from each holding's real leverage/beta/sector/earnings-quality characteristics &mdash; not a factor model or historical backtest.</p>
+        <div class="grid two" id="portfolio-scenarios"></div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="attribution" role="tabpanel">
+      <div class="two-col">
+        <article class="card">
+          <h3>Sector contribution <span id="sector-contribution-info"></span></h3>
+          <div id="portfolio-sector-contribution"></div>
+        </article>
+        <article class="card">
+          <h3>Position risk contribution <span id="position-risk-info"></span></h3>
+          <p class="small">Marginal contribution to portfolio volatility (weight × volatility × correlation), normalized to % of total.</p>
+          <div id="portfolio-position-risk"></div>
+        </article>
+      </div>
+      <div class="two-col">
+        <article class="card">
+          <h3>Portfolio quality attribution</h3>
+          <div id="portfolio-quality-attribution"></div>
+        </article>
+        <article class="card">
+          <h3>Portfolio valuation attribution</h3>
+          <div id="portfolio-valuation-attribution"></div>
+        </article>
+      </div>
     </div>
   </section>
 
   <section class="tab" id="risks">
-    <div class="grid four" id="risk-cards"></div>
-    <article class="card">
-      <h3>Stock-by-stock risk matrix</h3>
-      <div class="scroll">
-        <table id="risk-table">
-          <thead><tr><th>Company</th><th>Signal</th><th>Price</th><th>P/E</th><th>Valuation risk</th><th>Balance-sheet risk</th><th>Trend risk</th><th>Drawdown risk</th><th>Composite</th><th>Primary monitorable</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </article>
-    <article class="card">
-      <h3>Institutional risk view</h3>
-      <p id="risk-summary">Risk analysis will appear once securities are loaded.</p>
-    </article>
-  </section>
+    <nav class="subtabs" role="tablist" aria-label="Risks sections">
+      <button type="button" role="tab" data-subtab="overview">Overview</button>
+      <button type="button" role="tab" data-subtab="financial">Financial</button>
+      <button type="button" role="tab" data-subtab="business">Business</button>
+      <button type="button" role="tab" data-subtab="market">Market</button>
+      <button type="button" role="tab" data-subtab="sector">Sector</button>
+      <button type="button" role="tab" data-subtab="governance">Governance</button>
+    </nav>
+    <p class="small">5-category institutional risk framework: Financial, Business, Market, Sector and Governance. Financial/Market risk sub-scores are computed from real reported/priced data; Sector risk is a static, disclosed qualitative sector lookup (not a live regulatory/commodity feed); Business-risk concentration fields and Governance pledge/related-party exposure have no data source and are shown as unavailable rather than estimated.</p>
 
-  <section class="tab" id="news">
+    <div class="subsection" data-subtab="overview" role="tabpanel">
+      <div class="grid four" id="risk-cards"></div>
+      <article class="card">
+        <h3>Stock-by-stock risk matrix</h3>
+        <div class="scroll">
+          <table id="risk-table">
+            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Interest coverage</th><th>Financial</th><th>Business</th><th>Market</th><th>Sector</th><th>Governance</th><th>Scenario: downside to 200-DMA</th><th>Scenario: downside to 52W low</th><th>Composite</th><th>Trend</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Institutional risk view</h3>
+        <p id="risk-summary">Risk analysis will appear once the watchlist loads.</p>
+      </article>
+    </div>
+
     <article class="card">
-      <h3>Recent web coverage</h3>
-      <div id="news-list" class="news-list"></div>
-      <p class="small">News links open their original sources. Titles are supplied by Google News RSS and should be independently evaluated.</p>
+      <div class="section-head"><h3>Risk deep-dive</h3></div>
+      <div class="pill-row" id="risk-selector"></div>
+      <div class="subsection" data-subtab="financial" role="tabpanel" id="risk-detail-financial"></div>
+      <div class="subsection" data-subtab="business" role="tabpanel" id="risk-detail-business"></div>
+      <div class="subsection" data-subtab="market" role="tabpanel" id="risk-detail-market"></div>
+      <div class="subsection" data-subtab="sector" role="tabpanel" id="risk-detail-sector"></div>
+      <div class="subsection" data-subtab="governance" role="tabpanel" id="risk-detail-governance"></div>
     </article>
   </section>
 </main>

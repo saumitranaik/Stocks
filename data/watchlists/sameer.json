@@ -1,0 +1,53 @@
+{
+  "id": "sameer",
+  "name": "Sameer",
+  "createdAt": "2026-08-14T11:11:24.739Z",
+  "updatedAt": "2026-08-14T11:16:48.945Z",
+  "companies": [
+    {
+      "symbol": "DIXON.NS",
+      "name": "Dixon Technologies (India) Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Durables",
+      "industry": "Consumer Electronics",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:11:33.621Z"
+    },
+    {
+      "symbol": "OBEROIRLTY.NS",
+      "name": "Oberoi Realty Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Realty",
+      "industry": "Residential, Commercial Projects",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:13:07.708Z"
+    },
+    {
+      "symbol": "VBL.NS",
+      "name": "Varun Beverages Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Fast Moving Consumer Goods",
+      "industry": "Other Beverages",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:14:31.807Z"
+    },
+    {
+      "symbol": "JUBLFOOD.NS",
+      "name": "Jubilant FoodWorks Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Services",
+      "industry": "Restaurants",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:16:48.144Z"
+    }
+  ],
+  "cashTargetPct": 0
+}

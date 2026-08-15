@@ -1,0 +1,20 @@
+{
+  "id": "test",
+  "name": "Test",
+  "createdAt": "2026-08-14T07:55:35.256Z",
+  "updatedAt": "2026-08-14T11:10:54.084Z",
+  "companies": [
+    {
+      "symbol": "MTARTECH.NS",
+      "name": "MTAR Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-14T11:10:42.734Z"
+    }
+  ],
+  "cashTargetPct": 0
+}

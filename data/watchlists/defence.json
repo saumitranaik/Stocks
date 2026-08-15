@@ -1,0 +1,86 @@
+{
+  "id": "defence",
+  "name": "Defence",
+  "createdAt": "2026-08-13T13:06:38.735Z",
+  "updatedAt": "2026-08-14T10:54:21.516Z",
+  "companies": [
+    {
+      "symbol": "HAL.NS",
+      "name": "Hindustan Aeronautics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "BEL.NS",
+      "name": "Bharat Electronics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "BEML.NS",
+      "name": "BEML Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Construction Vehicles",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "BDL.NS",
+      "name": "Bharat Dynamics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "MAZDOCK.NS",
+      "name": "Mazagon Dock Shipbuilders Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Ship Building & Allied Services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "COCHINSHIP.NS",
+      "name": "Cochin Shipyard Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Ship Building & Allied Services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "GRSE.NS",
+      "name": "Garden Reach Shipbuilders & Engineers Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-13T13:06:38.735Z"
+    }
+  ],
+  "cashTargetPct": 0
+}
