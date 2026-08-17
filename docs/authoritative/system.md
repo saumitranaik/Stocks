@@ -56,7 +56,9 @@ multi-tenant service.
 | `data/watchlist/` | Watchlist persistence, research orchestration, caching, symbol search |
 | `data/analytics/` | Pure calculation modules (valuation, technical, portfolio, risk, series math) |
 | `data/scoring/` | The unified recommendation/rating engine |
-| `data/reporting/` | Per-company printable report model (derives from research, computes nothing new) |
+| `data/decision/` | Portfolio Action Score, alerts, portfolio health, rebalancing — pure composition over already-computed analytics/scoring output (§3.7) |
+| `data/quant/` | Institutional quantitative research domain — per-stock factor profiles, benchmark/performance/backtesting (Phase 7) — pure composition/normalization over already-computed analytics/scoring output (§3.9) |
+| `data/reporting/` | Per-company printable report model + Portfolio Review Pack model (both derive from research, compute nothing new) |
 | `data/metadata/` | The Sourced/Calculated/Heuristic metric tier registry |
 | `data/news/` | Company news fetch + heuristic classification |
 | `data/universe/` | Static NSE ticker reference data for local search |
@@ -96,20 +98,53 @@ no reactivity system and no virtual DOM diffing.
 - **Sub-tab selection** — per-tab, persisted to `localStorage`
   (`subtab:<tabId>`).
 
-### 2.3 Tabs and sub-tabs
+### 2.3 Sidebar workspaces and sub-tabs
 
-Eleven top-level tabs (flat nav, click-toggled `.active`/visibility):
-Dashboard, Watchlists, Fundamentals, Valuation, Profitability, Balance Sheet,
-Growth, Ownership, Technicals, Portfolio, Risks. The Watchlists tab is
-full-bleed width; every other tab shares a common reading-width container.
+**Phase 6.5** replaced the original flat top-tab nav with a persistent left
+sidebar (`#app-sidebar`, `.sidebar-item` buttons, collapsible to icon-only
+with text monograms, off-canvas drawer below 900px) holding 9 primary
+workspaces: Dashboard, Watchlists, Research, Technicals, Portfolio, Risks,
+Reports, Market Intelligence, Compare. The header lost its old `<nav
+class="tabs">` row and is now a slim global context bar only (title/status,
+watchlist select + Refresh, company selector + Quick Jump + Compare
+toggle/chips) — it does not duplicate the sidebar's navigation. This was a
+pure navigation/DOM-restructuring change: no API route, data flow, or
+analytics module was touched (`activateWorkspaceTab()` in `script.js` is the
+one function that replaced the old `$$('.tabs button')` click handler; every
+`render*()` data function is unchanged and keyed off the same element ids
+regardless of where those ids now live in the DOM).
 
-Every tab except Watchlists (a single-purpose management workspace) has a
-second navigation level: a sticky row of sub-tab pills directly under the
-tab's own header, splitting what was previously one long scrolling page into
-click-navigable sections (e.g. Valuation → Overview / DCF / Reverse DCF /
-Sensitivity / Relative valuation / Historical valuation). Sub-tabs are a pure
-client-side visibility toggle over already-rendered DOM (`applySubtabState()`)
-— they trigger no new computation and no new data.
+Each of Dashboard/Technicals/Portfolio/Risks/Reports/Market Intelligence/
+Compare maps 1:1 to one `.tab` section, same mechanism the old flat nav used.
+**Research is a virtual group**, not a merged section: Fundamentals,
+Valuation, Profitability, Balance Sheet, Growth and Ownership remain 6
+independent `.tab` sections with their own content and their own existing
+sub-tabs, completely untouched; a slim category pill-bar
+(`#research-category-bar`, reuses `.pill-row`/`.pill`) appears only while one
+of the 6 is active and switches among them, while the sidebar's single
+"Research" item stays highlighted. This keeps primary navigation at 2 levels
+(sidebar → workspace) without a 3rd level — each of the 6 sections' own
+sub-tab bar is unchanged content-internal navigation, exactly as before.
+**Market Intelligence** is a real single section that now hosts the Macro
+Intelligence, Sector Intelligence, Earnings & Events and News & Catalysts
+sub-tabs relocated from Dashboard (same element ids, same render functions —
+only their DOM parent changed). **Compare** is a new dedicated workspace that
+reuses `renderCompareAwarePillSelector()` and the existing `compareGrid()` +
+`valuationDetailContent()`/`technicalDetailContent()`/`riskDetailContent()`
+builder functions (already used this way on Valuation/Technicals/Risks) to
+populate 3 new containers — no new comparison logic. **Reports** is a new
+workspace consolidating the 3 standalone-report launch points
+(`report.html`/`portfolio-review.html`/`committee-pack.html`) behind 3 shared
+helpers (`openCompanyReport()`, `openPortfolioReview()`,
+`openCommitteePack()`); the pre-existing launch points (Quick Jump, Watchlists
+manage row, Committee View, the per-row report action) still work, now
+calling the same 3 helpers instead of each constructing its own URL.
+
+Every workspace/sub-tab is still a pure client-side visibility toggle over
+already-rendered DOM (`applySubtabState()`, `activateWorkspaceTab()`) — none
+of this phase's changes trigger new computation or new network requests;
+confirmed live that switching among all 9 workspaces and all 6 Research
+categories fires zero HTTP requests.
 
 ### 2.4 Rendering pattern
 
@@ -133,6 +168,14 @@ cache-only (never triggers a fetch), and renders a printable A4 "paper" theme
 report distinct from the dashboard's dark terminal theme. PDF export is the
 browser's own `window.print()` against the exact on-screen DOM/CSS — no PDF
 library, no server-side rendering.
+
+`portfolio-review.html` + `portfolio-review.js` (Phase 5) is the same
+architecture applied at watchlist scope — a second standalone page, its own
+copy of the paper-theme stylesheet and chart/formatting helpers (no shared
+frontend module system exists to import them from, §1.2), fetching
+`GET /api/watchlists/:id/portfolio-review` (also cache-only). Not a third
+distinct pattern, just `report.html`'s own template reused for a different
+scope.
 
 ---
 
@@ -159,7 +202,11 @@ race it).
 | DELETE | `/api/watchlists/:id` | Delete a watchlist |
 | POST | `/api/watchlists/:id/duplicate` | Duplicate a watchlist |
 | GET | `/api/watchlists/:id/research` | Cache-only research payload for a watchlist |
-| GET | `/api/watchlists/:id/report/:symbol` | Cache-only per-company printable report |
+| GET | `/api/watchlists/:id/report/:symbol` | Cache-only per-company printable institutional research report |
+| GET | `/api/watchlists/:id/portfolio-review` | Cache-only printable Portfolio Review Pack (Phase 5, §3.6) |
+| GET | `/api/watchlists/:id/committee-pack` | Weekly Investment Committee Pack (Phase 6, §3.8) — watchlist half cache-only; macro/sector halves may trigger their own cache-first fetch on their own TTL |
+| GET | `/api/macro` | Macro Intelligence snapshot + Market Regime (Phase 6, §3.8) — watchlist-independent, cache-first on its own 30min TTL |
+| GET | `/api/sector-intelligence` | Sector Intelligence rollup across every saved watchlist (Phase 6, §3.8) — cache-only, the one cross-watchlist read in this app |
 | POST | `/api/watchlists/:id/refresh` | Refresh (`force` = full refetch; `symbols[]` = targeted refetch; else incremental) |
 | POST | `/api/watchlists/import` | Import a watchlist (same shape Export produces) |
 | PUT | `/api/watchlists/:id/cash-target` | Set the watchlist's cash allocation target % |
@@ -168,6 +215,7 @@ race it).
 | PUT | `/api/watchlists/:id/companies/order` | Reorder companies |
 | PUT | `/api/watchlists/:id/companies/:symbol/weight` | Set a company's target weight % |
 | PUT | `/api/watchlists/:id/companies/:symbol/notes` | Set a company's notes |
+| PUT | `/api/watchlists/:id/alerts/:alertId` | Acknowledge/un-acknowledge a Portfolio Intelligence alert (§3.7) |
 
 Every mutation route re-runs `researchFor(id, 'none')` (cache-only) after the
 write and returns the fresh payload in the same response, so the frontend
@@ -197,7 +245,16 @@ External sources in use today:
   `screenerLabels.mjs` into one normalized shape.
 - **Google News RSS** (`data/news/companyNews.mjs`) — up to 5 recent
   deduplicated headlines per company, classified by impact/catalyst type via
-  disclosed keyword rules.
+  disclosed keyword rules. Phase 6 added sentiment (Positive/Negative/
+  Neutral/Uncertain) and a coarse `affectedThesisDriver` mapping to the
+  per-company report's own thesis buckets — same disclosed-keyword-list
+  convention, no new fetch.
+- **Yahoo Finance macro tickers** (`data/providers/macroProvider.mjs`, Phase
+  6) — the same public chart-feed fetch every equity price already uses
+  (`yahooQuoteProvider.mjs`'s `fetchQuote`), pointed at 6 non-equity tickers
+  (USD/INR, US 10-Year Treasury yield, WTI crude, natural gas, gold, India
+  VIX) for the Macro Intelligence panel (§3.8). No new fetch mechanism, no
+  new external dependency.
 
 ### 3.4 Caching
 
@@ -242,6 +299,296 @@ This is the pattern every future reporting or export feature must follow:
 **never duplicate an analytics calculation — read the already-computed result
 off the research payload.**
 
+**Phase 5** extended the report to a full 15-section institutional research
+note (`report.html`/`report.js`): the original 10 Phase 3d sections plus
+Thesis Tracking (reads `intelligence.thesis[symbol]`, §3.7), Target Price
+Rationale (WACC/growth/sensitivity/confidence, read off `stock.dcf`/
+`stock.financialValuation` — explicitly discloses where a figure isn't
+modeled, e.g. no forward margin assumption or no sensitivity grid for the
+financial-sector model, rather than fabricating one), Scenario Analysis
+(bull/base/bear plus this company's own row from the portfolio-level stress
+test, `research.portfolio.scenarios`), Portfolio Context (this company's own
+weight/attribution/risk-contribution/diversification-impact/action rows,
+looked up from already-computed portfolio fields), and Explainability (the
+recommendation engine's and Action Score's bucket breakdowns side by side).
+The catalyst taxonomy (`data/news/companyNews.mjs`) was remapped to 7
+categories (Earnings/Valuation/Industry/Regulatory/Technical/Management/
+Capital allocation) with a disclosed `signalStrength` heuristic (impact +
+recency) — deliberately not a numeric probability, since these are
+keyword-classified past headlines, not a confirmed event calendar.
+
+**Institutional research foundation upgrade** added 3 report sections (now
+17 total), all pure passthrough of §4.6's new fields, no new calculation in
+the reporting layer itself: **Company Quality vs. Stock Attractiveness**
+(after Investment thesis), **Thesis breakers** (extending the existing
+Thesis tracking section), and **Segment, Capacity & Forward Estimates** (a
+combined section reading `forwardFramework`/`researchQuality`, after
+Financial quality — every sub-concept renders an explicit "not available"
+status, per §4.6). Separately, `executiveSummary()`/`valuationAnalysis()`/
+`scenarioAnalysis()`/`finalVerdict()` now apply `precisionForConfidence()`
+(`data/util.mjs`) to the fair-value/target-price/bull-base-bear figures they
+display, keyed to the resolved valuation model's own `confidenceBand` — a
+report-page-only presentation change (High confidence keeps today's 2-decimal
+display; Medium rounds to the nearest whole unit; Low to the nearest 5). The
+underlying `stock.valuation`/`stock.dcf`/`stock.financialValuation` figures
+themselves are completely unchanged for every other consumer (the main
+dashboard, the decision layer's `valuationMarginPct`) — this is presentation
+rounding at the one place the number is actually shown to a reader, not a
+new calculation.
+
+`data/reporting/portfolioReviewPack.mjs`'s `buildPortfolioReviewPack(research)`
+is the same pure-composition pattern applied at watchlist scope — a 9-section
+investment-committee document (portfolio summary, valuation summary,
+concentration analysis, sector positioning, top opportunities, top risks,
+portfolio health, action priorities, rebalancing recommendations) reading
+entirely off `research.portfolio`/`research.intelligence`, with zero new
+analytics. Rendered by the standalone `portfolio-review.html`/
+`portfolio-review.js` pair, which mirrors `report.html`/`report.js`'s own
+WYSIWYG A4/print/PDF-export architecture (§2.5) rather than introducing a new
+one. Launched from the Watchlists tab's manage row and the Dashboard's
+Committee View sub-tab, both via `window.open('portfolio-review.html?wl=...')`
+— the same read-only-navigation pattern the per-company report already uses.
+
+### 3.7 Portfolio intelligence (decision layer)
+
+`data/decision/` is a **pure composition layer** over the `stocks`/
+`portfolio` fields `buildResearch()` already computed above — it performs no
+I/O, no fetching, and no new analytics; it only blends and thresholds
+already-computed figures. Every constant it uses (weights, score bands,
+alert thresholds, the lifecycle escalation window) lives in one file,
+`data/decision/config.mjs`, so calibration is a config change, not a
+re-audit of the modules that read it.
+
+- **Action Score** (`actionScore.mjs`) — a weighted blend of the
+  recommendation engine's own bucket scores (Quality/Valuation/Technical/
+  Risk-inverted/Relative positioning) plus a Portfolio Fit score (weight
+  drift vs. target, sector concentration, correlation with the largest
+  existing holding), mapped to Add aggressively/Add/Hold/Reduce/Exit.
+  Capped to Hold, with a disclosed `capNote`, when fewer than half of the
+  six buckets resolve — the same confidence-gating convention the main
+  recommendation engine already uses (§4.2).
+- **Alerts** (`alerts.mjs`) — standing-condition alerts (e.g. elevated
+  composite risk, RSI extremes, sector/position concentration) and
+  crossing/transition alerts (e.g. a rating change, a DMA crossover), each
+  graded across 2–3 severity tiers by how far past the threshold the
+  reading is, not a single fixed severity. An alert continuously firing for
+  `ALERT_LIFECYCLE.escalateAfterDays` (default 7) escalates one severity
+  tier; an acknowledged alert that clears and later re-fires is treated as
+  a new occurrence, not suppressed forever.
+- **Portfolio health** (`portfolioHealth.mjs`) and **rebalancing
+  suggestions** (`rebalancing.mjs`) — likewise pure blends of already-
+  computed portfolio fields; rebalancing is a rule-based read, not an
+  optimizer.
+- **Change detection** (`changeDetection.mjs`) — a field-level diff between
+  the live stock object and a persisted run-over-run snapshot, answering
+  "what changed since last refresh."
+- **Thesis tracking** (`thesisTracking.mjs`, Phase 5) — classifies each
+  company's investment thesis as Intact/Improving/Weakening/Broken, reusing
+  the same previous/current snapshot-field pair `changeDetection.mjs` already
+  computes for its own diff (no new I/O, no second pass over `stocks`). A
+  weighted blend of rating-tier movement (dominant), composite risk
+  direction, technical crossing/regime direction and relative-valuation rank
+  movement, plus hard "Broken" triggers (a 2+ tier rating downgrade, a fall
+  to Sell, or composite risk crossing into critical territory) that override
+  the blended score — same threshold-plus-magnitude pattern as
+  `alerts.mjs`. Weights/thresholds live in `config.mjs`'s `THESIS_TRACKING`
+  block. Attached as `intelligence.thesis[symbol]`, consumed by the
+  per-company report's Thesis Tracking section (§3.6).
+
+`data/decision/index.mjs`'s `buildPortfolioIntelligence()` is the single
+orchestration entrypoint, called once from `research.mjs`, in one pass over
+`stocks` (alerts, health, and Action Score are each computed exactly once,
+matching the single-computation-site rule in §8). It returns the
+`intelligence` object attached to the research payload, plus the snapshot
+to persist next.
+
+**Persistence**: `data/watchlist/snapshotCache.mjs` is a third disk-cache
+namespace (`data/cache/watchlistSnapshots/<id>.json`, one file per
+watchlist) holding the run-over-run baseline — per-company recommendation/
+valuation/risk/technical fields, portfolio aggregates, health history, and
+which alert ids are currently firing (with their first-detected time, for
+lifecycle escalation). It only advances on a **genuine** data refresh (a
+company's own `fetchedAt` moving forward) — a cache-only render reproduces
+the same alerts/diff deterministically from unchanged inputs, so the
+persisted baseline is intentionally left untouched, and the write itself is
+skipped entirely rather than rewriting an identical file (see the
+performance note below).
+
+**Performance**: cache-only `GET .../research` composes the decision layer
+on every request but only *persists* it when something genuinely changed.
+Measured cache-only response time is ~25–60ms across the seeded watchlists,
+in line with the pre-decision-layer baseline (§7 of the roadmap, 07.4) —
+an earlier version of this layer wrote the snapshot file unconditionally on
+every request (including cache-only ones), which regressed cache-only
+response time to 185–300ms; that write is now skipped whenever no company
+advanced.
+
+### 3.8 Market and event intelligence (Phase 6)
+
+Phase 6 added forward-looking market/event context on top of the existing
+research platform, following the same "reuse already-computed analytics,
+never duplicate a calculation" discipline as §3.6/§3.7. One piece required a
+genuinely new capability (cross-watchlist reads); everything else is pure
+composition over data already fetched/computed elsewhere.
+
+- **Macro Intelligence** (`data/providers/macroProvider.mjs`,
+  `data/watchlist/macro.mjs`, `GET /api/macro`) — 6 real indicators sourced
+  via Yahoo Finance tickers (USD/INR, US 10-Year Treasury yield, WTI crude,
+  natural gas, gold, India VIX), cached on their own namespace
+  (`data/cache/macro/`) and TTL (30min), independent of any watchlist's own
+  refresh cycle. Every other macro indicator the Phase 6 brief named (RBI
+  policy repo rate, India G-Sec yield, CPI, IIP, PMI, power demand, ethanol
+  policy, defence budget, banking liquidity) has no free, unauthenticated,
+  machine-readable public source this app can reach — each renders an
+  explicit **Future Integration** status (a Data Quality panel shows
+  Live/Delayed/Unavailable/Future Integration per indicator) rather than
+  being estimated or fabricated, the same posture as TD-10's market-wide peer
+  database. **Market Regime** (`data/decision/marketRegime.mjs`) is a
+  disclosed rule-based classification (Risk-on/Risk-off/tightening-or-easing
+  bias) blending India VIX level, the Nifty 50 benchmark's own already-
+  computed trend (reused from `benchmarkCache`, never refetched) and US 10Y
+  yield direction — the same pattern `technicalScorecard.mjs`'s per-stock
+  `technicalRegime` already uses, applied at market level; confidence never
+  exceeds Medium.
+- **Sector Intelligence** (`data/watchlist/sectorIntelligence.mjs`,
+  `GET /api/sector-intelligence`) — **the one cross-watchlist read in this
+  app**, a deliberate exception to the otherwise strictly single-watchlist-
+  scoped data flow (§5). Loops every saved watchlist's own already-cached
+  `buildResearch()` output (`networkPass:'none'` — zero new fetches),
+  dedupes companies appearing in more than one watchlist, and groups the
+  result by each company's own `sector` field into per-sector rollups
+  (composite/valuation/technical/risk score averages, relative strength, EPS
+  CAGR, regulatory/commodity sensitivity reused from
+  `institutionalRisk.mjs`'s `sectorRiskTags()`). Coverage is limited to
+  companies actually present in a saved watchlist — there is still no
+  market-wide sector database (TD-10 is unaffected; this combines the user's
+  own data, not an external universe).
+- **Portfolio Exposure Matrix** (`data/analytics/exposureRules.mjs`,
+  `data/decision/exposureMatrix.mjs`, attached as `portfolio.exposureMatrix`
+  in the research payload) — tags each company with interest-rate,
+  currency, commodity, regulatory and economic-cycle sensitivity. Interest-
+  rate and economic-cycle sensitivity are 2 new static keyword-matched
+  sector lookup tables (same shape as `institutionalRisk.mjs`'s
+  `SECTOR_RISK_RULES`); regulatory/commodity reuse `sectorRiskTags()`
+  directly and currency reuses `scenarios.mjs`'s `currencyExposure()` —
+  nothing is duplicated. Portfolio-level figures are a weight-aggregated
+  average using each holding's already-resolved illustrative target weight.
+- **Earnings Intelligence** (`data/analytics/earningsAnalytics.mjs`,
+  attached per-stock as `earningsIntelligence`) — real quarter-over-quarter
+  and year-over-year revenue/net-profit/operating-margin deltas computed
+  from Screener's own scraped quarterly P&L series
+  (`fundamentals.quarterly.profitLoss`, fetched since Phase 1 but unused
+  anywhere downstream until now). "Deviation vs. trailing average" is the
+  honest substitute for an earnings "surprise": this app has no analyst-
+  consensus data source, so deviation is measured against the company's own
+  trailing 4-quarter average, never against Street expectations. Next
+  earnings date, days remaining, expected impact, historical reaction,
+  guidance changes, management commentary and estimate-revision signals have
+  no data source and render an explicit **Future Integration** status.
+- **Portfolio Event Calendar** (`data/analytics/eventCalendar.mjs`,
+  attached at the payload's top level as `eventCalendar`) — every already-
+  fetched, dated company news item across the watchlist, sorted newest-
+  first. Earnings dates, dividend ex-dates, buybacks and regulatory/policy
+  events have no dated source (Screener exposes only a trailing annual
+  dividend payout %, not a schedule) and are not included, rather than
+  fabricated.
+- **Morning Briefing** — the Dashboard's default sub-tab (`script.js`'s
+  `renderMorningBriefing()`), composing `executiveSummary`, `intelligence`,
+  the Macro/Sector Intelligence payloads (fetched once client-side, reused —
+  never refetched for the briefing) and per-company news into one daily
+  roll-up. Pure client-side formatting; zero new backend computation.
+- **Weekly Investment Committee Pack** (`data/reporting/committeePack.mjs`,
+  `committee-pack.html`/`committee-pack.js`) — structurally the Phase 5
+  Portfolio Review Pack extended with macro/sector context and a
+  field-categorized view (Valuation/Risk/Other) over the existing per-
+  company diff (`data/decision/changeDetection.mjs`). "Weekly" means "since
+  this watchlist's own last genuine data refresh" (the same run-over-run
+  window `changeDetection.mjs` already tracks) — refresh cadence is user-
+  driven in this single-user local tool, not a scheduled job, so this may
+  reflect more or less than 7 calendar days. Macro/sector sections show
+  current state plus each indicator's own trailing-window change, not a
+  dedicated week-over-week snapshot diff (no such persistence exists yet for
+  macro/sector data — see the roadmap's technical debt).
+
+### 3.9 Quantitative research (Phase 7)
+
+Phase 7 adds an institutional quantitative-research domain, `data/quant/`,
+following the same discipline as `data/decision/` (§3.7): a pure composition/
+normalization layer that performs no I/O and recomputes no raw figure
+`data/analytics/`/`data/scoring/` already produced — it only normalizes and
+aggregates already-computed fields. Staged per the phase brief; **Stage 1
+(quantitative data model + factor engine) and Stage 2 (benchmark & performance
+engine) are complete** — backtesting/portfolio-construction/position-sizing/
+risk-budget/attribution modules are later stages, not yet built (see
+`docs/governance/roadmap.md` domain 09).
+
+- **Factor engine** (`data/quant/factorEngine.mjs`, `buildQuantResearch()`,
+  called once from `research.mjs` after the recommendation/relative-valuation
+  second pass resolves) — an institutional 6-factor framework (Value/
+  Quality/Growth/Momentum/Risk/Size). For each stock, every named sub-metric
+  (e.g. P/E, ROE, revenue CAGR, price momentum, beta, market cap — all read
+  directly off already-computed `stocks[]` fields, never recomputed) is
+  normalized to a 0-100 percentile against a peer universe: same-sector
+  watchlist peers first, falling back to the full watchlist below
+  `data/quant/config.mjs`'s `NORMALIZATION.minSectorPeers`, and to an
+  explicit "insufficient data" status below `minWatchlistPeers` even at
+  watchlist scope — the same watchlist-scoped-only peer constraint already
+  disclosed on `relativeValuation.mjs` and `portfolio.mjs`'s `factorExposure()`
+  (there is no market-wide peer database in this app). A category score
+  averages its resolved sub-metrics; the composite **Factor Score** is a
+  weighted blend of the 6 category scores (weights in
+  `data/quant/config.mjs`, disclosed and uncalibrated — same TD-11-class
+  limitation as `data/decision/config.mjs`'s own weights), renormalized over
+  whichever categories resolve, and withheld (with a disclosed `capNote`)
+  when fewer than half resolve — the same completeness-floor convention
+  `actionScore.mjs` already uses. Attached per-stock as `stock.quantFactors`
+  and, watchlist-level, as `research.quant` (factor leadership/weakness,
+  per-category averages, coverage).
+- **Distinct from `portfolio.factorExposure`** (§4.4): that pre-existing
+  function is a lightweight, portfolio-level, weight-aggregated tilt over 5
+  factors with no per-metric raw-value/percentile/confidence disclosure. The
+  Stage 1 factor engine is the full per-stock institutional profile the
+  Phase 7 brief requires (raw value + normalized score + percentile +
+  direction + data status + confidence per sub-metric). Both remain in the
+  payload, answering different questions over overlapping raw inputs — not a
+  duplicate computation of the same one (`metricRegistry.mjs`'s
+  `quantFactorScore` entry carries the full disclosure).
+- **Benchmark & Performance engine** (`data/quant/performanceEngine.mjs`,
+  Stage 2) — a single module (the phase brief's own "one clean module if
+  architecturally sufficient" option; benchmark selection needed no new code
+  beyond reusing `technicalLevels.mjs`'s existing `benchmarkSymbolFor()` and
+  `research.mjs`'s existing per-market benchmark bundle, so a separate
+  `benchmarkEngine.mjs` would have had no distinct responsibility). Computes,
+  per stock and weight-aggregated per watchlist: benchmark-relative period
+  returns (1M/3M/6M/1Y/3Y/5Y — 1Y reuses the existing daily-quote-derived
+  `oneYearReturnPct`/`relativeStrengthPct` rather than a second, slightly
+  different weekly-series-derived 1Y figure), price-series CAGR (3Y/5Y, actual
+  elapsed time, not an assumed integer year count), max-drawdown peak/trough/
+  recovery detail, and proxy Sharpe-like/Sortino-like risk-adjusted ratios —
+  explicitly labeled "-like" throughout since this app has no dividend-
+  inclusive total-return data source. It computes none of beta, volatility or
+  max-drawdown *magnitude* itself — those are `stock.beta`/`stock.
+  volatilityPct`/`stock.maxDrawdownPct`, already computed earlier in the same
+  per-stock pass, read and reused as-is. Attached per-stock as `stock.
+  performance` and watchlist-level as `portfolio.performance` (weight-
+  aggregated using the same `resolveWeights` vector every other portfolio
+  aggregate uses; portfolio volatility/beta reuse the real, correlation-aware
+  `portfolio.mjs` figures rather than a correlation-blind average — see
+  `portfolioVolatilityPct()`, extracted from `positionRiskContribution()`'s
+  own internal variance decomposition so both call sites share one
+  computation). Benchmark-side figures (period returns/CAGR/volatility/
+  drawdown) are computed exactly once per market via
+  `benchmarkPerformanceProfile()` and reused across every stock sharing that
+  market — a per-stock recompute was measured to regress cache-only response
+  time and was fixed before this stage shipped (see `docs/governance/
+  roadmap.md`'s Phase 7 Stage 2 validation note). `data/analytics/priceSeries.
+  mjs` gained one new shared primitive, `downsideDeviationPct()`, alongside
+  its existing `annualizedVolatilityPct()`/`maxDrawdownPct()` siblings.
+- **Product rule**: the Factor Score never overrides or averages into the
+  Portfolio Action Score (§3.7) or the unified recommendation engine (§4.2),
+  which remain this app's primary decision-layer signals. A later UI stage
+  surfaces a disagreement between them, rather than blending it away.
+
 ---
 
 ## 4. Analytics architecture
@@ -265,13 +612,31 @@ figure they produce is tagged in `data/metadata/metricRegistry.mjs` (§6).
   approaches the cost of equity.
 - **Fair value / target price** (`valuation.mjs`) — a disclosed heuristic:
   P/E and P/B reversion to the watchlist's own peer average, projected forward
-  by the 5-year EPS CAGR. Explicitly *not* analyst consensus.
+  by the 5-year EPS CAGR. Explicitly *not* analyst consensus. Now carries its
+  own `confidenceBand` (High/Medium/Low, same thresholds as DCF/
+  financialValuation below), blending reversion-component completeness,
+  watchlist sample size, and a **reversion-gap** read — how far this stock's
+  own current P/E/P/B already sits from the peer average it's being reverted
+  to (§4.6) — so a large, unjustified extrapolation (e.g. reverting a single
+  capital-goods name to an unrelated multi-sector watchlist average) no
+  longer reads as confidently as a well-supported one.
 - **Relative valuation** (`relativeValuation.mjs`) — a two-pass module: pass 1
   computes each stock's own comparison figures, pass 2 (needing every
   sector-mate's pass-1 result) computes sector-adjusted rank, a disclosed
   multi-factor peer score (Value 40% / Quality 35% / Growth 25%), valuation
   dispersion, and historical premium/discount bands. Always watchlist-scoped
-  — there is no market-wide peer universe.
+  — there is no market-wide peer universe. **Peer-framework correction
+  (institutional research foundation upgrade, §4.6)**: each stock's real
+  comparison-peer count (`peerCount`, self excluded) drives a `peerTier`
+  (Direct = same `industry`, Sector = same `sector` only) and a
+  `peerCompleteness` read (Strong ≥6 / Adequate 3–5 / Weak 1–2 / Unavailable
+  0). Below 3 real peers, `relativeValuationScore`/`sectorNormalizedValuationScore`/
+  `multiFactorPeerScore` render `null` with a disclosed reason instead of a
+  self-comparison artifact (previously a 1-company "sector" produced a real
+  but meaningless score) — the same insufficient-data floor
+  `data/quant/factorEngine.mjs` already applies to its own peer-relative
+  percentiles. `peerCompleteness` also feeds the unified recommendation
+  engine's confidence read (§4.2).
 - **Historical percentiles** (`historicalPercentiles.mjs`) — reconstructs a
   stock's own historical P/E and P/B distribution from its price and
   fundamentals history, for "where does today's multiple sit historically."
@@ -326,6 +691,77 @@ keyword-matched lookup table (not a market data feed). Business-risk
 concentration and governance pledge/related-party figures are explicitly
 unavailable (no data source), never estimated.
 
+### 4.6 Institutional research foundation
+
+A set of additive analytical lenses layered over already-computed
+`data/analytics`/`data/scoring` output — none of them touch or override the
+primary `recommendation.rating`/`compositeScore` (§4.2), same non-overriding
+relationship `data/quant/factorEngine.mjs` already has to the recommendation
+engine (§3.9).
+
+- **Evidence hierarchy** (`data/metadata/evidenceHierarchy.mjs`) — an A–F
+  provenance scale (A: audited filing/exchange/regulatory · B: management
+  guidance/investor presentation · C: high-quality independent research · D:
+  reputable financial/news source · E: derived calculation · F: system
+  heuristic/estimation) layered on top of, never replacing, the existing
+  Sourced/Calculated/Heuristic tier (§6). `metricRegistry.mjs`'s `metricMeta()`
+  attaches a default evidence tier to every registry entry (derived from its
+  existing tier; news-sourced entries default to D instead of A). No B or C
+  source exists in this app today — a disclosed gap, not an invented mapping.
+- **Company Quality vs. Stock Attractiveness** (`data/scoring/qualityAttractiveness.mjs`)
+  — two named groupings over the same per-stock factor list `factors.mjs`
+  already computes (`COMPANY_QUALITY_FACTOR_KEYS`: business/financial-
+  strength/profitability/growth/cash-flow/balance-sheet/management/industry-
+  position; `STOCK_ATTRACTIVENESS_FACTOR_KEYS`: valuation/risk-profile/
+  technical-trend/momentum-volume), each a separate weighted-average score
+  attached as `recommendation.companyQuality`/`.stockAttractiveness`. Answers
+  "is this a good business" independently of "is this stock a good buy right
+  now" — a stock can show Strong Company Quality alongside Average Stock
+  Attractiveness, or the reverse.
+- **Fundamental / Market / Timing separation** (`scoringEngine.mjs`) —
+  `recommendation.fundamentalView` (Quality+Valuation+Risk buckets only, no
+  Technical) and `.marketView` (the Technical bucket plus the technical
+  regime label) are additive re-averages of the same 5 bucket scores the
+  blended `rating` already uses, so a weak chart can never masquerade as a
+  business-quality read. `.actionGuidance` is a small disclosed lookup
+  combining the two into one sentence (e.g. "Fundamentally attractive but
+  technically weak — accumulate on weakness") — never a third rating.
+- **Research Quality Gates** (`data/scoring/researchQuality.mjs`) — five
+  disclosed gates per stock (`stock.researchQuality`): Data completeness,
+  Valuation completeness, Peer completeness (reads relativeValuation.mjs's
+  `peerCompleteness`, §4.1), Forecast confidence (a fixed "not applicable"
+  disclosure until a forward-estimate model exists), Evidence quality (a
+  coarse blend of recommendation-bucket coverage, valuation-model resolution
+  and fundamentals completeness). Confidence remains a first-class, separate-
+  from-score output — `deriveConfidenceInputs()` in `scoringEngine.mjs` now
+  also folds in peer-data availability once relativeValuation resolves (pass
+  2), so thin-peer companies read lower confidence, not just a lower
+  Relative-positioning bucket score.
+- **Forward-looking foundation contracts** (`data/analytics/forwardFramework.mjs`)
+  — schema-only builders for four concepts this app has no data source for:
+  forward estimates (management guidance vs. system estimate vs. actual),
+  management execution/credibility tracking, segment-level economics, and
+  capacity/utilization economics. Each returns `{ available: false, reason,
+  schema }` — the same "Future Integration" convention
+  `earningsAnalytics.mjs`/`macroProvider.mjs` already established — so a
+  future data-source integration has an agreed shape to fill in rather than
+  a redesign. Attached per-stock as `stock.forwardFramework`; nothing here is
+  computed today.
+- **Thesis breakers** (`data/decision/thesisTracking.mjs`'s `thesisBreakers()`)
+  — surfaces `thesisStatus()`'s own 3 hard "Broken" triggers (2+ tier rating
+  downgrade, a fall to Sell, composite risk reaching critical territory) plus
+  2 additional point-in-time conditions backed by already-computed data
+  (promoter holding declining materially, ROCE falling below the modeled
+  cost of capital) as a structured, named list (`condition`/`status`
+  Active-Watch-Clear-Unavailable/`currentReading`) attached alongside the
+  existing `status`/`reasons` at `intelligence.thesis[symbol].breakers` —
+  additive, no change to the blended thesis-status score itself.
+
+The per-company research report (§3.6) surfaces all of the above as new
+sections (Company Quality vs. Stock Attractiveness; Thesis breakers extending
+Thesis tracking; a combined Segment, Capacity & Forward Estimates section)
+without altering any existing section.
+
 ---
 
 ## 5. Data flow
@@ -371,6 +807,14 @@ passes), and every consumer — every dashboard tab, the report page, and
 future consumers (e.g. a mobile client) — must read the already-computed
 result rather than reimplementing the calculation.**
 
+**Phase 6's one exception**: `data/watchlist/sectorIntelligence.mjs` reads
+*every* saved watchlist's own already-built `buildResearch()` output
+(cache-only) to produce a cross-watchlist Sector Intelligence rollup (§3.8)
+— the single deliberate departure from "one watchlist at a time" in this
+app. It performs no new fetch and no new per-stock computation, so it does
+not violate the single-computation-site rule above; it only reads the
+result of that rule applied N times instead of once.
+
 ---
 
 ## 6. Canonical data sources
@@ -391,6 +835,12 @@ labeling — no tab or page maintains its own classification strings.
 `confidence` (High/Medium/Low) is orthogonal to tier — a Calculated figure can
 still be Low confidence (e.g. built on a short history window).
 
+**Evidence hierarchy (A–F)**: `metricMeta()` additionally attaches a
+provenance classification on top of the tier above (never replacing it) —
+see §4.6. Every consumer of the existing `{tier, confidence, label,
+methodology}` shape is unaffected; `evidenceTier`/`evidenceLabel` are purely
+additive fields on the same registry entries.
+
 **Rule for all future work**: every new metric added anywhere in the system
 must get a `metricRegistry.mjs` entry before it ships. A metric with no real
 data source available renders an explicit "N/A"/"not available" — it is never
@@ -406,20 +856,24 @@ Stocks/
 ├── README.md                    — human quick-start
 ├── server.mjs                   — HTTP server + full API route table
 ├── index.html / script.js / styles.css   — main dashboard SPA
-├── report.html / report.js      — standalone printable per-company report page
+├── report.html / report.js      — standalone printable per-company research report page (§3.6)
+├── portfolio-review.html / portfolio-review.js — standalone printable Portfolio Review Pack page (Phase 5, §3.6)
+├── committee-pack.html / committee-pack.js — standalone printable Weekly Investment Committee Pack page (Phase 6, §3.8)
 ├── run.bat / killserver.bat     — Windows start/stop helpers (no npm scripts exist)
 ├── data/
-│   ├── analytics/                — pure calculation modules (§4)
-│   ├── scoring/                  — the unified recommendation engine (§4.2)
-│   ├── reporting/                — report model builder (§3.6)
-│   ├── providers/                — external data source abstraction (§3.3)
+│   ├── analytics/                — pure calculation modules (§4), plus Phase 6's exposureRules.mjs, earningsAnalytics.mjs, eventCalendar.mjs (§3.8); forwardFramework.mjs (§4.6, schema-only forward/management/segment/capacity contracts)
+│   ├── scoring/                  — the unified recommendation engine (§4.2); qualityAttractiveness.mjs, researchQuality.mjs (§4.6)
+│   ├── decision/                  — Portfolio Action Score, alerts, health, rebalancing, thesis tracking (§3.7); Phase 6's marketRegime.mjs, exposureMatrix.mjs (§3.8)
+│   ├── quant/                     — Phase 7 quantitative research domain: config.mjs, factorEngine.mjs (Stage 1), performanceEngine.mjs (Stage 2) (§3.9)
+│   ├── reporting/                — per-company report, Portfolio Review Pack, Weekly Investment Committee Pack model builders (§3.6, §3.8)
+│   ├── providers/                — external data source abstraction (§3.3), including Phase 6's macroProvider.mjs
 │   ├── parse/                    — Screener.in HTML parsing (feeds screenerProvider)
-│   ├── news/                     — company news fetch + classification
-│   ├── metadata/                 — metricRegistry.mjs, the tier registry (§6)
+│   ├── news/                     — company news fetch + classification (+ Phase 6 sentiment/affected-thesis-driver)
+│   ├── metadata/                 — metricRegistry.mjs, the tier registry (§6); evidenceHierarchy.mjs, the A–F provenance layer (§4.6)
 │   ├── universe/                 — static NSE ticker reference data (search seed)
-│   ├── watchlist/                — store, research orchestration, disk cache, symbol search (§3.5)
+│   ├── watchlist/                — store, research orchestration, disk cache, symbol search (§3.5), snapshotCache.mjs (§3.7); Phase 6's macro.mjs and sectorIntelligence.mjs (§3.8, the one cross-watchlist module)
 │   ├── watchlists/                — the actual on-disk watchlist JSON data (user state)
-│   ├── cache/                     — on-disk research cache (companies/, benchmarks/)
+│   ├── cache/                     — on-disk research cache (companies/, benchmarks/, watchlistSnapshots/ — §3.7; macro/ — Phase 6, §3.8)
 │   ├── cache.mjs                  — in-memory TTL cache
 │   └── util.mjs                   — shared low-level helpers (atomic JSON writes, fetch wrapper)
 ├── docs/
@@ -434,6 +888,14 @@ Stocks/
 **Where new things belong**:
 - A new calculation → `data/analytics/` (pure function, no I/O) or
   `data/scoring/` if it's part of the rating composite.
+- A new alert/action/monitoring rule → `data/decision/` (§3.7), reading
+  already-computed `data/analytics`/`data/scoring` output and its own
+  `config.mjs` — never a new analytics calculation of its own.
+- A new quantitative-research capability (factor/benchmark/performance/
+  backtest/portfolio-construction/position-sizing/risk-budget/attribution)
+  → `data/quant/` (§3.9), same pure-composition-over-already-computed-output
+  pattern as `data/decision/`, own `config.mjs` — never a second valuation,
+  technical, risk or recommendation calculation.
 - A new external data source → implement the shape `data/providers/index.mjs`
   expects, register it there; never call an external API directly from
   `server.mjs`, `data/watchlist/research.mjs`, or the frontend.
@@ -472,8 +934,11 @@ content across them.
    `metricRegistry.mjs` entry (§6).
 5. **Module boundaries are stable.** `data/analytics/` stays pure
    (no I/O); `data/watchlist/` owns orchestration and persistence;
-   `data/scoring/` owns rating composition; `server.mjs` stays a thin route
-   table. Do not blur these lines for a one-off feature.
+   `data/scoring/` owns rating composition; `data/decision/` and
+   `data/quant/` (§3.7, §3.9) stay pure composition layers over already-
+   computed `data/analytics`/`data/scoring` output — no I/O, no independent
+   recalculation of a raw metric already computed elsewhere; `server.mjs`
+   stays a thin route table. Do not blur these lines for a one-off feature.
 6. **No document proliferation.** Rationale for a change belongs in
    `docs/governance/roadmap.md`'s completed-work ledger, not a new
    standalone markdown file. Point-in-time audit artifacts go in

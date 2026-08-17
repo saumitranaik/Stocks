@@ -1,6 +1,6 @@
 {
   "symbol": "BEL.NS",
-  "fetchedAt": "2026-08-14T12:23:01.075Z",
+  "fetchedAt": "2026-08-16T18:08:14.293Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 419.7637503051759,
     "fiftyTwoWeekHigh": 468.45001220703125,
     "fiftyTwoWeekLow": 363.8500061035156,
-    "regularMarketVolume": 7385157,
+    "regularMarketVolume": 7388147,
     "rsi14": 58.26746916444736,
     "macd": {
       "macdLine": -0.5,
@@ -24,7 +24,7 @@
       "histogram": 2.51
     },
     "oneYearReturnPct": 6.729019045775813,
-    "avgVolume20": 12795100.55,
+    "avgVolume20": 12795250.05,
     "ohlcv": {
       "open": [
         387.8500061035156,
@@ -1284,19 +1284,19 @@
         6803132,
         13125672,
         13819369,
-        7385157
+        7388147
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.277Z",
+    "asOf": "2026-08-16T18:00:07.953Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 298901,
-      "pe": 48.6,
+      "marketCap": 300286,
+      "pe": 48.9,
       "bookValue": 32.8,
       "dividendYield": 0.61,
       "roce": 36.4,
@@ -3288,7 +3288,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 410.5
+        "close": 410.79998779296875
       },
       {
         "date": "2026-08-14",
@@ -3303,8 +3303,11 @@
       "date": "Fri, 22 May 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Bharat Electronics Limited Stock 12‑Month Price Target Cut to INR 482.87, Implies 13% Upside - TradingView",
@@ -3312,8 +3315,11 @@
       "date": "Mon, 18 May 2026 07:00:00 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Bharat Electronics Stock Volatile Ahead Of Q1 Results; What To Expect In BELs Q1? Check Timing &amp; Dividends - Goodreturns",
@@ -3321,27 +3327,36 @@
       "date": "Mon, 03 Aug 2026 15:46:03 GMT",
       "source": "Goodreturns",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Uncertain",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
-      "title": "Bharat Electronics Limited Publishes Business Responsibility &amp; Sustainability Report for FY 2025-26 - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxQczhOQlR6STU3YmhhdnVtSFZpQlRkWUJHQ1Jod0RTVFdKd0I5bFFHRjNHN2FhbXZFVEVJdzVPbXRfTlpOT1ZLbjVMMjI4OEZRMm9JNlNRVzlINWd6emVrMnAweDFjb2RfWEU0c3M1UTI3ZXNIcHV6T3J0eEJJcTRBLVEwQzEwaDctZWk5N0pZVXM3VW1oZkFZcWFTMmpMTjRrSHE2QkplZjZDSHJTbHRnZDJMWW00QlZ5Tk5hVEo0eWdFQTJVamFIVkhkUm5oaTRPWVFiem80OGtmWWhGelVyTmdZaXBNbUVzdWc?oc=5",
-      "date": "Wed, 05 Aug 2026 18:39:16 GMT",
-      "source": "scanx.trade",
+      "title": "Bharat Electronics Limited Receives Order Worth INR 10,810 Million - marketscreener.com",
+      "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxONGIzOVBqeGRkOEc2bldIeWlHRjhHNThUVlRIb2g1SHlpU05aaTZFTXg3N3c1NFV3R1g5YVJSWHVDV0M5SUJnY3U4WXBSWFczeVZYZ3FzV1FKd3JrWk1WR3RyM2pCODhTa3VHN0tjVmZmQ0x0TkhXVG42THZZUUw3TGZiM250ZEN4VmZPZW5VUWR2Y3VwVm9IRlNURHVaLUhqdXp6TTQ1TFotQXRJb2JfME1WQldJb2ZabzNB?oc=5",
+      "date": "Mon, 22 Jun 2026 07:00:00 GMT",
+      "source": "marketscreener.com",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "HAL, BEL to Bharat Dynamics: Defence stocks dip after escalation in the US-Iran war - livemint.com",
-      "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxQS2JlYWNmcUc4eDlQX25YOHh1ZGtybTFPdHNHZVljSEYxV0JJUDdLTTZMMFdmQmgyazhISkVUSXFtQ1VKRVMwenhIanNyRDVUeTY3QnBneUUzb0hPYTY5VkZnV1lYdS1rYkVqUHljOVZFYS1qNEJ4Z2FsNnlOUTJQWFI0RWc1TTdjTGE1ZFJlS1BpQVdfNUVOYUZfd3NweWg5Wk5UeEhYUXVtQlFlVHlDaXRhUi1NYjNkbWtMSTdDTW5sRjJWQkhqa1RiXzhwZ24xYVIxVkJQMC1kMmxmNHROeUowdDRsQdIB6wFBVV95cUxPOXUybllxY3B0cTk4T3ljd1RXN0tpQUpPT2paeVYzaTlZTDBrRzRpN3hUb0FxLVMwWDZ2TFowZ2R0SEpxNEF2cHU4S2VWbmhMYTBQSlZVVlBWYy1MS3Z3QWtIcFZiNGo4ZVRtQmhSekVRSlA1WHg4dVBCSldPazdGYUV1aDRFV1NIajhvMHdtSFpLcUxlWUNyaFZPTUlNQmViMG5TNHJGOUFFNUxOWllRc000WG9oTFZSOGgwdVZpSFZybGUzd2dNVFVsVG1yLU8wMENOajRfalVLUnNENjNoU1pkSk1kZFpiSUJJ?oc=5",
-      "date": "Mon, 20 Jul 2026 07:00:00 GMT",
-      "source": "livemint.com",
+      "title": "Why is the Bharat Electronics Limited (BEL) Share Rising? - Univest",
+      "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBJVUxzY09ZMUhZUFZiV2ZsRVdWV2YxMUJIMEhuUDB6am9ZOVBEMW9FX0h3c05KYmZOaTFiWk5kQXBOM19mSkNhc1RzVHJhMlhrM3BZcWczd0NENlBDV0VBWHZGWTgyU0luTFlZb0NmS0p2ZFRieUN4bUw1RThUNjQ?oc=5",
+      "date": "Thu, 05 Mar 2026 08:00:00 GMT",
+      "source": "Univest",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:01.075Z"
+  "newsFetchedAt": "2026-08-16T18:08:14.293Z"
 }

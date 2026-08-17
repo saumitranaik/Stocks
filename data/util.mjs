@@ -16,6 +16,19 @@ export const writeJsonAtomic = async (file, value) => {
 };
 export const number = (value, digits = 2) => Number.isFinite(value) ? Number(value.toFixed(digits)) : null;
 export const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+// Presentation-only rounding, keyed to a real confidence-band read (High/
+// Medium/Low), so a heuristic figure doesn't display with the same apparent
+// precision as a sourced/audited one. Never applied inside a calculation
+// chain -- callers pass the already-fully-computed value; this only changes
+// how many digits are shown, never how the value was derived. High keeps
+// today's 2-decimal behavior unchanged (no regression for the common case).
+export const precisionForConfidence = (value, confidenceBand) => {
+  if (!Number.isFinite(value)) return null;
+  if (confidenceBand === 'Medium') return Math.round(value);
+  if (confidenceBand === 'Low') return Math.round(value / 5) * 5;
+  return number(value, 2);
+};
 export const average = (values) => {
   const valid = values.filter(Number.isFinite);
   return valid.length ? valid.reduce((sum, value) => sum + value, 0) / valid.length : null;

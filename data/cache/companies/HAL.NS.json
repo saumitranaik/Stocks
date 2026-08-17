@@ -1,6 +1,6 @@
 {
   "symbol": "HAL.NS",
-  "fetchedAt": "2026-08-14T12:23:00.815Z",
+  "fetchedAt": "2026-08-16T18:08:14.108Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 4364.082496337891,
     "fiftyTwoWeekHigh": 5029.89990234375,
     "fiftyTwoWeekLow": 3487.199951171875,
-    "regularMarketVolume": 1536996,
+    "regularMarketVolume": 1537351,
     "rsi14": 74.68707341874426,
     "macd": {
       "macdLine": 137.48,
@@ -24,7 +24,7 @@
       "histogram": 28.87
     },
     "oneYearReturnPct": 10.42347686128347,
-    "avgVolume20": 1056149.25,
+    "avgVolume20": 1056167,
     "ohlcv": {
       "open": [
         4537,
@@ -1284,18 +1284,18 @@
         447081,
         2901166,
         1595991,
-        1536996
+        1537351
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.272Z",
+    "asOf": "2026-08-16T18:00:07.966Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 336656,
+      "marketCap": 336387,
       "pe": 36.1,
       "bookValue": 614,
       "dividendYield": 0.89,
@@ -3308,7 +3308,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 4945
+        "close": 5029.89990234375
       },
       {
         "date": "2026-08-14",
@@ -3323,8 +3323,11 @@
       "date": "Mon, 10 Aug 2026 00:31:40 GMT",
       "source": "simplywall.st",
       "impact": "Medium",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "Hindustan Aeronautics Limited (HAL) Share Price Forecast: 7-Year Backlog, Tejas Risk, Aug 7 Earnings - TradingKey",
@@ -3332,26 +3335,35 @@
       "date": "Tue, 21 Jul 2026 07:00:00 GMT",
       "source": "TradingKey",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
-    },
-    {
-      "title": "Hindustan Aeronautics shares gain 11% in a month; all eyes on Q1 result amid easing engine supply issues - Upstox",
-      "url": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxQZnJ6NzhIX0lVV1J6MEpHbVB2Z0tVZGJzX29zYTM0V2VRd2tQVlVXQ3h4SlhSN19GVWtIMmI2OEpjQUxsVmtmbDFtTXFBMnYzUVRPMlZEd0VTT3NPS3ZHaTZJaXFnYVlqRE9PT25hbHVGQzNBY0dIMzd2REtsNHUyM05WbGh6amZoU1puS01xcWtuMXpLeFBRRFEyb05UbnFMVDJuTVVtV1RjSFlYRFBDdFVjdDV3QUNXaDJBa3BRMFRBZDMwelB5Q1ZEb1dEVkFwckIwZjdtSGJUZFN1WmZZeDNfMXpwRWRxSmZIUkxlTmc5Q0E?oc=5",
-      "date": "Fri, 07 Aug 2026 08:10:09 GMT",
-      "source": "Upstox",
-      "impact": "High",
-      "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Hindustan Aeronautics shares jump over 5% on Goldman Sachs upgrade; Check key factors behind it - CNBC TV18",
       "url": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxPRG1DTGVkZ1Zva1oxazJyUWUzU2lmcG5ZckNiejM2R002X3I5SXFlMmdKRXVjMUtnWU9aSzVEY0d2YUthQXBsSk1kcHY4azFQQlZQbkptN1hRSmxTYVE3YmY4YTEzUVJpdmxoN0p5eTR6MzRua2dUbkw2X1JjYW5UY0Jfal8tRjVla2N1SmFGMUtTMC11aW9ocFZVQmt3aEpQVDBoVlAzck5ZWEhjMWJXS0tUR0hXMG9TdVZ2Z1hTT21qZVAtcjF5VTRDRnJ6QWRLRUNURC0yVlZKT1FtRVHSAeMBQVVfeXFMT0ZHWGhYZUN1bDlPS3RRaWdoV1R4UllvaENOWERpaVgxUzJweDJBT2hYTnh4R1gzcElUYmd4Zzc0S3RSMjZaSGVpd09Td2FIMGljUDVqZHZXWl9JT0RHVjlwMi14M2g0bDNUSmFoaUlsM2sxR3RaaHNId2RHa0E4VHhCZXM2MWlOUHJVQmlUdHBrNUhpNlkwZVBiUk1Xckd5cXBQY0ZSUDIzZ0wxZExiM1FvbVVTemN3aS1xT1UtTG45MzkyMlI0Y1dDTFBUWmdoYlNpelNHb2hHekVyeGJvNFNERjg?oc=5",
-      "date": "Thu, 06 Aug 2026 04:26:28 GMT",
+      "date": "Thu, 06 Aug 2026 07:00:00 GMT",
       "source": "CNBC TV18",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Hindustan Aeronautics shares gain 11% in a month; all eyes on Q1 result amid easing engine supply issues - Upstox",
+      "url": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxQZnJ6NzhIX0lVV1J6MEpHbVB2Z0tVZGJzX29zYTM0V2VRd2tQVlVXQ3h4SlhSN19GVWtIMmI2OEpjQUxsVmtmbDFtTXFBMnYzUVRPMlZEd0VTT3NPS3ZHaTZJaXFnYVlqRE9PT25hbHVGQzNBY0dIMzd2REtsNHUyM05WbGh6amZoU1puS01xcWtuMXpLeFBRRFEyb05UbnFMVDJuTVVtV1RjSFlYRFBDdFVjdDV3QUNXaDJBa3BRMFRBZDMwelB5Q1ZEb1dEVkFwckIwZjdtSGJUZFN1WmZZeDNfMXpwRWRxSmZIUkxlTmc5Q0E?oc=5",
+      "date": "Fri, 07 Aug 2026 08:25:14 GMT",
+      "source": "Upstox",
+      "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
+      "catalystType": "Earnings",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Hindustan Aeronautics Limited Stock 12‑Month Price Target Raised to INR 5138.56, Implies 17% Upside - TradingView",
@@ -3359,9 +3371,12 @@
       "date": "Fri, 15 May 2026 07:00:00 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:00.815Z"
+  "newsFetchedAt": "2026-08-16T18:08:14.108Z"
 }

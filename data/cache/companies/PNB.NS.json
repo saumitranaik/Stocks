@@ -1,6 +1,6 @@
 {
   "symbol": "PNB.NS",
-  "fetchedAt": "2026-08-14T12:16:38.049Z",
+  "fetchedAt": "2026-08-16T13:39:49.338Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": 0.46
     },
     "oneYearReturnPct": 11.027475870639694,
-    "avgVolume20": 20038300.8,
+    "avgVolume20": 20038951.5,
     "ohlcv": {
       "open": [
         106.6500015258789,
@@ -1284,21 +1284,21 @@
         14258368,
         51235935,
         10028318,
-        11235998
+        11249012
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:37.366Z",
+    "asOf": "2026-08-16T13:39:48.752Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 134459,
-      "pe": 6.08,
+      "marketCap": 135617,
+      "pe": 6.14,
       "bookValue": 136,
-      "dividendYield": 2.55,
+      "dividendYield": 2.54,
       "roce": 6.13,
       "roe": 13,
       "faceValue": 2
@@ -3096,7 +3096,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 117.58999633789062
+        "close": 118
       },
       {
         "date": "2026-08-14",
@@ -3106,40 +3106,28 @@
   },
   "news": [
     {
-      "title": "150% Dividend: PSU Bank Rewards Investors With Bumper Payout, Stock Up 114% In 3 Yrs | How To Get Eligible? - goodreturns.in",
+      "title": "Punjab National Bank vs Canara Bank: Share Price, PE and ROE Compared - Univest",
+      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1iY3VNNl9idktJQ0NkSnJxRE1wSjVZS3dISkxOSVk4ekZoeDBOWGpQU2s1cmNUUkczcHU3c1VQZFBGTFdHLUZET1hUeHh1NUx3aldxOHppcFRxaW5ZOFV2UlhsQTRxcWUzX0JoNQ?oc=5",
+      "date": "Thu, 13 Aug 2026 06:23:00 GMT",
+      "source": "Univest",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "150% Dividend: PSU Bank Rewards Investors With Bumper Payout, Stock Up 114% In 3 Yrs | How To Get Eligible? - Goodreturns",
       "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNV3RxYkNobUxydEhJeDlNM1YyQ1VQVzBSV0hFVnhBUExTZXd0bDMxc0p0TlotVjk0NVE4UkRKaFdzNWlmcVBrVlJCMmFOOTJOel9XVU96Z3VsRV9WSXk2bGgyMXIwM2N1NWkxRXB3QlpXZjNsZGFSLW9rUHppclFOTFRMbHhTckh1Z2pxTkJTaEVRc0hCTTVGZnFsQ3RndEFoZFN2NVJRVWZnb0o2NWxEVDAwLXdWbXNrQU9fNnFINVRNa2VhM0ZSMmVQeDNiNDlJOVRjLUJR?oc=5",
       "date": "Wed, 12 Aug 2026 14:47:07 GMT",
-      "source": "goodreturns.in",
+      "source": "Goodreturns",
       "impact": "Medium",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
-    },
-    {
-      "title": "PUNJAB NATIONAL BANK (PNB6.BO) Stock Price, News, Quote &amp; History - ca.finance.yahoo.com",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5IdEE4ejE0VW9GaTdBbzEyazlmNzRuOHUtWUdoejkyWEJlcnBpVUtfVUItWkZTaDNNdGs1ckFZSUdhT0JjR1N0anhoanpzb1Jya3B4MGJ1V0sxZXRMSmgwbUNZcnRjczVqbDBIc0R3?oc=5",
-      "date": "Thu, 13 Aug 2026 14:55:27 GMT",
-      "source": "ca.finance.yahoo.com",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Nifty PSU Bank index surges 2% in weak market; PNB, UBI gain up to 5% - Business Standard",
-      "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOWnhrVE9pRXJjOVdqbzd2M0tFeHhjWmNGcmY3d0hWTXNVSXhqLXFPWFdmRUJRQkZXRDd0RFZhLW1ZWW9OeHA1aWxiX29rRG1FYUFQeE5MRmc1c1F5RXJvTmI0QXh5cUpGejhqaFdEeFRPdmdpWVYtR3c4ZUMxZW5SNXdjZDJUdFV5b1AxY1dHZmV2VzZRV0NoOXBTTnJQT2NIOVh1dmZKRGtBU1VsQ3FOaWUtM1FGZlNsTGlCdnVsN05SU0gxeFVHazNzSDjSAdIBQVVfeXFMT1Jlc2J6dmxlOURrN1JVVGxJdHZ1dVJwVS1UOF9PQXdPdnBDcDN2OTh6ci10b2dCd09lUTZTZ2J0enV0YVR3TC1NS05rSzZOSWhDcmNRQmpfdDRTTFJqVmVJU2RjcjlaNjZzMDVaeW4ydGQ1dUdXQ0MzSDEtb0ZCalVqeWJ0RWxMOFV2OTM3WmlOU1huSVJjRTdWQW5CNUI0OFVQdVVEZnQ3dmRrSnJBVlJGUmxILXoxeF9JT1luNlpvLXlia1owdlBtYVlZaVhGMk93?oc=5",
-      "date": "Wed, 12 Aug 2026 06:44:47 GMT",
-      "source": "Business Standard",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Punjab National Bank to host investor meet at Motilal Oswal conference - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPdFUwMHFkYlc5UkFtNmZQbHBRVjl1ck5OMDFCYUN1U3N1MHRMUUF2d0YxR3RUSThQVEF1TGlwcFFWWmhieUJPYm9FcHNoanpKVWwyNzZzZmJjUDkydWFtM19fTWtvR0tpYUJYdDZYQ0cyaE5PYk0tTS1malFHVTBzR004UTA0NW9NVkhob0JiRHpnUzZnLTd6el9ZZDZEdk9sX2tIMVJCWVZjeXFyX25UR21Yblc5TmFyc1JMYTZRNE5VbnczeGc?oc=5",
-      "date": "Tue, 11 Aug 2026 16:50:43 GMT",
-      "source": "scanx.trade",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "Punjab National Bank shares in focus as board approves raising $1.5 billion in foreign currency funds - Upstox",
@@ -3147,9 +3135,36 @@
       "date": "Wed, 29 Jul 2026 07:00:00 GMT",
       "source": "Upstox",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "PUNJAB NATIONAL BANK (PNB6.BO) Stock Price, News, Quote &amp; History - Yahoo! Finance Canada",
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5IdEE4ejE0VW9GaTdBbzEyazlmNzRuOHUtWUdoejkyWEJlcnBpVUtfVUItWkZTaDNNdGs1ckFZSUdhT0JjR1N0anhoanpzb1Jya3B4MGJ1V0sxZXRMSmgwbUNZcnRjczVqbDBIc0R3?oc=5",
+      "date": "Thu, 13 Aug 2026 14:55:27 GMT",
+      "source": "Yahoo! Finance Canada",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Punjab National Bank - Positive Breakout: These 9 stocks cross above their 200 DMAs - The Economic Times",
+      "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxQLWk0WHJRcDlLcDhhcTBiSEtXVkxzbDlNR2JkQUpaZHZCMGNBbUc0QXdLWGdFY1ZZOVBpOUJYeC1PN2RPVkwxd0o5WlQ5a0ZNV1o2RmVHRUxmWkRfQmYwTUVVUjhaTHp5ZDRYWHRwX1JxZVE5TEd1UHF3ZjM4OTQwNHhrT3d5YkFOaWFBN2xZQ2N2bWJvUHV5LVAwcjE0SkpuYVI3SEQ0SW5FWXphT05iZzdqLVZPQUNFVFlUMUdybDRRRldvTGVDSFllbmNtbkk3RVlIR0NEdmdWVElaXzJKdXRCTnIyTm8?oc=5",
+      "date": "Thu, 13 Aug 2026 02:44:34 GMT",
+      "source": "The Economic Times",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:38.049Z"
+  "newsFetchedAt": "2026-08-16T13:39:49.338Z"
 }

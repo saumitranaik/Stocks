@@ -9,7 +9,8 @@ import { buildStockMetrics } from '../analytics/metricsTable.mjs';
 import { fairValueModel } from '../analytics/valuation.mjs';
 import {
   sectorAllocation, watchlistAverages, resolveWeights, portfolioDashboard, weightedSectorAllocation, positionConcentration, portfolioQuality,
-  portfolioBeta, portfolioRiskAdjustedReturn, riskAdjustedReturnScore, sectorContribution, positionRiskContribution, attributionBreakdown, factorExposure
+  portfolioBeta, portfolioRiskAdjustedReturn, riskAdjustedReturnScore, sectorContribution, positionRiskContribution, attributionBreakdown, factorExposure,
+  portfolioVolatilityPct
 } from '../analytics/portfolio.mjs';
 import { benchmarkSymbolFor, relativeStrengthPct, supportResistance } from '../analytics/technicalLevels.mjs';
 import { beta as computeBeta, dcfValuation, dcfAssumptions } from '../analytics/dcf.mjs';
@@ -31,7 +32,16 @@ import { fetchQuote, fetchPriceHistory, trendLabel, momentumLabel, volumeTrendLa
 import { getFundamentalsProvider } from '../providers/index.mjs';
 import { fetchCompanyNews } from '../news/companyNews.mjs';
 import { companyCache, benchmarkCache } from './diskCache.mjs';
-import { updateCompaniesMetadata } from './store.mjs';
+import { snapshotCache } from './snapshotCache.mjs';
+import { updateCompaniesMetadata, pruneAlertAcknowledgements } from './store.mjs';
+import { buildPortfolioIntelligence } from '../decision/index.mjs';
+import { portfolioExposureMatrix } from '../decision/exposureMatrix.mjs';
+import { earningsIntelligence } from '../analytics/earningsAnalytics.mjs';
+import { buildEventCalendar } from '../analytics/eventCalendar.mjs';
+import { buildQuantResearch } from '../quant/factorEngine.mjs';
+import { stockPerformance, portfolioPerformance, benchmarkPerformanceProfile } from '../quant/performanceEngine.mjs';
+import { buildForwardFramework } from '../analytics/forwardFramework.mjs';
+import { researchQuality } from '../scoring/researchQuality.mjs';
 
 // Bundle staleness for the persistent per-symbol cache. Deliberately
 // coarser than the in-memory quote/fundamentals caches in data/cache.mjs
@@ -59,8 +69,10 @@ const DATA_LIMITATIONS = [
   'Factor exposure (Value/Growth/Quality/Momentum/Size) is an in-house within-watchlist percentile tilt over already-computed metrics -- not a commercial risk-factor model (e.g. Barra/Axioma) and not benchmarked against a market-wide factor universe.',
   'Rolling correlation, correlation stability and position-level marginal risk contribution share the same ~1-2 year weekly-price-history coverage constraint as the correlation matrix above -- limited to symbols with at least 10-20 overlapping weekly price points.',
   'Relative-valuation rankings/percentiles/dispersion (sector-adjusted rank, multi-factor peer rank, sector-normalized score, watchlist percentile, relative attractiveness) are computed from this watchlist\'s own companies only, same root constraint as the existing sector median/leader figures -- there is no market-wide peer universe in this app.',
-  'Upcoming Earnings & Events has no configured data source in this app and is shown as unavailable rather than an invented date.',
-  'News impact levels and catalyst timelines are keyword-based heuristics over the headline text, not editorial ratings or confirmed dates from the source.'
+  'Earnings Intelligence (Phase 6) computes real quarter-over-quarter and year-over-year revenue/net-profit/operating-margin deltas from Screener\'s own scraped quarterly results, framed as deviation vs. this company\'s own trailing 4-quarter average -- not a beat/miss vs. analyst consensus, since no consensus-estimate data source exists. Next earnings date, days remaining, expected impact, historical earnings reaction, guidance changes, management commentary and estimate-revision signals have no data source in this app and render an explicit "Future Integration" status rather than an invented date or estimate. The Event Calendar is limited to real, dated company news items for the same reason -- dividend ex-dates, buybacks and regulatory/policy events have no dated source (Screener exposes only a trailing annual dividend payout %).',
+  'News impact levels and catalyst timelines are keyword-based heuristics over the headline text, not editorial ratings or confirmed dates from the source.',
+  'Benchmark & Performance (Phase 7 Stage 2) reports price returns only -- this app has no dividend/total-return data source, so period returns, CAGR and the Sharpe-like/Sortino-like ratios never include reinvested dividends and are not total-shareholder-return figures. Both risk-adjusted ratios are disclosed proxies (trailing-1y return over annualized volatility/downside deviation), not conventional-methodology Sharpe/Sortino ratios. A period/CAGR renders "insufficient history" rather than an extrapolated figure when the weekly price series does not reach back far enough within its tolerance window; a market with no defensible single benchmark (e.g. Global) renders "N/A -- benchmark unavailable" rather than a substituted index. Portfolio-level max drawdown is a diversification-blind weighted average of each holding\'s own drawdown, not a synthetic portfolio-index drawdown.',
+  'The Quantitative Factor Score (Phase 7) is a distinct, more granular capability from the existing Factor Exposure tilt (Value/Growth/Quality/Momentum/Size) -- Factor Exposure is a portfolio-level, weight-aggregated within-watchlist percentile with no per-metric disclosure; the Factor Score is a per-company profile disclosing every raw sub-metric, its normalized percentile, direction, data status and confidence, sector-relative first (falling back to watchlist-relative, then to explicit "insufficient data"). Neither replaces the other, and neither replaces the Portfolio Action Score or the unified recommendation engine, which remain this app\'s primary decision-layer signals -- see data/quant/factorEngine.mjs.'
 ];
 
 async function loadCompanyBundle(company, networkPass, forceSymbols) {
@@ -117,8 +129,9 @@ const emptyStock = (company) => ({
   currency: null, price: null, change: null, pe: null, marketCap: null, marketCapUnit: null,
   metrics: {}, fundamentals: null, fundamentalsAnalytics: null, recommendation: null, signal: 'N/A', score: 0,
   valuation: {}, dcf: { available: false, reason: 'No data fetched yet' }, financialValuation: null, relativeValuation: null,
-  technicalScorecard: null, institutionalRisk: null,
+  technicalScorecard: null, institutionalRisk: null, quantFactors: null, performance: null,
   targetWeightPct: company.targetWeightPct ?? null, effectiveWeightPct: null,
+  forwardFramework: buildForwardFramework(), researchQuality: null,
   news: [], newsFetchedAt: null, fetchedAt: null, unresolved: true, stale: true
 });
 
@@ -137,6 +150,14 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
   const markets = [...new Set(companies.map(c => c.market))];
   const benchmarkEntries = await Promise.all(markets.map(async (market) => [market, await loadBenchmarkQuote(market, networkPass)]));
   const benchmarkByMarket = Object.fromEntries(benchmarkEntries);
+  // -- Phase 7 Stage 2 (data/quant/performanceEngine.mjs): the benchmark-side
+  // half of the Benchmark & Performance Engine (period returns/CAGR/
+  // volatility/drawdown) is computed exactly ONCE per market here and reused
+  // across every stock in that market below -- never recomputed per-company
+  // (performance-discipline requirement; a per-stock recompute of an
+  // identical NIFTY/S&P calculation was measured to regress cache-only
+  // response time and was fixed before this stage shipped, see roadmap.md). --
+  const benchmarkPerfByMarket = Object.fromEntries(markets.map(market => [market, benchmarkPerformanceProfile(market, benchmarkByMarket[market])]));
 
   // Backfill metadata a fetch just resolved (name/sector/industry/exchange)
   // that the watchlist entry didn't have yet -- applied in place on
@@ -182,7 +203,7 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
     const bs = fundamentals.annual?.balanceSheet, pl = fundamentals.annual?.profitLoss, cf = fundamentals.annual?.cashFlow;
     const pb = snapshot.bookValue > 0 && Number.isFinite(quote.regularMarketPrice) ? number(quote.regularMarketPrice / snapshot.bookValue) : null;
     const metrics = buildStockMetrics(quote, fundamentals, null);
-    const valuation = fairValueModel({ quote, fundamentals, industryPe, industryPb, epsCagr5: metrics.epsCagr5y });
+    const valuation = fairValueModel({ quote, fundamentals, industryPe, industryPb, epsCagr5: metrics.epsCagr5y, industryPeSampleSize: rawPe.length, industryPbSampleSize: rawPb.length });
     const relStrength = relativeStrengthPct(quote.oneYearReturnPct, benchmarkByMarket[company.market]?.quote?.oneYearReturnPct);
     const levels = supportResistance(quote);
     const trend = trendLabel(quote.regularMarketPrice, quote.fiftyDayAverage, quote.twoHundredDayAverage);
@@ -223,6 +244,18 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
     // already uses (dcfAssumptions) -- see portfolio.mjs's doc comment. --
     const riskFreeRatePctForMarket = dcfAssumptions(company.market)?.riskFreeRatePct;
     const riskAdjReturn = riskAdjustedReturnScore(quote.oneYearReturnPct, volatilityPct, riskFreeRatePctForMarket);
+
+    // -- Phase 7 Stage 2 Benchmark & Performance Engine
+    // (data/quant/performanceEngine.mjs): pure composition over the beta/
+    // volatility/max-drawdown/proxy-Sharpe/benchmark-bundle values already
+    // computed above -- no new fetch, no recomputation of any of them. Adds
+    // multi-period return/CAGR measurement, drawdown recovery detail and a
+    // proxy Sortino ratio, all benchmark-relative using the same per-market
+    // benchmark bundle (benchmarkByMarket) already loaded once above. --
+    const performance = stockPerformance({
+      stockPoints: bundle.priceHistory?.points, benchmarkProfile: benchmarkPerfByMarket[company.market],
+      oneYearReturnPct: quote.oneYearReturnPct, betaValue, volatilityPct, maxDrawdownPct, sharpeLike: riskAdjReturn, riskFreeRatePct: riskFreeRatePctForMarket
+    });
 
     // -- Technical scorecard: ADX/ATR/OBV/A-D/volume profile/breakout all
     // reuse the daily OHLCV fetchQuote() already pulled in one call (see
@@ -300,7 +333,7 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
       industryPe, industryPb, recommendation, signal: recommendation.rating,
       score: recommendation.compositeScore ?? recommendation.technicalScore ?? 0,
       valuation, earningsYield, fcfYield: metrics.fcfYield, sectorPremiumDiscountPe,
-      beta: betaValue, volatilityPct, maxDrawdownPct, riskAdjustedReturnScore: riskAdjReturn,
+      beta: betaValue, volatilityPct, maxDrawdownPct, riskAdjustedReturnScore: riskAdjReturn, performance,
       peHistoricalPercentile: peHistPercentile.percentile, peHistory: peHistPercentile.history,
       pbHistoricalPercentile: pbHistPercentile.percentile, pbHistory: pbHistPercentile.history,
       dcf, financialValuation,
@@ -323,6 +356,15 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
         earningsQuality: earningsQuality(fundamentals.annual?.profitLoss, bs, fundamentals.annual?.cashFlow)
       },
       news: bundle.news || [], newsFetchedAt: bundle.newsFetchedAt || null,
+      // -- Phase 6 Earnings Intelligence (data/analytics/earningsAnalytics.mjs):
+      // real QoQ/YoY deltas over the already-scraped quarterly P&L series,
+      // plus an explicit Future-Integration status for every calendar-
+      // dependent field this app has no data source for. --
+      earningsIntelligence: earningsIntelligence(fundamentals),
+      // -- Foundation upgrade: forward-looking framework contracts (§6-§9) --
+      // schema-only, no real data source exists for any of these four
+      // concepts yet (see data/analytics/forwardFramework.mjs). --
+      forwardFramework: buildForwardFramework(),
       fetchedAt: bundle.fetchedAt, stale
     };
   });
@@ -344,11 +386,30 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
     // (10% weight) now that sector/watchlist peer comparison has resolved,
     // and recompose the tier/confidence/consistency read -- this is the
     // recommendation every tab renders (see scoringEngine.mjs). --
-    stock.recommendation = finalizeRecommendation({ recommendation: stock.recommendation, relativeValuationScore: rv?.relativeValuationScore ?? null, dcf: stock.dcf, financialValuation: stock.financialValuation, institutionalRisk: stock.institutionalRisk });
+    stock.recommendation = finalizeRecommendation({
+      recommendation: stock.recommendation, relativeValuationScore: rv?.relativeValuationScore ?? null,
+      dcf: stock.dcf, financialValuation: stock.financialValuation, institutionalRisk: stock.institutionalRisk,
+      technicalRegime: stock.technicalScorecard?.regime ?? null, peerCompleteness: rv?.peerCompleteness ?? null
+    });
     stock.signal = stock.recommendation.rating;
     stock.score = stock.recommendation.compositeScore ?? stock.recommendation.technicalScore ?? 0;
     if (stock.valuation) stock.valuation.convictionLevel = stock.recommendation.confidence;
+    // -- Foundation upgrade: Research Quality Gates (§13 + §18) -- runs here,
+    // not in the per-stock pass above, because it reads peerCompleteness off
+    // relativeValuation, which only resolves in this second pass. --
+    stock.researchQuality = researchQuality(stock);
   }
+
+  // -- Phase 7 Stage 1 quantitative factor engine (data/quant/factorEngine.mjs):
+  // pure normalization/aggregation over the per-stock fields already
+  // finalized above -- no new fetch, no duplicate of any existing analytics
+  // calculation (see system.md §3.9). Runs after the recommendation/relative-
+  // valuation second pass so technical/risk/relative-strength inputs are
+  // final, same "needs the full stocks array" shape as relativeValuation()
+  // above. Attached per-stock as `stock.quantFactors`, watchlist-level
+  // summary attached to the returned payload as `quant`.
+  const quant = buildQuantResearch(stocks);
+  for (const stock of stocks) stock.quantFactors = quant.bySymbol.get(stock.symbol) || null;
 
   const averages = watchlistAverages(stocks);
   const allocation = sectorAllocation(stocks);
@@ -381,6 +442,9 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
   // already-resolved illustrative weights and already-computed per-stock
   // fields above, no new fetch. --
   const volatilityBySymbol = new Map(stocks.map(stock => [stock.symbol, stock.volatilityPct]));
+  const weightBySymbolForVol = new Map(stocks.map((s, i) => [s.symbol, weights[i]]));
+  const portfolioBetaValue = portfolioBeta(stocks, weights);
+  const portfolioRiskAdjReturn = portfolioRiskAdjustedReturn(stocks, weights);
   const portfolio = {
     weights: Object.fromEntries(stocks.map((s, i) => [s.symbol, weights[i]])),
     cashTargetPct: watchlist.cashTargetPct ?? 0,
@@ -388,12 +452,28 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
     diversificationScore: [weightedSectors.diversificationScore, positions.diversificationScore].filter(Number.isFinite).length
       ? Math.round(average([weightedSectors.diversificationScore, positions.diversificationScore].filter(Number.isFinite))) : null,
     quality, correlation, rollingCorrelation: rolling, scenarios,
-    beta: portfolioBeta(stocks, weights), riskAdjustedReturn: portfolioRiskAdjustedReturn(stocks, weights),
+    beta: portfolioBetaValue, riskAdjustedReturn: portfolioRiskAdjReturn,
     sectorContribution: sectorContribution(stocks, weights),
     positionRiskContribution: positionRiskContribution(stocks, weights, correlation, volatilityBySymbol),
     qualityAttribution: attributionBreakdown(stocks, weights, s => s.recommendation?.compositeScore),
     valuationAttribution: attributionBreakdown(stocks, weights, s => s.recommendation?.components?.valuation?.score),
-    factorExposure: factorExposure(stocks, weights)
+    factorExposure: factorExposure(stocks, weights),
+    // -- Phase 6 Portfolio Exposure Matrix (data/decision/exposureMatrix.mjs):
+    // pure composition over each stock's already-known sector plus disclosed
+    // static sensitivity lookup tables -- no new fetch, no per-stock
+    // recomputation. --
+    exposureMatrix: portfolioExposureMatrix(stocks),
+    // -- Phase 7 Stage 2 Benchmark & Performance Engine
+    // (data/quant/performanceEngine.mjs): weight-aggregates the per-stock
+    // `performance` objects above using the same illustrative weight vector
+    // every other portfolio aggregate here uses; volatility/beta reuse the
+    // already-computed real portfolio-level figures (portfolioVolatilityPct,
+    // portfolioBetaValue) rather than a correlation-blind approximation. --
+    performance: portfolioPerformance(
+      stocks, weights, portfolioBetaValue,
+      portfolioVolatilityPct(correlation?.symbols || [], weightBySymbolForVol, volatilityBySymbol, correlation),
+      portfolioRiskAdjReturn
+    )
   };
 
   // -- Dashboard executive summary: 4 status lines rolled up from fields
@@ -412,11 +492,39 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
     opportunityStatus: opportunityCount > 0 ? `${opportunityCount} name${opportunityCount === 1 ? '' : 's'} rated Buy/Strong Buy with positive upside` : 'No names currently rated Buy/Strong Buy with positive upside'
   };
 
+  // -- Phase 4 decision layer: Portfolio Action Score, change detection,
+  // alerts, portfolio health and rebalancing -- all pure composition over
+  // the `stocks`/`portfolio` fields already computed above
+  // (data/decision/index.mjs), plus one run-over-run snapshot read/write
+  // (data/watchlist/snapshotCache.mjs) so "since last refresh" means what it
+  // says. Stage 3 perf fix: buildPortfolioIntelligence returns `nextSnapshot
+  // = null` whenever no company genuinely advanced this request (the
+  // overwhelming majority of requests -- cache-only reads), so the disk
+  // write below is skipped entirely instead of rewriting an identical file
+  // on every request; when it does write, it's fire-and-forget (already
+  // best-effort/error-swallowed, so nothing in the response depends on it
+  // completing before returning).
+  const previousSnapshot = await snapshotCache.read(watchlist.id);
+  const intelligencePayload = { watchlistId: watchlist.id, stocks, portfolio };
+  const { intelligence, nextSnapshot, reactivatedAlertIds } = buildPortfolioIntelligence(intelligencePayload, previousSnapshot, watchlist.acknowledgedAlertIds || []);
+  if (nextSnapshot) snapshotCache.write(watchlist.id, nextSnapshot).catch(() => { /* best-effort persistence */ });
+  if (reactivatedAlertIds.length) { try { await pruneAlertAcknowledgements(watchlist.id, reactivatedAlertIds); } catch { /* best-effort persistence */ } }
+
   return {
     watchlistId: watchlist.id, watchlistName: watchlist.name, generatedAt: new Date().toISOString(),
     recommendation: recommendationLabel, score: avgScore, trend, stocks,
     averages, sectorAllocation: allocation, industryPe, industryPb, valuationDispersion,
-    portfolio, executiveSummary, metricMeta: metricMeta(),
+    portfolio, executiveSummary, intelligence, metricMeta: metricMeta(),
+    // -- Phase 7 Stage 1 quantitative research domain (data/quant/):
+    // watchlist-level roll-up of the per-stock `quantFactors` computed above
+    // -- factor leadership/weakness, per-category averages, and coverage.
+    // Full per-stock detail lives on each stock's own `quantFactors`. --
+    quant: { ...quant.summary, methodology: quant.methodology },
+    // -- Phase 6 Portfolio Event Calendar (data/analytics/eventCalendar.mjs):
+    // pure composition over every stock's already-fetched news items -- no
+    // new fetch, no fabricated dates for the event types this app can't
+    // source (see DATA_LIMITATIONS below). --
+    eventCalendar: buildEventCalendar(stocks),
     dataLimitations: DATA_LIMITATIONS,
     summary: `${watchlist.name} tracks ${stocks.length} compan${stocks.length === 1 ? 'y' : 'ies'} across ${sectorCount} sector${sectorCount === 1 ? '' : 's'}. For India, 10-year financials, ownership history and ratios are enriched from Screener.in; prices and trend inputs come from Yahoo Finance's public chart feed. Treat the output as research support -- not investment advice -- and validate every decision against company filings.`
   };

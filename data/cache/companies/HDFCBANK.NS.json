@@ -1,6 +1,6 @@
 {
   "symbol": "HDFCBANK.NS",
-  "fetchedAt": "2026-08-14T12:16:33.625Z",
+  "fetchedAt": "2026-08-16T13:39:49.404Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": -0.91
     },
     "oneYearReturnPct": -26.97503802780574,
-    "avgVolume20": 30816760.65,
+    "avgVolume20": 30817500.85,
     "ohlcv": {
       "open": [
         989,
@@ -1284,18 +1284,18 @@
         29154365,
         26993177,
         22129893,
-        20349327
+        20364131
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:32.955Z",
+    "asOf": "2026-08-16T13:39:48.654Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 1117719,
+      "marketCap": 1120263,
       "pe": 14.2,
       "bookValue": 390,
       "dividendYield": 1.79,
@@ -3096,7 +3096,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 725
+        "close": 727
       },
       {
         "date": "2026-08-14",
@@ -3106,13 +3106,28 @@
   },
   "news": [
     {
-      "title": "HDFC Bank hits 52-week low as stock slumps over 27% in 2026, ₹4 lakh crore market cap wiped out - Upstox",
-      "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNY1lEcFUtUGN4NXBEamJtR3VQRXhxRmd4ZUp1MHJJa2h1djc2SnBPT01zWkxNa2ZWNkRMR0ZiV1hvTGtYZm5XUVhJRkcxUUtyTnJWQnotRHVNQlQ1elNwSGRxR0xWbnpwdFVTTzZxMURpMHZaMG1YY01YYUhPRmxCajk5NmZqVU5HVGFBaTRUbkxaN3VKY0hLXy1vbUR0ZWdNNVplaDdhdlIwT2Qyb3MyVlh1ZjZ1UVdhb0x2RGFQQTlQM2Rtb3QzNDFxaUhTUG9uX0NXbUl5SFNFc0lvUXljZ0daUGcxdw?oc=5",
-      "date": "Wed, 12 Aug 2026 09:57:35 GMT",
-      "source": "Upstox",
+      "title": "HDFC Bank, Axis, ICICI, Karur Vysya, Ujjivan SFB shares: What SBI Securities' Sunny Agrawal says - Business Today",
+      "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxOaUZvWVFlR29XdktudDVTMXV0a2VBYVIxTGtmYWhFblZZSHc5VzFhNGZSSGMybUx3ODZDa2tUX3FQTEpsRF9CWjR6d3FzblZCTkF3Q1UxaEFsNjM2aU11ckJISnpPRHE2YkxoczFEanFMZjlhNk16ZmduOW40S2JZWHdtT2NwNllrWDA3U1k5enlGWE8zTlQtc3MzVktwWmFQelNLSGg3MlFPREQ1em9wT3ZwVEhiNjk2WmZvR0xaMXZ0Sl9WZFhDR25OTmJKVG9wb0tOdWd0ZzZDRG52M0J4c2R2bDY0YkJiV3hmUmgtMNIB9AFBVV95cUxNTE5VMXVybGlqeXo3Q1c5UTVQWGxVcjY0TG1XVGJGazNwS2F4MFFCRTVjVGhfUXFCZ3doNHN6SVllLTNpTDRGNTdSeG41NlgyQ3duaDd6ZDVmeFJ2Wm9nQ01RMXdRS1J0d0w5dzdpa2gwWnN5cnFULTUyVkdiUmdjVHYzTE1uRzI4MmgzdWI4THB0N0h5LWp3WC1tX2tLUU9XY1Q3NzRrdkYzYU9vRjZ2TnZ0UkpfWEVDNzVTMFQyZVpsaFZNb2dMMkJsVmMzSVdpZE5kQlNHMFFPVmUwaFFsVkFUS0Z1aDloaVk0dF9JelcyV25i?oc=5",
+      "date": "Sat, 15 Aug 2026 03:30:04 GMT",
+      "source": "Business Today",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "HDFC Bank Ltd Share Price Today,, HDFCBANK Share Price NSE, BSE - Business Today",
+      "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQYl9PSEdSWjNuX0l2V1g2UGEydHExQ2lVREdwNzB4dUthSDV6Y0FCYVdXNHVPRG51dXFWbXQ4RjAwSnlFZGlhOTNYWUZpaVJfaHM4ZzFEOUlISGNDVHg2OWFzN1B0eDd1Wml1NWI4U2tUVGdaMjNYME1HNGZVVmZoRHFyYw?oc=5",
+      "date": "Thu, 13 Aug 2026 07:00:00 GMT",
+      "source": "Business Today",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "HDFC Bank Limited $HDB Shares Sold by Trinity Street Asset Management LLP - MarketBeat",
@@ -3120,26 +3135,23 @@
       "date": "Thu, 13 Aug 2026 09:43:48 GMT",
       "source": "MarketBeat",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Top 12 Bank Stocks To Buy In India August 2026 - Samco",
       "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQVTJGTjNBTndCWnlCMVF4am9OclFTVEN0clJWVXBKc3BWX0E4bDhwTUxlVWFKd0xReUJWSVl6T0M3UnExVHowUHZHdkExQ016S1MtX1lJdjNKYUNoRzBpM19fbTZYeTNOVGpNY0NPMTQydUdvWDZWMGFveE12Umh4eVRkVC02b1FMYVJhZQ?oc=5",
-      "date": "Wed, 12 Aug 2026 06:50:59 GMT",
+      "date": "Sat, 15 Aug 2026 06:51:04 GMT",
       "source": "Samco",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "HDB|HDFC Bank Ltd|Price:23.460|Chg%:-0.170 - TradingKey",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1CcFZiaXVZdzRWdVByemZPS09lR09JVkpMNFlRUW1iazRQTmw0cXZtRkFuUjVIOWlkTlJxUjVBdkd5aGs2dWpaR1lLQXl3MFp3YXdHMzZwZmo4Rktjbk05Vzl3UmFuRGVMc0hCOA?oc=5",
-      "date": "Tue, 11 Aug 2026 03:56:53 GMT",
-      "source": "TradingKey",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Here’s Why HDFC Bank Limited (HDB) Traded Lower in Q1 - Yahoo Finance",
@@ -3147,9 +3159,12 @@
       "date": "Wed, 03 Jun 2026 07:00:00 GMT",
       "source": "Yahoo Finance",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:33.625Z"
+  "newsFetchedAt": "2026-08-16T13:39:49.404Z"
 }

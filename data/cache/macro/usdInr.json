@@ -1,0 +1,12 @@
+{
+  "key": "usdInr",
+  "ticker": "INR=X",
+  "fetchedAt": "2026-08-16T17:59:51.653Z",
+  "quote": {
+    "price": 95.41500091552734,
+    "changePct": 9.108062796486381,
+    "oneYearChangePct": 9.108066604049503,
+    "fiftyDayAverage": 95.47191513061523,
+    "twoHundredDayAverage": 92.86502872467044
+  }
+}

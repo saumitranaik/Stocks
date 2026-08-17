@@ -1,6 +1,6 @@
 {
   "symbol": "BDL.NS",
-  "fetchedAt": "2026-08-14T12:23:01.089Z",
+  "fetchedAt": "2026-08-16T18:08:13.994Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 1361.343000488281,
     "fiftyTwoWeekHigh": 1631.5999755859375,
     "fiftyTwoWeekLow": 1096.5999755859375,
-    "regularMarketVolume": 8455625,
+    "regularMarketVolume": 8457532,
     "rsi14": 69.60895051065077,
     "macd": {
       "macdLine": 15.6,
@@ -24,7 +24,7 @@
       "histogram": 16.22
     },
     "oneYearReturnPct": -11.395616888316576,
-    "avgVolume20": 1318574.3,
+    "avgVolume20": 1318669.65,
     "ohlcv": {
       "open": [
         1591,
@@ -1284,19 +1284,19 @@
         505756,
         1279928,
         4154401,
-        8455625
+        8457532
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.249Z",
+    "asOf": "2026-08-16T18:00:08.115Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Standalone",
     "snapshot": {
-      "marketCap": 51354,
-      "pe": 98.6,
+      "marketCap": 51245,
+      "pe": 98.4,
       "bookValue": 116,
       "dividendYield": 0.32,
       "roce": 13.8,
@@ -3282,7 +3282,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 1375.5
+        "close": 1398
       },
       {
         "date": "2026-08-14",
@@ -3294,11 +3294,14 @@
     {
       "title": "Bharat Dynamics Share Price - Live NSE: BDL Stock Price &amp; Chart - Upstox",
       "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE5fWVlpMm1Ic242SEt1TVRtb3BVSWNsTFVEbEtoYUo4YXoya1FXdjRYRWxhdjlBcGYxN1V3d3lHOHpCMlNreDRUdXc1QjhZcFFad2VyNzk3Wm85REk3QkNhaHJUSVdOVXJzRXBHUkVyMA?oc=5",
-      "date": "Thu, 13 Aug 2026 16:54:36 GMT",
+      "date": "Fri, 14 Aug 2026 07:00:00 GMT",
       "source": "Upstox",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Should You Buy Bharat Dynamics Limited (NSE:BDL) For Its Upcoming Dividend? - simplywall.st",
@@ -3306,17 +3309,23 @@
       "date": "Thu, 05 Feb 2026 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Medium",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
-      "title": "Bharat Dynamics Q4 Revenue Drops 73% to ₹480 Crore; EBITDA Margin Contracts to 11.5% - sahi.com",
+      "title": "Bharat Dynamics Q4 Revenue Drops 73% to ₹480 Crore; EBITDA Margin Contracts to 11.5% - Sahi",
       "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNV0FkR294Y3NFWkZKamI2NERPOW5OWVVlWURZVUxJajB2Q3phN2xLUlJMNDdZc05kWUZVLTJ5MmFfTDdhTWZEQmx2c0JXSkdQUW9YelF4aG0xZWtNR0Z5aHM2Mjl2MVBfdnVlWk13WkdPRnNNQ1JES2dZd3h2ZzlIVXBSNF9QVmtpZmdHaG5KMGloajlWeEhyQkIxSm9jS3ViX0pmODlVTUI4T1JwZWM2aHFRNUhJT25odE84?oc=5",
       "date": "Thu, 28 May 2026 07:00:00 GMT",
-      "source": "sahi.com",
+      "source": "Sahi",
       "impact": "Low",
-      "catalystType": "Expansion",
-      "expectedTimeline": "Medium-term"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Bharat Dynamics Share Price Jumps 5% After Akash-NG Trial Success | Stock Market Today - Samco",
@@ -3324,8 +3333,11 @@
       "date": "Wed, 24 Dec 2025 08:00:00 GMT",
       "source": "Samco",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Bharat Dynamics appoints Shailesh Vagerwal as Chairman and Managing Director - scanx.trade",
@@ -3333,9 +3345,12 @@
       "date": "Sun, 12 Jul 2026 07:00:00 GMT",
       "source": "scanx.trade",
       "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Management",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "businessQuality"
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:01.089Z"
+  "newsFetchedAt": "2026-08-16T18:08:13.994Z"
 }

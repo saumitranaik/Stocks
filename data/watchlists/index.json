@@ -1,33 +1,33 @@
 {
-  "activeWatchlist": "sameer",
+  "activeWatchlist": "asmita",
   "watchlists": [
     {
       "id": "core-portfolio",
       "name": "Core Portfolio",
       "file": "core-portfolio.json",
       "companyCount": 6,
-      "updatedAt": "2026-08-14T04:58:43.553Z"
+      "updatedAt": "2026-08-15T10:27:19.314Z"
     },
     {
       "id": "banking",
       "name": "Banking",
       "file": "banking.json",
       "companyCount": 8,
-      "updatedAt": "2026-08-13T13:31:11.106Z"
+      "updatedAt": "2026-08-15T11:07:30.699Z"
     },
     {
       "id": "power",
       "name": "Power",
       "file": "power.json",
       "companyCount": 8,
-      "updatedAt": "2026-08-13T14:09:41.444Z"
+      "updatedAt": "2026-08-15T10:33:29.993Z"
     },
     {
       "id": "defence",
       "name": "Defence",
       "file": "defence.json",
       "companyCount": 7,
-      "updatedAt": "2026-08-14T10:54:21.516Z"
+      "updatedAt": "2026-08-15T10:33:30.156Z"
     },
     {
       "id": "test",
@@ -47,9 +47,16 @@
       "id": "sameer",
       "name": "Sameer",
       "file": "sameer.json",
-      "companyCount": 4,
-      "updatedAt": "2026-08-14T11:16:48.945Z"
+      "companyCount": 5,
+      "updatedAt": "2026-08-16T13:40:10.729Z"
+    },
+    {
+      "id": "asmita",
+      "name": "Asmita",
+      "file": "asmita.json",
+      "companyCount": 30,
+      "updatedAt": "2026-08-15T13:40:15.972Z"
     }
   ],
-  "updatedAt": "2026-08-14T12:44:00.899Z"
+  "updatedAt": "2026-08-16T18:08:11.933Z"
 }

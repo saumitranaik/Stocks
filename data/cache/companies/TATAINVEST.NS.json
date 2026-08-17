@@ -1,6 +1,6 @@
 {
   "symbol": "TATAINVEST.NS",
-  "fetchedAt": "2026-08-14T12:23:00.689Z",
+  "fetchedAt": "2026-08-16T18:06:47.025Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 679.9147509765623,
     "fiftyTwoWeekHigh": 1058,
     "fiftyTwoWeekLow": 541.1500244140625,
-    "regularMarketVolume": 138457,
+    "regularMarketVolume": 138702,
     "rsi14": 47.48611674662815,
     "macd": {
       "macdLine": 3.03,
@@ -24,7 +24,7 @@
       "histogram": 0.58
     },
     "oneYearReturnPct": -2.9452403984475914,
-    "avgVolume20": 419737.2,
+    "avgVolume20": 419749.45,
     "ohlcv": {
       "open": [
         688.0999755859375,
@@ -1284,18 +1284,18 @@
         257928,
         662394,
         167634,
-        138457
+        138702
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.145Z",
+    "asOf": "2026-08-16T18:00:07.933Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 33805,
+      "marketCap": 33762,
       "pe": 78.4,
       "bookValue": 578,
       "dividendYield": 0.51,
@@ -3315,11 +3315,11 @@
       },
       {
         "date": "2026-08-09",
-        "close": 674.4000244140625
+        "close": 667.2999877929688
       },
       {
         "date": "2026-08-14",
-        "close": 667.2999877929688
+        "close": 665.5
       }
     ]
   },
@@ -3330,8 +3330,11 @@
       "date": "Tue, 04 Aug 2026 15:36:41 GMT",
       "source": "marketscreener.com",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Tata Investment Corporation Limited (NSE:TATAINVEST) is largely controlled by institutional shareholders who own 71% of the company - simplywall.st",
@@ -3339,17 +3342,23 @@
       "date": "Thu, 20 Nov 2025 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "Tata Investment Corporation Reports FY26 Results, Q4 Performance, Dividend Recommendation - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxNa0c4WnNTYnZxbzVpVlpSRVBDWGtpendKV21oMEJiQzNPVWxZUDdPTzFKdHVLYUNOdEFlR3VkbEhZQUgzUFRCYTVnY1puQ1V0bGdzUXNLeXdCOERQSjJCYnBxN05qSjl2Nk53cm5ibnB6UFVudXNxdUg1TDhSZGZhcU9CLUd6RVVlYmhfSWpDbVVNR3JHYURLUEFvQmotS0p5RmtHZVpXRU9aVnR4bGtmckFVN1BScDZIQkVMc1hELW1aV3M2QTA1YXlFdzBXUm1JdWJhX0c0amt4Yk00dXdMdk0yc0c?oc=5",
-      "date": "Thu, 23 Apr 2026 07:00:00 GMT",
+      "title": "Tata Investment Fixes June 10 Record Date - scanx.trade",
+      "url": "https://news.google.com/rss/articles/CBMi9gFBVV95cUxNOHpoZUtZOXlJSmhrYV9jcTlWTVlBdVQwTC1RWGVGVlA4M0pqNXZFZ0lTQnN6ek1weC1jUWkzTEZEWTBWR0VPM3VMbjV6LXpXWHRoTVl1Q09NZU5BMGRqVWpyd0xrcDBEeGhDdWJGem5qZVhiMVlwZHZYSEU0N1Z1OURTYnY1UUZ3eFBKRmhQOU93WU5XVElHTFF0dzhyWEZta0t4d0xLUzJuYzVDeWdUXzM4TzNyaHJLVnFRaXNGRDNIVUtzV0VlUm5JMkxMSTVjTTQ2WUE5REd4Q3Q4Unkza0p5NWJ5YXhmanNpZnppZm9PbmNJTFE?oc=5",
+      "date": "Wed, 10 Jun 2026 07:00:00 GMT",
       "source": "scanx.trade",
-      "impact": "High",
-      "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Tata Investment Falls 12% in 2 Days After Stock Split - HDFC Sky",
@@ -3357,18 +3366,24 @@
       "date": "Thu, 16 Oct 2025 07:00:00 GMT",
       "source": "HDFC Sky",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Negative",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "Tata Investment Corporation shares surge nearly 20%, hit 52-week high; here’s why - Upstox",
-      "url": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxNSWJzSGpya3RWUm5TQU5JMlpNSnlEejJxNkx5eno3VFdDRU1CUDFQZEhIczB5ZGk2UG1qS3oyeXR2VDZFcUNqNnJTY0p0NmQ4Y1RmRkZaUHJwcVAySnlISzV3a0VlaXBlR3U4RzhkZjN3SXZhQzFGbExnelJUMGtJbU4zRjQyLWV4QkxKS05FdkVlNzJjdkhRcGNCREZIb19yNFBWY1c0Tzhva1cweXVFbzdacmM5UE1HeG1yb2xNeG1mNEZOejhZbnlWOVQzOUxGbnh4RmlfTWJSeTJrd0hEV3JHbmNKRHpH?oc=5",
-      "date": "Tue, 30 Sep 2025 07:00:00 GMT",
+      "title": "Tata Investment Corporation shares jump 12% to 52-week high: Here is what’s driving the rally today - Upstox",
+      "url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxQZWRVY1Jzc0Q2YTlLYnU5MTJGWTJSeUJXbmhiSW41WVUyaThseVFsbmloRExKZVJpcktxNG9HcXVjZHFSWUpzbmtCMDNhemU2bDE5SzU0ajd3TkdTckUzTHduZ2hNRDFaS25tdlNHUW82b3RsaWlXRm1ycDJEaWxXTF9idlpUb1gtSnRCQkVJYUQtTGtyQkxZNGM0TGhtQV95VVlsTDVqeFRaUEkzUFlWMUN6V1kxV2JMcVJfVG5jdXVJQXNxWTY2YTdybXRjVHRHZ0dCdzFkYU1xQmswMVAtOUJTRG9aUllwZnAyLQ?oc=5",
+      "date": "Tue, 23 Sep 2025 07:00:00 GMT",
       "source": "Upstox",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:00.689Z"
+  "newsFetchedAt": "2026-08-16T18:06:47.025Z"
 }

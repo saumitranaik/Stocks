@@ -1,6 +1,6 @@
 {
   "symbol": "BEML.NS",
-  "fetchedAt": "2026-08-14T12:16:47.136Z",
+  "fetchedAt": "2026-08-15T17:20:46.019Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": 18.85
     },
     "oneYearReturnPct": -7.5260825591483504,
-    "avgVolume20": 404934.25,
+    "avgVolume20": 404939.5,
     "ohlcv": {
       "open": [
         2039.949951171875,
@@ -1284,19 +1284,19 @@
         628418,
         714898,
         216982,
-        171475
+        171580
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:46.675Z",
+    "asOf": "2026-08-15T17:20:45.347Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 15647,
-      "pe": 87.7,
+      "marketCap": 15612,
+      "pe": 87.5,
       "bookValue": 352,
       "dividendYield": 0.26,
       "roce": 7.71,
@@ -3288,7 +3288,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 1910.5999755859375
+        "close": 1874.4000244140625
       },
       {
         "date": "2026-08-14",
@@ -3298,13 +3298,28 @@
   },
   "news": [
     {
+      "title": "Earnings call transcript: BEML Q1 2026 revenue beats as stock jumps 9.2% - Investing.com",
+      "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxPamh6T3gyckpBeFUwWGRpMlBsVlp5YllEQVo3bVp1U1ZLS2VsMk5ia3JfWnZ3UXAyWkV4WHlEWUw1SExRdXA0cVdZZjZwYTZ5enhWRU1Ianpwa2RyNXNoWnVROHFqVnpEVS13VS1qY3pMZGVwNVJxcUhYckc5NG5TV1FjUlRxMlhVTGxCUExwMmJrd2FLLXo2OTFLWnc1TF9rZUYxeTY2dlNsMHpDX2Jfam9mZVNqZ3FkQmdTY3RJVENHQ00?oc=5",
+      "date": "Thu, 13 Aug 2026 11:18:18 GMT",
+      "source": "Investing.com",
+      "impact": "High",
+      "signalStrength": "High",
+      "sentiment": "Positive",
+      "catalystType": "Earnings",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
+    },
+    {
       "title": "Income Investors Should Know That BEML Limited (NSE:BEML) Goes Ex-Dividend Soon - simplywall.st",
       "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxOS2hTdmRkODc2VnZndUpWWEdtR3YtYkZOeXNOTFozMDcwRDJYaEVyU2hZZ1NySDFFRlU2N3BmQUxKWWJXOEVnYVB6eXpqRW1JN2tqSDhzMnpZZmtONDdhNWFBQ2Ridi1sTXNxellDSGVhOGl5LVI3c2MyY1NGcXMyRFBtSUE5OGZIUHFJRHFGQm93dWtsMU5ZbUhXcE9wOXRGeHFkWUJaazBfV0g3SDdtOFJqYmxxWFdDb0xfb1VUSHowMDB1X1VyM1VLUdIB0AFBVV95cUxNTTdXRHEtOVFVSF9SdlAwdUhfcWNjNGtmZ0syUFhwcW1McTBjSlJtR0VBMlo1NnZUalhkRkVMLUpEX2lNS1loMS10MTFsN1BmVGh6aTk5RlFqZE9JUzFCa0t3QkF6TW53aWlhUFdEekJyV3pOcWxDVjcza2N5Q0RqNTNudVJCNFI3WkU1VHlfOUx0VWUtZktBSzZiVXN0ZktvbHp0aG9EYVhWMmc4azBsbUw4V211MFZZLUFkLTBJNnFmbklLMUp3MXFBeU5VWGpt?oc=5",
       "date": "Tue, 02 Jun 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Medium",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "BEML Forecast — Price Target — Prediction for 2027 - TradingView",
@@ -3312,17 +3327,23 @@
       "date": "Thu, 25 Jun 2026 14:37:35 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "BEML Q2 Results: Earnings Call Scheduled for Aug 12 - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQU0lHYUJXM3ZCc3hQZ1VFLUM3Tnl5THd2aVUwZDlISkRKT0JvWVdWQmpHWDNPUTRjcFVfVERjbW9XZlBQbUFsRFAyeE52M0c0aXFyMzVPWHBZTklYVEJiUHZTUTNGc19mWFR0OG12TFV3S3hheUhsOG9PQTEwU1J5Nklwb0pwSVlSejMyYVlUaDF2dzgtRm5qTVp6UU9GOFNHWlMyLTlTZlpaV28?oc=5",
-      "date": "Fri, 07 Aug 2026 14:40:15 GMT",
+      "title": "BEML Ltd Q1 Results: Net loss widens to ₹27.26 lakh - scanx.trade",
+      "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNQ3pmM2l3ZHNvbFh6UFBqLTZ6T2MtVmNvMEk1b0toNjJoQUJaMnhaTW8zUU15ay1ZNmRwZzhNTTNJdmxrUmxONzFjOTF1OFVodTM0QXlDTDV3MWlkd1cxSlhVSVdFTXRQUDFJQXZBdF9EdjF6YkRhdFRVQ05BWXRCY3pwMDZ1Nkk5VjdsVkd5WkZOUmxYMWZObHFFRTM5VDhwOG14cWp2NlI5UQ?oc=5",
+      "date": "Mon, 10 Aug 2026 04:55:25 GMT",
       "source": "scanx.trade",
       "impact": "High",
+      "signalStrength": "High",
+      "sentiment": "Negative",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "BEML shares tank 8% as Q4 net profit dips 36% YoY; check all numbers, dividend details - Upstox",
@@ -3330,18 +3351,12 @@
       "date": "Fri, 29 May 2026 07:00:00 GMT",
       "source": "Upstox",
       "impact": "High",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
-    },
-    {
-      "title": "BEML shares rally 8% after Rs 590 crore defence order win - economictimes.com",
-      "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxOSXBKN0xabjBCZXVzdXpSNGY5MEZIMlpIQm8xNzZZR1dUcUxQem53Zzh2Yjl3ZnJsU3NPaDZJbXNfdFZVY01mRXBQdmR1SE9lc05QbjJNZVc5dFhUZjdJMlhteWFZS0dWWHJhN2VkYU93NTRMOHBYa0Nwbnk3OFFyQ3BtNW1nSUpBZ0NoYkh2a2dxVFJXQ1lUa2ZES2EyUzV5NVk0OEtId1VCZGV5M1RuZ0xLUG9FM2VMQU5Kc1U2RXN4S2l4QU11Mk9n0gHPAUFVX3lxTE1hQXhHZ1lidElfeG1IR0VpbzFYMVhoLVRvQUR4bHk3T1hvRWUyQ2dYZTV1bjlGQ29FV1lpWDF3Ni1BcnA4RE9QLXcyMWhzLWppMW9jOUVpaG9ES2FGSmNVNWZmZTJLMDhGZURsU1FnWkd5akR0Z3RVNW9FdXNuS3g2SUtfaEpmQXZub193cFZLMlVqRU9xd0dtQUpwdmRHbWFDRm5JcXVpSXdLUlIyS2VDQ016Mm80eHRHMlRsaGRMVV9CeG43c0FEUXZXRzBzQQ?oc=5",
-      "date": "Wed, 22 Apr 2026 07:00:00 GMT",
-      "source": "economictimes.com",
-      "impact": "Medium",
-      "catalystType": "Expansion",
-      "expectedTimeline": "Medium-term"
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:47.136Z"
+  "newsFetchedAt": "2026-08-15T17:20:46.019Z"
 }

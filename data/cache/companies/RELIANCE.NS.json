@@ -1,6 +1,6 @@
 {
   "symbol": "RELIANCE.NS",
-  "fetchedAt": "2026-08-14T12:16:33.818Z",
+  "fetchedAt": "2026-08-15T17:20:43.034Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": 2.74
     },
     "oneYearReturnPct": -4.644056380879266,
-    "avgVolume20": 11313582,
+    "avgVolume20": 11313831.55,
     "ohlcv": {
       "open": [
         1377.300048828125,
@@ -1284,18 +1284,18 @@
         9953124,
         7901012,
         9397301,
-        10492367
+        10497358
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:32.972Z",
+    "asOf": "2026-08-15T17:20:42.053Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 1770795,
+      "marketCap": 1772762,
       "pe": 23.7,
       "bookValue": 668,
       "dividendYield": 0.46,
@@ -3315,7 +3315,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 1317
+        "close": 1310
       },
       {
         "date": "2026-08-14",
@@ -3330,8 +3330,11 @@
       "date": "Tue, 21 Jul 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Positive",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Reliance Industries Limited. . Moody's has upgraded Reliance Industries from Baa2 to Baa1, now two notches above India's sovereign credit rating. The agency pointed to our diversified businesses across energy, telecom, retail and digital, disciplined financial - facebook.com",
@@ -3339,8 +3342,11 @@
       "date": "Sun, 31 May 2026 07:00:00 GMT",
       "source": "facebook.com",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Reliance Industries seeks nod for ₹1.45 lakh crore RPTs and new business - scanx.trade",
@@ -3348,17 +3354,11 @@
       "date": "Sat, 25 Jul 2026 07:00:00 GMT",
       "source": "scanx.trade",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Reliance Industries' share price tumbles 5% a day after hitting all-time high; what you need to know - Upstox",
-      "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxOOWlaZjZoNjlsd2ZGQXJmZTl5SUc3LXJjS2NrR0ZsVXIzaEFOcEYweXlQbDUxZmdQQUZVczRpelRUWDFNbEwtZkVLdEktajVTd21qd3BBSUFyVVd4eTJreXhaTGlkV3VsN1ZvZDZBWGVMUXhydTV2ZmlJQzZvdHlUY2M5QVlodjdHdmNka1dnY0FxaHMwdnBSWXJJOEFERUc0QjVzWUZ6czR6S3JHVnhCd09vU1RMZ0s0dnMwUTQ0VUlJS3RlNThSVEx5NFpmazQxMEhETlY0THU2QU9QR3QwNHJTYkVxS0p0R25wVm9R?oc=5",
-      "date": "Tue, 06 Jan 2026 08:00:00 GMT",
-      "source": "Upstox",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Reliance shares tumble 4.6%, m-cap erodes ₹88,000 crore as windfall tax returns amid oil surge - livemint.com",
@@ -3366,9 +3366,24 @@
       "date": "Fri, 27 Mar 2026 07:00:00 GMT",
       "source": "livemint.com",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Reliance Industries' share price tumbles 5% a day after hitting all-time high; what you need to know - Upstox",
+      "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxOOWlaZjZoNjlsd2ZGQXJmZTl5SUc3LXJjS2NrR0ZsVXIzaEFOcEYweXlQbDUxZmdQQUZVczRpelRUWDFNbEwtZkVLdEktajVTd21qd3BBSUFyVVd4eTJreXhaTGlkV3VsN1ZvZDZBWGVMUXhydTV2ZmlJQzZvdHlUY2M5QVlodjdHdmNka1dnY0FxaHMwdnBSWXJJOEFERUc0QjVzWUZ6czR6S3JHVnhCd09vU1RMZ0s0dnMwUTQ0VUlJS3RlNThSVEx5NFpmazQxMEhETlY0THU2QU9QR3QwNHJTYkVxS0p0R25wVm9R?oc=5",
+      "date": "Tue, 06 Jan 2026 08:00:00 GMT",
+      "source": "Upstox",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:33.818Z"
+  "newsFetchedAt": "2026-08-15T17:20:43.034Z"
 }

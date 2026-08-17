@@ -1,6 +1,6 @@
 {
   "symbol": "INDUSINDBK.NS",
-  "fetchedAt": "2026-08-14T12:16:37.829Z",
+  "fetchedAt": "2026-08-16T13:39:49.681Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": -2.79
     },
     "oneYearReturnPct": 32.61448363663121,
-    "avgVolume20": 2046717.75,
+    "avgVolume20": 2046736.7,
     "ohlcv": {
       "open": [
         773.4500122070312,
@@ -1284,19 +1284,19 @@
         1400560,
         915131,
         674807,
-        1033715
+        1034094
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:37.350Z",
+    "asOf": "2026-08-16T13:39:48.737Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 80565,
-      "pe": 60.9,
+      "marketCap": 79535,
+      "pe": 60.2,
       "bookValue": 844,
       "dividendYield": 0.15,
       "roce": 5.68,
@@ -3083,7 +3083,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 1024.699951171875
+        "close": 1020.7999877929688
       },
       {
         "date": "2026-08-14",
@@ -3098,8 +3098,11 @@
       "date": "Thu, 13 Aug 2026 07:06:37 GMT",
       "source": "scanx.trade",
       "impact": "Medium",
-      "catalystType": "Analyst view",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
+      "catalystType": "Valuation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "IndusInd Bank Shares Fall 3% on Whistleblower Complaint - HDFC Sky",
@@ -3107,8 +3110,11 @@
       "date": "Wed, 03 Jun 2026 07:00:00 GMT",
       "source": "HDFC Sky",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Negative",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Investors in IndusInd Bank (NSE:INDUSINDBK) from three years ago are still down 24%, even after 3.9% gain this past week - simplywall.st",
@@ -3116,27 +3122,36 @@
       "date": "Thu, 08 Jan 2026 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "IndusInd Bank: Akila Krishnakumar steps down as independent director - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPSE9rc0JuUTBiTllZX2JxNmtiREM2NkhQNmF4N0Z6b0ozdE1qTFZmdWUxbk9qdnM4NW83a3lydWVMZER4ZEI0TV9qd2Jla21LZFFlMVZDcDhaSmNxai1GNEdYMTBuZEpESXdJdU4xSGpNZVRkOWtfYXp4VFd1VER6dE9Oc241NXRUeWpzV1dKR2xWWmdmTWFlMGs4SjdiWllWUkdiWnd0VGVvaXhqOG9ZWm5yemMzSzVSbEhkQmd5TWlOZw?oc=5",
-      "date": "Sun, 09 Aug 2026 13:06:35 GMT",
+      "title": "IndusInd Bank to host investor meet in Mumbai on August 17 - scanx.trade",
+      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQOE9uT3hsSEF1RVB0VFEtNDZTNm1qVklkWm4wRjdTS0RlZ2w1ZkhBQXBRVUd6WE45Q29Qd3h0S3ZqZzkzSG9GZUZfWWFLZGtsQVJDdFk1M1BodUlfaHdlVlk3LU5DNVl6UGVDWHNUbExNdGpRU1RjM1plM2w2ZDhEZGNIdUQxVVBwb2hJcGlLdUEwUnpIb2UtSF8yRXd3XzN6UWp1c3FCOVRRU0JtT0dXVW5hZVlyQQ?oc=5",
+      "date": "Tue, 11 Aug 2026 13:29:41 GMT",
       "source": "scanx.trade",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "IndusInd Bank shares slip 1% as SFIO initiates probe into Rs 2,600 crore accounting discrepancies - economictimes.com",
+      "title": "IndusInd Bank shares slip 1% as SFIO initiates probe into Rs 2,600 crore accounting discrepancies - The Economic Times",
       "url": "https://news.google.com/rss/articles/CBMigAJBVV95cUxPaExTUG5mNjlTeEM4enR2WERwTTBGSUpQOFAtdHFoS2dCME5JQk1nZFdLWE41OHZZYWppejZUVXp5MWlBdUtRdEN0Y21QV2c1Y3l3THo5OVZvUzNDVGtFdzBKRFZfWWdmUHJJWXlWdDFWRVJiMGtDUVlIaDdweEJPZE1uOURwQWJTZnF1QXZHdzNva0dZazY0SmtQQmZBcTR6bThYSzc2a2pPRnYwc2Z6YVdSX29nOWM4c2xfM1FKZkE5NXpSaC15ZG9vbnRJa2xkejVZbkxuS2NRai1VazhIVERrU2pzTnI5RDhiX2t5VUJHSWZ2QWJDZmE1Qk50cE000gGGAkFVX3lxTE9PWGNjVFA3STE1bnQtU0dGT2VOTHpoc3NwYlBwaTNCampwcDRqbF9aRnBDYkxPWE05TE9EQkwtenF5WjhsbE1pamYxbU9kbW1XbzRydndRdktvOVB5TkF6MW9rcVRLSlFtWFRRWTNxS2hzU0ZnaXlQcmVTSWhWS0RJaXRJMHVwV253ZGNQUHUxMXUwaTdFdGxrcm1rdlM4X20zQjZyVWZ1YmVuRTI4WllOQ2NUR0VQTUhpUndaaENyQWRhOF81VHJSYW1XSEk5RWl0RUhCaWwwU1lYamtNVWZDZzdaWUwtWF9za3hkbFlmSFBYSDlQa2c2d2sxQUIzNXRlMVZZRVE?oc=5",
       "date": "Fri, 26 Dec 2025 08:00:00 GMT",
-      "source": "economictimes.com",
+      "source": "The Economic Times",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Uncertain",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:37.829Z"
+  "newsFetchedAt": "2026-08-16T13:39:49.681Z"
 }

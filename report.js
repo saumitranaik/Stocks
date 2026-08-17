@@ -18,6 +18,13 @@ const tagClass = (rating) => RATING_CLASS[rating] || 'tag-neutral';
 const ratingTag = (rating) => `<span class="tag ${tagClass(rating)}">${escape(rating || 'N/A')}</span>`;
 const directionClass = (label) => label === 'Improving' ? 'pos' : label === 'Deteriorating' ? 'neg' : '';
 
+// Phase 5 thesis tracking status -- reuses the same tag/pos/neg/amber-text
+// vocabulary as everything else on this page rather than introducing a new
+// color convention.
+const THESIS_TAG_CLASS = { Improving: 'tag-buy', Intact: 'tag-neutral', Weakening: 'tag-hold', Broken: 'tag-sell' };
+const THESIS_TEXT_CLASS = { Improving: 'pos', Weakening: 'amber-text', Broken: 'neg' };
+const thesisTag = (status) => `<span class="tag ${THESIS_TAG_CLASS[status] || 'tag-neutral'}">${escape(status || 'N/A')}</span>`;
+
 let metricMeta = {};
 // Data-quality badge (Sourced/Calculated/Heuristic), same classification
 // dictionary the main dashboard ships as data.metricMeta -- a native `title`
@@ -126,7 +133,7 @@ function renderExecutiveSummary(x) {
       ${kpi('Confidence', escape(x.confidence || 'N/A'))}
       ${kpi('Investment horizon', escape(x.investmentHorizon) + ' ' + dataTag('investmentHorizon'))}
       ${kpi('Current price', money(x.currentPrice, x.currency))}
-      ${kpi('Fair value', money(x.fairValue, x.currency), dataTag('dcfFairValue'))}
+      ${kpi('Fair value', money(x.fairValue, x.currency), `${dataTag('dcfFairValue')} ${x.valuationConfidenceBand ? `Precision reflects ${escape(x.valuationConfidenceBand)} valuation confidence` : ''}`)}
       ${kpi('Target price (12M)', money(x.targetPrice, x.currency), dataTag('fairValue'))}
       ${kpi('Upside to target', pct(x.upsideToTargetPct), '', x.upsideToTargetPct >= 0 ? 'pos' : 'neg')}
       ${kpi('Upside to fair value', pct(x.upsideToFairValuePct), '', x.upsideToFairValuePct >= 0 ? 'pos' : 'neg')}
@@ -168,7 +175,36 @@ function renderThesis(t) {
     <p class="small">${dataTag('whyOwnAvoid')}</p>`;
 }
 
-// ------------------------------------------------------------ 3. Metrics dashboard
+// ------------------------------------------------------------ 3. Company Quality vs. Stock Attractiveness
+const VIEW_LABEL_CLASS = { Strong: 'pos', 'Above average': 'pos', Positive: 'pos', Favorable: 'pos', Weak: 'neg', 'Below average': 'neg', Negative: 'neg', Unfavorable: 'neg' };
+function renderCompanyQuality(cq) {
+  const cls = (label) => VIEW_LABEL_CLASS[label] || '';
+  return `
+    <div class="kpi-grid">
+      ${kpi('Company Quality', cq.companyQuality.score != null ? `${cq.companyQuality.score}/100` : 'N/A', escape(cq.companyQuality.label), cls(cq.companyQuality.label))}
+      ${kpi('Stock Attractiveness', cq.stockAttractiveness.score != null ? `${cq.stockAttractiveness.score}/100` : 'N/A', escape(cq.stockAttractiveness.label), cls(cq.stockAttractiveness.label))}
+      ${kpi('Fundamental View', escape(cq.fundamentalView.label), cq.fundamentalView.score != null ? `${cq.fundamentalView.score}/100` : '', cls(cq.fundamentalView.label))}
+      ${kpi('Market View', escape(cq.marketView.label), cq.marketView.regime ? escape(cq.marketView.regime) : '', cls(cq.marketView.label))}
+    </div>
+    <div class="card"><h4>Action guidance ${dataTag('actionGuidance')}</h4><p class="small">${escape(cq.actionGuidance)}</p></div>
+    <p class="small">${dataTag('companyQualityScore')} ${dataTag('stockAttractivenessScore')} Company Quality measures the underlying business, independent of price. Stock Attractiveness measures whether today's price/setup is attractive, independent of business quality. A weak Market View is never folded into Company Quality. Neither replaces the primary Recommendation above.</p>`;
+}
+
+// ------------------------------------------------------------ 4. Thesis tracking
+const BREAKER_STATUS_CLASS = { Active: 'neg', Watch: 'amber-text', Clear: 'pos', Unavailable: '' };
+function renderThesisTracking(tt) {
+  const breakerRows = (tt.breakers || []).map(b => `<tr><td>${escape(b.condition)}</td><td class="${BREAKER_STATUS_CLASS[b.status] || ''}">${escape(b.status)}</td><td class="small">${escape(b.currentReading)}</td></tr>`).join('');
+  return `
+    <div class="card"><h4>Thesis status ${dataTag('thesisStatus')}</h4>
+      <p>${thesisTag(tt.status)}</p>
+      <ul class="bullets">${(tt.reasons || []).map(r => `<li>${escape(r)}</li>`).join('')}</ul>
+    </div>
+    <div class="card"><h4>Thesis breakers ${dataTag('thesisBreakers')}</h4>
+      <table><thead><tr><th>Condition</th><th>Status</th><th>Current reading</th></tr></thead><tbody>${breakerRows || '<tr><td colspan="3" class="small">Not available.</td></tr>'}</tbody></table>
+    </div>`;
+}
+
+// ------------------------------------------------------------ 4. Metrics dashboard
 function renderMetricsDashboard(m) {
   const trendCell = (indicatorKey) => { const v = m.indicators[indicatorKey]; return v && v !== 'N/A' ? `<span class="${directionClass(v)}">${escape(v)}</span>` : '<span class="muted">N/A</span>'; };
   const row = (label, value, indicatorKey, tagKey) => `<tr><td>${label} ${tagKey ? dataTag(tagKey) : ''}</td><td class="num">${value}</td><td>${indicatorKey ? trendCell(indicatorKey) : '&mdash;'}</td></tr>`;
@@ -196,7 +232,7 @@ function renderMetricsDashboard(m) {
     </table>`;
 }
 
-// ------------------------------------------------------------ 4. Valuation analysis
+// ------------------------------------------------------------ 5. Valuation analysis
 function renderValuation(v, currency) {
   if (!v.primaryModelSource && v.reasonUnavailable) {
     return `<p class="small">Primary valuation model unavailable: ${escape(v.reasonUnavailable)}</p>
@@ -232,7 +268,36 @@ function renderValuation(v, currency) {
     <p class="small">${escape(v.methodology || '')}</p>`;
 }
 
-// ------------------------------------------------------------ 5. Financial quality
+// ------------------------------------------------------------ 6. Target price rationale
+function renderTargetPriceRationale(r) {
+  const w = r.wacc;
+  const sensitivityRows = (r.sensitivity || []).map(row => `<tr><td class="num">${fmt(row.waccPct)}%</td>${row.row.map(cell => `<td class="num">${fmt(cell.fairValue)}</td>`).join('')}</tr>`).join('');
+  const sensitivityHeader = r.sensitivity?.[0]?.row?.map(cell => `<th class="num">${fmt(cell.terminalGrowthPct)}%</th>`).join('') || '';
+  return `
+    <div class="two-col">
+      <div class="card"><h4>Discount rate / cost of capital ${dataTag('wacc')}</h4>
+        ${w
+          ? `<p class="small">WACC: <b>${fmt(w.waccPct)}%</b> &middot; Cost of equity ${fmt(w.costOfEquityPct)}% &middot; Cost of debt ${fmt(w.costOfDebtPct)}%</p>
+             <p class="small">Equity weight ${fmt(w.equityWeightPct)}% / Debt weight ${fmt(w.debtWeightPct)}% &middot; Risk-free rate ${fmt(w.riskFreeRatePct)}% &middot; Equity risk premium ${fmt(w.equityRiskPremiumPct)}%</p>`
+          : `<p class="small">Cost of equity (CAPM, financial-sector model): ${fmt(r.costOfEquityPct)}%</p>`}
+      </div>
+      <div class="card"><h4>Growth assumption</h4>
+        <p class="small">Modeled growth: ${pct(r.growthAssumptionPct)} &middot; Reverse-DCF implied growth: ${r.reverseImpliedGrowthPct != null ? pct(r.reverseImpliedGrowthPct) : 'N/A'} ${dataTag('reverseDcf')}</p>
+        <p class="small">Valuation confidence: ${r.valuationConfidenceScore ?? 'N/A'}/100 (${escape(r.confidenceBand || 'N/A')}) ${dataTag('valuationConfidenceScore')}</p>
+      </div>
+    </div>
+    ${r.sensitivity
+      ? `<div class="card"><h4>Sensitivity &mdash; WACC &times; terminal growth ${dataTag('dcfSensitivity')}</h4>
+           <table><thead><tr><th>WACC \\ Terminal g</th>${sensitivityHeader}</tr></thead><tbody>${sensitivityRows}</tbody></table></div>`
+      : `<p class="small">${escape(r.sensitivityUnavailableReason || 'Sensitivity grid not available.')}</p>`}
+    <div class="card"><h4>Margin assumption</h4>
+      <p class="small">${escape(r.marginAssumptionNote)}</p>
+      ${chart('Historical operating margin (%, FY) — context only', r.marginContext, { suffix: '%' })}
+    </div>
+    <p class="small">${escape(r.methodology || '')}</p>`;
+}
+
+// ------------------------------------------------------------ 7. Financial quality
 function renderFinancialQuality(f) {
   return `
     <div class="two-col">
@@ -260,7 +325,37 @@ function renderFinancialQuality(f) {
     </div>`;
 }
 
-// ------------------------------------------------------------ 6. Technical outlook
+// ------------------------------------------------------------ Segment, Capacity & Forward Estimates (foundation)
+const FRAMEWORK_LABELS = [
+  ['forwardEstimates', 'Forward estimates (management guidance vs. system estimate vs. actual)'],
+  ['managementCredibility', 'Management execution / credibility track record'],
+  ['segmentEconomics', 'Segment-level economics'],
+  ['capacityUtilization', 'Capacity / utilization economics']
+];
+function renderForwardOutlook(fo) {
+  const ff = fo?.forwardFramework || {};
+  const rq = fo?.researchQuality;
+  const frameworkCards = FRAMEWORK_LABELS.map(([key, label]) => {
+    const entry = ff[key];
+    return `<div class="card"><h4>${escape(label)}</h4><p class="small">${entry?.available ? 'Available.' : `Not available — ${escape(entry?.reason || 'no data source for this concept exists in this app yet.')}`}</p></div>`;
+  }).join('');
+  const rqGrid = rq ? `
+    <div class="kpi-grid three">
+      ${kpi('Data completeness', escape(rq.dataCompleteness))}
+      ${kpi('Valuation completeness', escape(rq.valuationCompleteness))}
+      ${kpi('Peer completeness', escape(rq.peerCompleteness))}
+    </div>
+    <div class="kpi-grid">
+      ${kpi('Forecast confidence', escape(rq.forecastConfidence))}
+      ${kpi('Evidence quality', escape(rq.evidenceQuality))}
+    </div>` : '<p class="small">Not available.</p>';
+  return `
+    <p class="small">${dataTag('forwardFramework')} These four concepts have no real data source in this app today (no segment/capacity/investor-guidance feed is integrated) — each renders an explicit "not available" status below rather than an invented figure. This section establishes the foundation a future data-source integration will populate.</p>
+    <div class="two-col">${frameworkCards}</div>
+    <div class="card"><h4>Research Quality Gates ${dataTag('researchQuality')}</h4>${rqGrid}</div>`;
+}
+
+// ------------------------------------------------------------ 8. Technical outlook
 function renderTechnical(t, priceSeries) {
   const s = t.scores || {}, adv = t.advancedScores || {};
   return `
@@ -284,7 +379,7 @@ function renderTechnical(t, priceSeries) {
     </div>`;
 }
 
-// ------------------------------------------------------------ 7. Risk analysis
+// ------------------------------------------------------------ 9. Risk analysis
 function renderRisk(r) {
   return `
     ${heatmap(r.categories)}
@@ -299,7 +394,76 @@ function renderRisk(r) {
     <p class="small">Governance: promoter-change risk ${r.detail?.governance?.promoterChangeRisk ?? 'N/A'}/100, capital-allocation risk ${r.detail?.governance?.capitalAllocationRisk ?? 'N/A'}/100 ${dataTag('governanceRisk')}</p>`;
 }
 
-// ------------------------------------------------------------ 8. Peer comparison
+// ------------------------------------------------------------ 10. Scenario analysis
+function renderScenarioAnalysis(s, currency) {
+  const stressRows = (s.stressTests || []).map(t => `<tr>
+      <td>${escape(t.label)}</td><td class="small">${escape(t.description)}</td>
+      <td class="num ${t.impactPct == null ? '' : t.impactPct >= 0 ? 'pos' : 'neg'}">${t.impactPct != null ? pct(t.impactPct) : 'N/A'}</td>
+    </tr>`).join('');
+  return `
+    <div class="chart-wrap"><div class="chart-title">Bear / Base / Bull fair value vs. CMP</div>${valuationBand({ bear: s.bear, base: s.base, bull: s.bull, cmp: s.currentPrice, currency })}</div>
+    <div class="kpi-grid three">
+      ${kpi('Bear case', money(s.bear, currency), s.bearDownsidePct != null ? `${pct(s.bearDownsidePct)} vs. CMP` : '', s.bearDownsidePct >= 0 ? 'pos' : 'neg')}
+      ${kpi('Base case', money(s.base, currency))}
+      ${kpi('Bull case', money(s.bull, currency), s.bullUpsidePct != null ? `${pct(s.bullUpsidePct)} vs. CMP` : '', s.bullUpsidePct >= 0 ? 'pos' : 'neg')}
+    </div>
+    <div class="card"><h4>Portfolio stress-test read for this position ${dataTag('scenarioImpact')}</h4>
+      <table><thead><tr><th>Scenario</th><th>Description</th><th class="num">Est. impact</th></tr></thead><tbody>${stressRows || '<tr><td colspan="3" class="small">Not available for this company.</td></tr>'}</tbody></table>
+    </div>
+    <p class="small">${escape(s.methodology || '')}</p>`;
+}
+
+// ------------------------------------------------------------ 11. Portfolio context
+function renderPortfolioContext(p) {
+  return `
+    <div class="kpi-grid">
+      ${kpi('Portfolio weight', p.weightPct != null ? `${fmt(p.weightPct)}%` : 'N/A', dataTag('targetWeightPct'))}
+      ${kpi('Diversification impact', p.diversificationImpactPct != null ? `${fmt(p.diversificationImpactPct)}%` : 'N/A', dataTag('positionDiversificationImpact'))}
+      ${kpi('Risk contribution', p.riskContributionPct != null ? `${fmt(p.riskContributionPct)}%` : 'N/A', dataTag('positionRiskContribution'))}
+      ${kpi('Action recommendation', escape(p.actionLabel || 'N/A'), p.actionScore != null ? `Score ${p.actionScore}/100 ${dataTag('actionScore')}` : '')}
+    </div>
+    <div class="two-col">
+      <div class="card"><h4>Quality attribution ${dataTag('portfolioAttribution')}</h4>
+        <p class="small">${p.qualityContribution != null ? `${p.qualityContribution >= 0 ? '+' : ''}${fmt(p.qualityContribution)} pts to the portfolio's weighted quality score` : 'N/A'}</p>
+      </div>
+      <div class="card"><h4>Valuation attribution</h4>
+        <p class="small">${p.valuationContribution != null ? `${p.valuationContribution >= 0 ? '+' : ''}${fmt(p.valuationContribution)} pts to the portfolio's weighted valuation score` : 'N/A'}</p>
+      </div>
+    </div>
+    ${p.actionCapNote ? `<p class="small amber-text">${escape(p.actionCapNote)}</p>` : ''}`;
+}
+
+// ------------------------------------------------------------ 12. Explainability
+function renderExplainability(e) {
+  const c = e.recommendationComponents || {}, a = e.actionComponents || {};
+  const compRow = (label, score) => `<tr><td>${label}</td><td class="num ${scoreCellClass(score)}">${score ?? 'N/A'}</td></tr>`;
+  return `
+    <div class="two-col">
+      <div class="card"><h4>Recommendation components ${dataTag('compositeScore')}</h4>
+        <table><tbody>
+          ${compRow('Quality', c.quality)}
+          ${compRow('Valuation', c.valuation)}
+          ${compRow('Technical', c.technical)}
+          ${compRow('Risk (inverted)', c.risk)}
+          ${compRow('Relative positioning', c.relativePositioning)}
+        </tbody></table>
+        <p class="small">Primary driver: ${escape(e.primaryDriver || 'N/A')}${e.capNote ? ` &mdash; ${escape(e.capNote)}` : ''}</p>
+      </div>
+      <div class="card"><h4>Portfolio Action Score components ${dataTag('actionScore')}</h4>
+        <table><tbody>
+          ${compRow('Quality', a.quality)}
+          ${compRow('Valuation', a.valuation)}
+          ${compRow('Technical', a.technical)}
+          ${compRow('Risk (inverted)', a.risk)}
+          ${compRow('Relative positioning', a.relativePositioning)}
+          ${compRow('Portfolio fit', a.portfolioFit)}
+        </tbody></table>
+        <p class="small">Action: ${escape(e.actionLabel || 'N/A')}${e.actionCapNote ? ` &mdash; ${escape(e.actionCapNote)}` : ''}</p>
+      </div>
+    </div>`;
+}
+
+// ------------------------------------------------------------ 13. Peer comparison
 function renderPeers(p) {
   if (!p) return '<p class="small">No same-sector peers in this watchlist to compare against.</p>';
   const rows = p.comparison.map(row => `<tr><td>${escape(row.label)}</td><td class="num">${fmt(row.value)}</td><td class="num">${fmt(row.sectorMedian)}</td><td class="num">${fmt(row.sectorLeader)}</td><td class="num">${row.historicalAverage != null ? fmt(row.historicalAverage) : 'N/A'}</td><td class="num">${fmt(row.watchlistAverage)}</td></tr>`).join('');
@@ -313,7 +477,7 @@ function renderPeers(p) {
     <p class="small">Peer universe is this watchlist's own same-sector companies &mdash; there is no market-wide sector database in this app ${dataTag('sectorRank')}</p>`;
 }
 
-// ------------------------------------------------------------ 9. Catalysts
+// ------------------------------------------------------------ 14. Catalysts
 const IMPACT_CLASS = { High: 'neg', Medium: 'amber-text', Low: '' };
 function renderCatalysts(items) {
   if (!items?.length) return '<p class="small">No recent catalysts found for this company.</p>';
@@ -322,25 +486,30 @@ function renderCatalysts(items) {
       <td>${escape(n.catalystType || 'General')}</td>
       <td>${escape(n.expectedTimeline || 'Unclassified')}</td>
       <td class="${IMPACT_CLASS[n.impact] || ''}">${escape(n.impact || 'N/A')}</td>
+      <td class="${IMPACT_CLASS[n.signalStrength] || ''}">${escape(n.signalStrength || 'N/A')}</td>
       <td>${escape(n.source || 'N/A')}</td>
       <td>${n.date ? escape(new Date(n.date).toLocaleDateString('en-IN')) : 'N/A'}</td>
     </tr>`).join('');
-  return `<table><thead><tr><th>Catalyst</th><th>Type</th><th>Timeline</th><th>Impact</th><th>Source</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>
-    <p class="small">${dataTag('technicalCatalyst')} News catalysts are keyword-classified headlines, not editorial ratings or confirmed event dates.</p>`;
+  return `<table><thead><tr><th>Catalyst</th><th>Type</th><th>Timeline</th><th>Impact</th><th>Signal strength</th><th>Source</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="small">${dataTag('catalystCategory')} ${dataTag('catalystSignalStrength')} News catalysts are keyword-classified headlines, not editorial ratings or confirmed event dates. Signal strength is a disclosed heuristic blending impact and recency, not a statistical probability.</p>`;
 }
 
-// ------------------------------------------------------------ 10. Final verdict
+// ------------------------------------------------------------ 15. Investment conclusion
 function renderVerdict(v, currency) {
   return `
     <div class="kpi-grid">
       ${kpi('Recommendation', ratingTag(v.rating))}
       ${kpi('Confidence', escape(v.confidence || 'N/A'))}
+      ${kpi('Thesis status', thesisTag(v.thesisStatus), dataTag('thesisStatus'))}
       ${kpi('Ideal entry zone', v.idealEntryZone ? `${money(v.idealEntryZone.low, currency)} &ndash; ${money(v.idealEntryZone.high, currency)}` : 'N/A', dataTag('idealEntryZone'))}
       ${kpi('Fair value', money(v.fairValue, currency))}
       ${kpi('Target price (12M)', money(v.targetPrice, currency))}
     </div>
     <div class="card"><h4>Risk-reward summary ${dataTag('riskRewardSummary')}</h4>
       <p class="small">Upside to target: ${pct(v.riskReward.upsideToTargetPct)} &middot; Downside to bear case: ${pct(v.riskReward.downsideToBearPct)} &middot; Risk-reward ratio: ${v.riskReward.ratio != null ? `${fmt(v.riskReward.ratio)}x` : 'N/A'}</p>
+    </div>
+    <div class="card"><h4>Monitoring triggers</h4>
+      ${v.monitoringTriggers?.length ? `<ul class="bullets">${v.monitoringTriggers.map(t => `<li><b>${escape(t.severity)}:</b> ${escape(t.message)}</li>`).join('')}</ul>` : '<p class="small">No active alerts for this company.</p>'}
     </div>`;
 }
 
@@ -359,14 +528,21 @@ function renderReport(report) {
     renderMasthead(report),
     section(1, 'Executive summary', renderExecutiveSummary(report.executiveSummary)),
     section(2, 'Investment thesis', renderThesis(report.thesis)),
-    section(3, 'Metrics dashboard', renderMetricsDashboard(report.metricsDashboard)),
-    section(4, 'Valuation analysis', renderValuation(report.valuationAnalysis, currency)),
-    section(5, 'Financial quality', renderFinancialQuality(report.financialQuality)),
-    section(6, 'Technical outlook', renderTechnical(report.technicalOutlook, report.charts.price)),
-    section(7, 'Risk analysis', renderRisk(report.riskAnalysis)),
-    section(8, 'Peer comparison', renderPeers(report.peerComparison)),
-    section(9, 'Catalysts', renderCatalysts(report.catalysts)),
-    section(10, 'Final recommendation', renderVerdict(report.finalVerdict, currency)),
+    section(3, 'Company Quality vs. Stock Attractiveness', renderCompanyQuality(report.companyQuality)),
+    section(4, 'Thesis tracking & thesis breakers', renderThesisTracking(report.thesisTracking)),
+    section(5, 'Metrics dashboard', renderMetricsDashboard(report.metricsDashboard)),
+    section(6, 'Valuation analysis', renderValuation(report.valuationAnalysis, currency)),
+    section(7, 'Target price rationale', renderTargetPriceRationale(report.targetPriceRationale)),
+    section(8, 'Financial quality', renderFinancialQuality(report.financialQuality)),
+    section(9, 'Segment, capacity & forward estimates', renderForwardOutlook(report.forwardOutlook)),
+    section(10, 'Technical outlook', renderTechnical(report.technicalOutlook, report.charts.price)),
+    section(11, 'Risk analysis', renderRisk(report.riskAnalysis)),
+    section(12, 'Scenario analysis', renderScenarioAnalysis(report.scenarioAnalysis, currency)),
+    section(13, 'Portfolio context', renderPortfolioContext(report.portfolioContext)),
+    section(14, 'Explainability', renderExplainability(report.explainability)),
+    section(15, 'Peer comparison', renderPeers(report.peerComparison)),
+    section(16, 'Catalysts', renderCatalysts(report.catalysts)),
+    section(17, 'Investment conclusion', renderVerdict(report.finalVerdict, currency)),
     renderDataLimitations(report.dataLimitations),
     `<div class="report-footer"><span>Generated ${escape(new Date(report.generatedAt).toLocaleString('en-IN'))}</span><span>${escape(report.watchlistName)} watchlist &middot; ${escape(report.cover.symbol)}</span></div>`
   ].join('');

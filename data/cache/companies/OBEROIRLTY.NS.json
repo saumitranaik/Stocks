@@ -1,6 +1,6 @@
 {
   "symbol": "OBEROIRLTY.NS",
-  "fetchedAt": "2026-08-14T16:26:35.050Z",
+  "fetchedAt": "2026-08-16T18:01:42.908Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 1663.0164984130852,
     "fiftyTwoWeekHigh": 1953.4000244140625,
     "fiftyTwoWeekLow": 1411.5,
-    "regularMarketVolume": 259322,
+    "regularMarketVolume": 259326,
     "rsi14": 55.205883142565824,
     "macd": {
       "macdLine": -0.33,
@@ -24,7 +24,7 @@
       "histogram": -0.94
     },
     "oneYearReturnPct": 14.006920434007016,
-    "avgVolume20": 285320.1,
+    "avgVolume20": 285320.3,
     "ohlcv": {
       "open": [
         1622.5999755859375,
@@ -1284,19 +1284,19 @@
         134987,
         172080,
         824579,
-        259322
+        259326
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T16:25:13.352Z",
+    "asOf": "2026-08-16T17:59:52.044Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 67085,
-      "pe": 25.3,
+      "marketCap": 67121,
+      "pe": 25.4,
       "bookValue": 493,
       "dividendYield": 0.43,
       "roce": 17.3,
@@ -3303,8 +3303,11 @@
       "date": "Tue, 21 Jul 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Medium",
-      "catalystType": "Analyst view",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Low",
+      "sentiment": "Negative",
+      "catalystType": "Valuation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "OBEROIRLTY Forecast — Price Target — Prediction for 2027 - TradingView",
@@ -3312,8 +3315,11 @@
       "date": "Thu, 25 Jun 2026 14:08:54 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Oberoi Realty ESG score rises to 69.5 in 2026 - scanx.trade",
@@ -3321,27 +3327,36 @@
       "date": "Thu, 06 Aug 2026 07:00:00 GMT",
       "source": "scanx.trade",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "Revenue Downgrade: Here's What Analysts Forecast For Oberoi Realty Limited (NSE:OBEROIRLTY) - simplywall.st",
-      "url": "https://news.google.com/rss/articles/CBMiggJBVV95cUxQNTU5UnVfUE1HRDVIVk5MY0liUldsbGlKWjdFa0REX2d2RWR6Ul9WOHlLXzZ5OUEtQVdzWFMwN2I1b3lkQVh4VWpWdkVDbW1ESDRSM3Y4VG9pMC1KckhOQjNCbjQ3ZGlWTTkyLVRlN0taNFA2SC04d1V1bG1mWnBjbU9oYUo4UC1mUnFEM2pSTHlRcDdIZHFhMzJJNlROQlBMaGNmeFdzVC1nZUN0dm1ZdldMRFFWdFlPTkJoNFhIV1R6ZjBNWTZPdnZxYkhFRXNQTHBtWWJmWGQ4WUZrOWVjeUpZNGJzdVhYOTBaREF1azk5c0ZWNmNCUUljVUNMOXlycUHSAYcCQVVfeXFMT1FraGlGOWlJcnlqaENuU1JnanF0eTdKdGJmNzBTeTVxQUJ2dVVqWjNyNWxhY002ZlRjYWkzSDRSblBHRldJa2UxRHJpcXpQeU1hLURSVjR0Wlo0VE04REQxUlVpVmJkUmRwS2w3WE5fbzlCcW5oVUM0aEtkNFBldThtTzVBRzlBcjdMMW10alpuNG0xeVFPSHZVUzhGblNlUDNVaFp5cmZlanV5ckpyVjZmdzEzQVVtTjh5TXo4a2ozMmNoWHpVX3VKanU3dldhNXAtb0FBaE5VaXFMYl9hZEcyU3I0SVUyWVhWZzB2WlpDUEtRbWt2Z1NRQlUzZGNIOVVDYmEwenM?oc=5",
-      "date": "Sun, 19 Jul 2026 07:00:00 GMT",
+      "title": "Should You Buy Oberoi Realty Limited (NSE:OBEROIRLTY) For Its Upcoming Dividend? - simplywall.st",
+      "url": "https://news.google.com/rss/articles/CBMihAJBVV95cUxNZmpNY215WnZsby1lWk84RWxHUkdoaUljb3NwdVpmRmxmTzVXZG80cDhlQ2pmQ29OMUN6MG9CdlJEcURGakZ1bUUzOTVidHh3SEhDNjFNZy1hZk1Eb3JodF9rdWNnQ19FeldLei0tTTNrQWpXRWhERE96YlRhS1dPaWdrMTFrNnpNY3JySEN4UW5Sb09tSjF2STlsYkNMYnJmaVY1N2xhQzAwUVpuTk9lUEtfU2l6bDZCRVNsTzJsVnZmWWR6dXo3WV8xN2ZSWXhwQzRBdWxfX21sSU9jS0h0ZWdxU2tYZzl5Vk9fa0lRVHQwVm02WVVsMjBDbGs3bzFLeHpiMtIBigJBVV95cUxOVTlWa3R1QTh4QzlPWks1OWZWbXlYSnZSV0NPdkZxbUFCbWtNa2RKU240T3h1QWlQLW4wazFvajU4aU5IYnhOMXdlN0pYOXQtSFYtdk4tdzRpaHdkTEx2S2VRRnl3OUQtX2EyLWNSQmxjeTdpRUFnU2tOOFladWxOWkJiZUxJc0IzTURyZEJWTFVxM3IxdngxN1RMaTJtUkNocjNYNVN6V0ctRlB3cV9qdEdobVRySVl2SHlnYW93eDBFUDNBd2M5c0pGTlFEaXFYMnFGRjR5akNxSnIyUkVuNDZYZUNMcnBILWVHMWM0X1pCdVdqV3dLN25WQXdXZm5LdC0yYkV5aVo5QQ?oc=5",
+      "date": "Tue, 12 May 2026 07:00:00 GMT",
       "source": "simplywall.st",
-      "impact": "Low",
-      "catalystType": "Analyst view",
-      "expectedTimeline": "Near-term"
+      "impact": "Medium",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
-      "title": "Realty Stocks Slide As RBI Holds Rates | Oberoi Realty, DLF, Godrej Properties | Stock Market Today - Samco",
-      "url": "https://news.google.com/rss/articles/CBMi6wFBVV95cUxPakZ0dHk2TDVXdm9oTWlKMkpaWDhFSUlUSTdCYWVpVy1HYVZ3V3Bjbm90UTlVRXF3Z1B6aWx5ZkdvRWYxY3BzaTVrMHN1R1otRGh4d19udHEyVXZyTDhRY1lTMldZV1FfaXJHSzJoOE9IZlljTXZmZ1Z5Q2tyY1BaQkVVZ0UyYzRtby1oM0g0YmNMcG1reUhBc3VYRWlERUhDMlV5LXNxZ0pjRWNfSGlCbGNIQVZqczMwajR3Z0JCdmhubE5lbG03SFE4Mm94QXdxNTVTUDdDc2hUSUdWcWctY2hrMkFqRDZpVElv?oc=5",
-      "date": "Fri, 06 Feb 2026 08:00:00 GMT",
-      "source": "Samco",
+      "title": "Two Trades for Today: A realty major for an 8.3% upmove, a large-cap IT stock for a gain of almost 6% - The Economic Times",
+      "url": "https://news.google.com/rss/articles/CBMigAJBVV95cUxQbDRjUkJjNHAwS3RKUzB2d1pmeHV6UnFNby1jXzJGSWVFNzNmdHF0OUgza0FEVUl6aGp1eGNIRWlWTGFsdUNObGhjQjl5REdWcWFjNXRFX0RPR0pHUDlYRGRhUjA4QjFMTXNXN2FWMFBRcmJTYi03YlpRMy1PUmRQLTE4a2dLbHVTclVjdGQweHZXSVkzN0I4RFlvMG1WOE1VMmQ2REI5RVd0Y29MOUVPVERWVVh0UWVDMzBkOEo5Q0NvRGEtWnFCZDdVRGUtejZ6NmVsdXpGRmRaV2NtY2VQM3BnUzJYbUZVNFNEeHYtMlVSLXM2WVFyU2pqeFNwT1JB0gGGAkFVX3lxTE95STlBTXdVdnhzVk9iR0VUOWVObTQ5dEpXWGthZnU4dkpRMVRLb1VIck5vYkFoVXpBU2haR1p0TnNwZDJTOTZBaW8zVVYwZ2tUY1VHakN3QmNIOVpFWFpEWFFrUDlfZVNZZ05hcW52TzZnRU1NWmVnT2dUdDZfTUtjQ0Ezd0w2MDZlOTAybVd0aHk4Z3BvS2VxTko2endISUFTcUxReTRfY2VWRkFqX01QS2ZmR1dIZ2VpazJxNllMbi1Ya05zTHQtdFJnMW9CVUN0THpDWnBUZ1lQMzkwU2ZSci1OZTF2S3FVSUdUNnpMZUtHM0V0eFpuT2FSX2ZXNU1iRkE3N1E?oc=5",
+      "date": "Sun, 31 May 2026 07:00:00 GMT",
+      "source": "The Economic Times",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T16:26:35.050Z"
+  "newsFetchedAt": "2026-08-16T18:01:42.908Z"
 }

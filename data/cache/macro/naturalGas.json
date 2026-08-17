@@ -1,0 +1,12 @@
+{
+  "key": "naturalGas",
+  "ticker": "NG=F",
+  "fetchedAt": "2026-08-16T17:59:51.652Z",
+  "quote": {
+    "price": 2.7330000400543213,
+    "changePct": -6.275718791004069,
+    "oneYearChangePct": -5.432527998301206,
+    "fiftyDayAverage": 2.9923399925231937,
+    "twoHundredDayAverage": 3.411074995994569
+  }
+}

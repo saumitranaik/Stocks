@@ -1,6 +1,6 @@
 {
   "symbol": "DATAPATTNS.NS",
-  "fetchedAt": "2026-08-14T12:23:01.012Z",
+  "fetchedAt": "2026-08-16T18:06:47.119Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 3467.4680041503925,
     "fiftyTwoWeekHigh": 4866.2001953125,
     "fiftyTwoWeekLow": 2182.5,
-    "regularMarketVolume": 444489,
+    "regularMarketVolume": 444565,
     "rsi14": 51.35505343529034,
     "macd": {
       "macdLine": 20.85,
@@ -24,7 +24,7 @@
       "histogram": 4.14
     },
     "oneYearReturnPct": 76.99304090119166,
-    "avgVolume20": 1146508.8,
+    "avgVolume20": 1146512.6,
     "ohlcv": {
       "open": [
         2510,
@@ -1284,18 +1284,18 @@
         313404,
         836820,
         594263,
-        444489
+        444565
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.229Z",
+    "asOf": "2026-08-16T18:00:08.136Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Standalone",
     "snapshot": {
-      "marketCap": 24939,
+      "marketCap": 24945,
       "pe": 92.3,
       "bookValue": 310,
       "dividendYield": 0.22,
@@ -3186,11 +3186,11 @@
       },
       {
         "date": "2026-08-09",
-        "close": 4529.2998046875
+        "close": 4455.7998046875
       },
       {
         "date": "2026-08-14",
-        "close": 4455.7998046875
+        "close": 4470
       }
     ]
   },
@@ -3201,8 +3201,11 @@
       "date": "Thu, 25 Jun 2026 12:21:26 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Concerns Surrounding Data Patterns (India)'s (NSE:DATAPATTNS) Performance - simplywall.st",
@@ -3210,8 +3213,11 @@
       "date": "Tue, 26 May 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Data Patterns and Azad Engineering shares in Focus for this reason - India Infoline",
@@ -3219,17 +3225,11 @@
       "date": "Tue, 02 Jun 2026 07:00:00 GMT",
       "source": "India Infoline",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Data Patterns (India) Ltd passes all 9 resolutions at 28th AGM - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPX2VsYTlsNkhHNURPSWRKMWtPLUhZSnBvQmZsd0tJUTM5M0VKd1A3cldZUl9hN0FBc3pxWnpSZ3NyN0ZjV1pmWkdIRkZYUE1BRlUxdEhDVEE2OEJkZUxyclNPOGNobHdVTVlMNUl0WnY0X2lBRUxuYVY5bzVkWElJVkZTSEtrandyQnZvcGhYVUNmWVVNdW1YaHg2V1hYNEROMkZiem1ZQXU3enI3aE1ERU5jTWpReTFj?oc=5",
-      "date": "Mon, 03 Aug 2026 07:00:00 GMT",
-      "source": "scanx.trade",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Data Patterns' share price in focus as the company secures ₹288 crore order; all you need to know - Upstox",
@@ -3237,9 +3237,24 @@
       "date": "Sun, 15 Mar 2026 07:00:00 GMT",
       "source": "Upstox",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Data Patterns (India) Limited Confirms Full Dematerialization Status for Q4 FY26 - scanx.trade",
+      "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxQRksxUnNNaTdwMjRZTXYyUEd3QVRNall0ZWV4ODNhNkhFalhTU1NOcmc0XzdIbnlIcFdBS0xKeEtJTUtKbXRYSV83R2pZYTQtZ2pIVzBjNHE3OG96SmxKVUtPdExwZklpcHdoNkhxbHpOMm4yNXlHV0lscGVHaUxOT291REdtMENXQ2p3NTNkSTVycEpYLVdPSUdCdXQ1OGx1dW45dlA5cHVJaklhTHBGOTl0QTNtRHNXS0F3bURXLVBkOFpFRXFqc0R6RVpoRTk4?oc=5",
+      "date": "Thu, 09 Apr 2026 07:00:00 GMT",
+      "source": "scanx.trade",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:01.012Z"
+  "newsFetchedAt": "2026-08-16T18:06:47.119Z"
 }

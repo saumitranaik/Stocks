@@ -1,6 +1,6 @@
 {
   "symbol": "JUBLFOOD.NS",
-  "fetchedAt": "2026-08-14T16:26:35.030Z",
+  "fetchedAt": "2026-08-16T18:01:42.918Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 494.8275000000002,
     "fiftyTwoWeekHigh": 663.7999877929688,
     "fiftyTwoWeekLow": 412.29998779296875,
-    "regularMarketVolume": 12893002,
+    "regularMarketVolume": 12894239,
     "rsi14": 70.05852531317342,
     "macd": {
       "macdLine": 17.86,
@@ -24,7 +24,7 @@
       "histogram": 4.72
     },
     "oneYearReturnPct": -20.218402218652407,
-    "avgVolume20": 3754518.45,
+    "avgVolume20": 3754580.3,
     "ohlcv": {
       "open": [
         657.25,
@@ -1284,19 +1284,19 @@
         2648480,
         3122764,
         8831457,
-        12893002
+        12894239
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T16:25:13.386Z",
+    "asOf": "2026-08-16T17:59:52.035Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 33232,
-      "pe": 87.2,
+      "marketCap": 33263,
+      "pe": 87.3,
       "bookValue": 34.7,
       "dividendYield": 0.24,
       "roce": 14.8,
@@ -3315,7 +3315,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 491.54998779296875
+        "close": 504.1000061035156
       },
       {
         "date": "2026-08-14",
@@ -3325,22 +3325,28 @@
   },
   "news": [
     {
-      "title": "Jubilant FoodWorks Limited (JUBLFOOD.BO) stock price, news, quote and history - Yahoo Finance UK",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE50WjRFY1o0Q1A3Z1NnYnR0T0FkZlh2RVhnbXdQVlZfYXZYekNNN01SMmswaFhpNnBNOG56bEtyTXptMWc4SXRhOTB5am1BS2JZT1BJWlNVcEt2OGczdGRFcWw2UU82WVhpbzBj?oc=5",
-      "date": "Mon, 03 Aug 2026 15:08:48 GMT",
-      "source": "Yahoo Finance UK",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "title": "Jubilant FoodWorks Limited (NSE:JUBLFOOD) Looks Like A Good Stock, And It's Going Ex-Dividend Soon - simplywall.st",
+      "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxPc2hpMEFZVGdJeFIwWHc3cy04UEQ3XzNOLTJaVlNOZVktQ2FoLVpVVXl3S182Um5zcjVpMTNRV2ZEWjB6X3JrYVRKbm1Db0pMWTFjT1RmdzdFR1lTUUNZeFZJOU9rRjIweW1DeS1Cc3g2Rnd0WVNjWmpPTlVaQTBQOEg1dEdGMkxlUC0zN3M5eUFwQWp0ek9yeTVIZGRmZU1zVzBiRFUyQlBaZXNtM3N2QjZyaXRSUGUxTkdqazdRcmZwYk95YXNneTJoa2FhT3FtRmk5SjBDRE8ta25HU1RKTkVDYXpiaUs2UUHSAe8BQVVfeXFMT0VtajBXVDJCeWlpUFk0M3VjeEExRTFOMXZkaTZ4OE1uYmxoblc3MGphNXhsM19yYmNNLW5BcFZad004TUpZM3JPdmoxcVNqOWY4MmFYcVN2NThZdjk1Mk5pWXRXVnhkREpZVGdMVDhKTXQxVDJ4VDhrWHVPX3NsTmZOOF82dmFrSWJScDJGVGtqSW9WeVNtNmdieFVsUnMyZTZtcHJaOHdpZjBJZ1Q3UDQyajFvdDhYZU9iZHlLZEhsNXk2WmFxbFN0RUpwaEtyUEhmUWFPNWd5QkUtYV9nX01CUGdpSkIxd0d2Nk1uclU?oc=5",
+      "date": "Tue, 14 Jul 2026 07:00:00 GMT",
+      "source": "simplywall.st",
+      "impact": "Medium",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
-      "title": "Jubilant FoodWorks Limited's (NSE:JUBLFOOD) recent 4.0% pullback adds to one-year year losses, institutional owners may take drastic measures - simplywall.st",
-      "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxPdmVaOEdKMktwVm9HOEhpSWxSOE5wZXh3YUpVeGdiaG1BanJQaFlfR1RwaHIxNmk4U0tVM1JOa0NDLUhfTFo5blc2UVc0X1VSVl9udUR3Z3Vlb1BTYWhwRkJVUU5rcU1YQVBzUG1TY1NoQlNBODllS1d3Z3RXM0dRYnNnR1VBa2xXa05BX0Z4RlJnSXJoTnpVNGNmUTM4N3pSOGZmRGtPWmxfVVgyVW13bkJsM0Q0RHctWHNHVzZ1N09EMkJyYUF2MGNzS3drQ1lyZ1AySlBVbnlaR0QyeDVmUk81dU5xUWY4d0HSAe8BQVVfeXFMTlNCdVpkejg5bXEybFhwcVRVbVZqbmN5X0FZN1ZCb3Q2UmtnVEozZm4zS1Y2Y0ttY3dpQkItZVVZWjlhUDdvVUg3MmRFUjdERGRyS0twWGkzUjYwdDJWLU1aNWFkSnJkMWdfY3IyOVlfbWZleWF6TVhHdHNtN0tMdjBiREVaam1TczMtUUZmaUhaVkhNMHQ4X1ZPeUtoUnJyRWpVNkZDSWkyUENIa3F2QWx4QXZEdXgtSERNQkwwM1lKWWNXZnhFTzB5MlJZV25hWUtqVWd0c3pPaE5FUUx1bGFGS0U2UEN2ejBfODNwVWc?oc=5",
-      "date": "Wed, 21 Jan 2026 08:00:00 GMT",
-      "source": "simplywall.st",
+      "title": "Jubilant FoodWorks Limited (JUBLFOOD.BO) stock price, news, quote and history - Yahoo Finance UK",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5FWDN3U2xXN0h1S0RsZVgtcnBXbVNHaWdEaTdCTTU2a2ZXZ1ZlQzkxcTBEcWdNdGJqOXYtMENfVG1LWGtwRWNyZUdaTTRFZTdFOENqRnBwdUlPdC1VVUlkM1Z5TEtCWk8tN0E?oc=5",
+      "date": "Mon, 03 Aug 2026 16:31:25 GMT",
+      "source": "Yahoo Finance UK",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Jubilant FoodWorks Update; Shares Drop 6% On LFL Weakness - HDFC Sky",
@@ -3348,8 +3354,11 @@
       "date": "Tue, 07 Apr 2026 07:00:00 GMT",
       "source": "HDFC Sky",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Jubilant FoodWorks sets TDS rules for ₹1.20 FY26 dividend - scanx.trade",
@@ -3357,18 +3366,24 @@
       "date": "Tue, 21 Jul 2026 07:00:00 GMT",
       "source": "scanx.trade",
       "impact": "Medium",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
-      "title": "We Think Jubilant FoodWorks (NSE:JUBLFOOD) Can Stay On Top Of Its Debt - simplywall.st",
-      "url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxQdHJQMW5YQ0E5Rmp6SWQ2N1hMNXJSWXBXTk5kTkRzb2ZRVkF3NFRkSEQ4UHlyQmV5eDEzVlQ1YzhxU0lNdXFDOFBXbmJMNkRFUnExODlyVXFLS1h1S0N6VVo4MzZiMmZRZXhVc09Wd0xfMEtONUowR2dsMDQwV0I4TmlZRlJYWE1IVEtZWlIzUXFERzJjYWlpaUZDcFRNY1NlTFFWTWt1dlZiYWQ5WnU4MWgxczFNTnBrVkNYWkY2Q3otRkc3SFhBV3BmMFFHRGZucVRYNDlHenlzNG9fZUNJQ1V0NFVoc1FKX2M3cNIB8gFBVV95cUxPVFh0Z3BLbmR6VW1XVzY0WnVtRWxlVXNvWVR4WlVQcUZzeEVYSEN4YTlqOE9QaEQtNXQ3M2JudDFoaXBIU2RSSDJuVThoa0dqQ3YzOUhmNmFLV19XVWNsVjhxdExNcDdtcm9CNjdDem1uUHZlNFBFdGdmc3hHVHZZNUtobjNPZWNjWWZjLURzRWhKb1dsb3JYMlRSVWdLVlJ0RnRPakZiVVBJUTE4alNzaDd4b0piemN0ZmFfUTZmY1hoUkRvUGVwOXZ2QXZEc0dSWlh5YkhKdnlHZk03blpzalBjUkptU2FUNkpVekh0OWh2dw?oc=5",
-      "date": "Sun, 08 Feb 2026 08:00:00 GMT",
+      "title": "Jubilant FoodWorks Limited's (NSE:JUBLFOOD) recent 4.0% pullback adds to one-year year losses, institutional owners may take drastic measures - simplywall.st",
+      "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxPdmVaOEdKMktwVm9HOEhpSWxSOE5wZXh3YUpVeGdiaG1BanJQaFlfR1RwaHIxNmk4U0tVM1JOa0NDLUhfTFo5blc2UVc0X1VSVl9udUR3Z3Vlb1BTYWhwRkJVUU5rcU1YQVBzUG1TY1NoQlNBODllS1d3Z3RXM0dRYnNnR1VBa2xXa05BX0Z4RlJnSXJoTnpVNGNmUTM4N3pSOGZmRGtPWmxfVVgyVW13bkJsM0Q0RHctWHNHVzZ1N09EMkJyYUF2MGNzS3drQ1lyZ1AySlBVbnlaR0QyeDVmUk81dU5xUWY4d0HSAe8BQVVfeXFMTlNCdVpkejg5bXEybFhwcVRVbVZqbmN5X0FZN1ZCb3Q2UmtnVEozZm4zS1Y2Y0ttY3dpQkItZVVZWjlhUDdvVUg3MmRFUjdERGRyS0twWGkzUjYwdDJWLU1aNWFkSnJkMWdfY3IyOVlfbWZleWF6TVhHdHNtN0tMdjBiREVaam1TczMtUUZmaUhaVkhNMHQ4X1ZPeUtoUnJyRWpVNkZDSWkyUENIa3F2QWx4QXZEdXgtSERNQkwwM1lKWWNXZnhFTzB5MlJZV25hWUtqVWd0c3pPaE5FUUx1bGFGS0U2UEN2ejBfODNwVWc?oc=5",
+      "date": "Wed, 21 Jan 2026 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Negative",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T16:26:35.030Z"
+  "newsFetchedAt": "2026-08-16T18:01:42.918Z"
 }

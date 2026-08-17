@@ -1,6 +1,7 @@
 import { number, clamp, average } from '../util.mjs';
 import { computeFactors } from './factors.mjs';
 import { ratingFor, capRatingAtMost, BUY_SIDE_TIERS, INSUFFICIENT_DATA } from './ratings.mjs';
+import { companyQualityScore, stockAttractivenessScore } from './qualityAttractiveness.mjs';
 
 // -- Unified institutional recommendation engine -----------------------------
 // Replaces the Phase 1 rating engine (a flat 12-factor weighted average) with
@@ -111,12 +112,21 @@ function derivePrimaryDriver(components) {
 // earnings stability (the business-quality factor, which is itself a
 // margin/ROCE stability read), and the sector valuation model's own
 // confidence band.
-function deriveConfidenceInputs({ businessQualityScore, dcf, financialValuation, institutionalRisk }) {
+// Peer-availability confidence score (foundation upgrade, §13): only
+// supplied once relativeValuation.mjs's per-stock peer-completeness read
+// resolves (pass 2 -- see finalizeRecommendation below). `null` in pass 1,
+// where it's correctly excluded from confidenceParts below rather than
+// defaulted, same "missing input, not neutral 50" rule every confidence
+// blend in this codebase already follows.
+const PEER_COMPLETENESS_CONFIDENCE_SCORE = { Strong: 100, Adequate: 80, Weak: 40, Unavailable: 10 };
+
+function deriveConfidenceInputs({ businessQualityScore, dcf, financialValuation, institutionalRisk, peerCompleteness }) {
   return {
     businessQualityScore: businessQualityScore ?? null,
     valuationApplicable: !!(dcf?.available || financialValuation?.available),
     riskCategoriesResolvedFrac: institutionalRisk ? Object.values(institutionalRisk.categories || {}).filter(Number.isFinite).length / 5 : null,
-    sectorModelConfidenceBand: dcf?.confidenceBand || financialValuation?.confidenceBand || null
+    sectorModelConfidenceBand: dcf?.confidenceBand || financialValuation?.confidenceBand || null,
+    peerCompletenessScore: peerCompleteness != null ? (PEER_COMPLETENESS_CONFIDENCE_SCORE[peerCompleteness] ?? null) : null
   };
 }
 
@@ -134,9 +144,9 @@ function composeRecommendation(components, confidenceInputs) {
   let rating = ratingFor(compositeScore);
   const notes = [];
 
-  const { businessQualityScore, valuationApplicable, riskCategoriesResolvedFrac, sectorModelConfidenceBand } = confidenceInputs;
+  const { businessQualityScore, valuationApplicable, riskCategoriesResolvedFrac, sectorModelConfidenceBand, peerCompletenessScore } = confidenceInputs;
   const sectorModelConfidenceScore = { High: 100, Medium: 60, Low: 30 }[sectorModelConfidenceBand] ?? null;
-  const confidenceParts = [dataCompletenessPct, valuationApplicable ? 100 : 0, riskCategoriesResolvedFrac != null ? riskCategoriesResolvedFrac * 100 : null, businessQualityScore, sectorModelConfidenceScore].filter(Number.isFinite);
+  const confidenceParts = [dataCompletenessPct, valuationApplicable ? 100 : 0, riskCategoriesResolvedFrac != null ? riskCategoriesResolvedFrac * 100 : null, businessQualityScore, sectorModelConfidenceScore, peerCompletenessScore].filter(Number.isFinite);
   const confidenceScore = confidenceParts.length ? Math.round(average(confidenceParts)) : null;
   const confidence = confidenceScore == null ? 'Low' : confidenceScore >= 70 ? 'High' : confidenceScore >= 45 ? 'Medium' : 'Low';
 
@@ -165,6 +175,41 @@ function composeRecommendation(components, confidenceInputs) {
   };
 }
 
+// -- Fundamental/Market/Timing separation (foundation upgrade, §15) --------
+// Additive views over the same 5 bucket scores the primary blended `rating`
+// already uses -- neither `rating` nor `compositeScore` is touched by any of
+// this. Fundamental View = Quality+Valuation+Risk only (no Technical), so a
+// weak chart can never masquerade as a business-quality read. Market View =
+// the Technical bucket plus the technical regime label. Action Guidance is a
+// small disclosed lookup combining the two, same style as DRIVER_LABELS
+// above -- never a second rating.
+function buildFundamentalView(components) {
+  const parts = ['quality', 'valuation', 'risk'].map(key => ({ score: components[key].score, weight: components[key].weight })).filter(p => p.score != null);
+  const score = parts.length ? Math.round(weightedAverage(parts)) : null;
+  const label = score == null ? 'Insufficient data' : score >= 70 ? 'Positive' : score >= 45 ? 'Neutral' : 'Negative';
+  return { score, label, components: { quality: components.quality.score, valuation: components.valuation.score, risk: components.risk.score } };
+}
+function buildMarketView(components, technicalRegime) {
+  const score = components.technical.score;
+  const label = score == null ? 'Insufficient data' : score >= 60 ? 'Favorable' : score >= 40 ? 'Neutral' : 'Unfavorable';
+  return { score, label, regime: technicalRegime ?? null };
+}
+const ACTION_GUIDANCE = {
+  'Positive|Favorable': 'Fundamentally attractive and technically favorable — timing is supportive of the fundamental case.',
+  'Positive|Unfavorable': 'Fundamentally attractive but technically weak — consider accumulating on weakness rather than chasing strength.',
+  'Positive|Neutral': 'Fundamentally attractive with a neutral technical setup — no strong timing signal either way.',
+  'Neutral|Favorable': 'Technically firm on a fundamentally neutral case — timing looks constructive, but the underlying business case is not itself a strong driver.',
+  'Neutral|Unfavorable': 'Technically weak on a fundamentally neutral case — little urgency either way.',
+  'Neutral|Neutral': 'Fundamental and technical signals are both neutral — no strong combined read.',
+  'Negative|Favorable': 'Technically firm but fundamentally weak — technical strength should not be read as a business-quality signal.',
+  'Negative|Unfavorable': 'Fundamentally weak and technically weak — both views agree cautiously.',
+  'Negative|Neutral': 'Fundamentally weak — timing signals are secondary to the underlying business concern.'
+};
+function actionGuidanceFor(fundamentalView, marketView) {
+  if (fundamentalView.label === 'Insufficient data' || marketView.label === 'Insufficient data') return 'Insufficient data for combined fundamental/technical guidance.';
+  return ACTION_GUIDANCE[`${fundamentalView.label}|${marketView.label}`] || 'Fundamental and technical signals are mixed — no strong combined read.';
+}
+
 // Pass 1 (per-stock): every bucket except Relative positioning, which needs
 // the full watchlist assembled first (relativeValuation.mjs runs as a
 // second pass over all stocks). Returns a complete, displayable
@@ -177,7 +222,13 @@ export function buildRecommendation({ quote, fundamentals, industryPe, dcf, fina
   const businessQualityScore = factors.find(f => f.key === 'businessQuality')?.value ?? null;
   const confidenceInputs = deriveConfidenceInputs({ businessQualityScore, dcf, financialValuation, institutionalRisk });
   const recommendation = composeRecommendation(components, confidenceInputs);
-  return { ...recommendation, factors: Object.fromEntries(factors.map(f => [f.key, f])) };
+  return {
+    ...recommendation, factors: Object.fromEntries(factors.map(f => [f.key, f])),
+    // -- Foundation upgrade: additive, non-overriding analytical lenses over
+    // the same already-computed factors/buckets -- see qualityAttractiveness.mjs
+    // and the Fundamental/Market View helpers above. --
+    companyQuality: companyQualityScore(factors), stockAttractiveness: stockAttractivenessScore(factors)
+  };
 }
 
 // Pass 2 (after the watchlist-wide relative-valuation pass): folds in the
@@ -185,12 +236,20 @@ export function buildRecommendation({ quote, fundamentals, industryPe, dcf, fina
 // read from scratch -- cheap (pure aggregation over already-computed
 // sub-scores), not a re-fetch or re-derivation of anything. This is the
 // recommendation that ships in the API response and every tab renders.
-export function finalizeRecommendation({ recommendation, relativeValuationScore, dcf, financialValuation, institutionalRisk }) {
+// `technicalRegime`/`peerCompleteness` (foundation upgrade) are optional --
+// omitting either preserves this function's exact pre-upgrade behavior.
+export function finalizeRecommendation({ recommendation, relativeValuationScore, dcf, financialValuation, institutionalRisk, technicalRegime = null, peerCompleteness = null }) {
   const components = { ...recommendation.components, relativePositioning: { ...recommendation.components.relativePositioning, score: Number.isFinite(relativeValuationScore) ? Math.round(relativeValuationScore) : null } };
   const businessQualityScore = recommendation.factors?.businessQuality?.value ?? null;
-  const confidenceInputs = deriveConfidenceInputs({ businessQualityScore, dcf, financialValuation, institutionalRisk });
+  const confidenceInputs = deriveConfidenceInputs({ businessQualityScore, dcf, financialValuation, institutionalRisk, peerCompleteness });
   const final = composeRecommendation(components, confidenceInputs);
-  return { ...final, factors: recommendation.factors };
+  const fundamentalView = buildFundamentalView(components);
+  const marketView = buildMarketView(components, technicalRegime);
+  return {
+    ...final, factors: recommendation.factors,
+    companyQuality: recommendation.companyQuality, stockAttractiveness: recommendation.stockAttractiveness,
+    fundamentalView, marketView, actionGuidance: actionGuidanceFor(fundamentalView, marketView)
+  };
 }
 
 export { INSUFFICIENT_DATA };

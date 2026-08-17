@@ -1,4 +1,4 @@
-import { number } from '../util.mjs';
+import { number, precisionForConfidence } from '../util.mjs';
 import { timeSeries } from '../analytics/series.mjs';
 import { companyCache } from '../watchlist/diskCache.mjs';
 
@@ -57,10 +57,24 @@ function coverHeader(stock, research) {
   };
 }
 
+// Precision-confidence coupling (foundation upgrade, §10/§17): every
+// valuation model in this app now discloses its own confidenceBand (DCF/
+// financialValuation already did; valuation.mjs's P/E-P/B reversion
+// heuristic gained one as part of this upgrade). This report is the one
+// place that number is actually shown to a reader, so precisionForConfidence
+// is applied here -- presentation only, never touching the underlying
+// figure `stock.valuation`/`stock.dcf`/`stock.financialValuation` still
+// carry at full precision for every other consumer (the main dashboard,
+// the decision layer's own valuationMarginPct calculation, etc.).
+function resolvedConfidenceBand(stock, model) {
+  return model?.confidenceBand ?? stock.valuation?.confidenceBand ?? null;
+}
+
 function executiveSummary(stock, model) {
   const rec = stock.recommendation || {};
-  const fairValue = model?.base ?? stock.valuation?.fairValue ?? null;
-  const targetPrice = stock.valuation?.targetPrice ?? null;
+  const confidenceBand = resolvedConfidenceBand(stock, model);
+  const fairValue = precisionForConfidence(model?.base ?? stock.valuation?.fairValue ?? null, confidenceBand);
+  const targetPrice = precisionForConfidence(stock.valuation?.targetPrice ?? null, confidenceBand);
   const upsideToTargetPct = targetPrice != null && stock.price > 0 ? number(((targetPrice - stock.price) / stock.price) * 100) : null;
   const upsideToFairValuePct = fairValue != null && stock.price > 0 ? number(((fairValue - stock.price) / stock.price) * 100) : null;
   const overallView = rec.rating
@@ -69,6 +83,7 @@ function executiveSummary(stock, model) {
   return {
     rating: rec.rating ?? null, confidence: rec.confidence ?? null, primaryDriver: rec.primaryDriver ?? null, capNote: rec.capNote ?? null,
     currentPrice: stock.price, currency: stock.currency, fairValue, targetPrice, upsideToTargetPct, upsideToFairValuePct,
+    valuationConfidenceBand: confidenceBand,
     investmentHorizon: '12 months', overallView
   };
 }
@@ -143,13 +158,15 @@ function metricsDashboard(stock) {
 }
 
 function valuationAnalysis(stock, model) {
+  const confidenceBand = resolvedConfidenceBand(stock, model);
   return {
     primaryModelSource: model?.source ?? null,
     currentPrice: stock.price,
-    fairValue: model?.base ?? stock.valuation?.fairValue ?? null,
-    targetPrice: stock.valuation?.targetPrice ?? null,
+    fairValue: precisionForConfidence(model?.base ?? stock.valuation?.fairValue ?? null, confidenceBand),
+    targetPrice: precisionForConfidence(stock.valuation?.targetPrice ?? null, confidenceBand),
     marginOfSafetyPct: stock.valuation?.marginOfSafetyPct ?? null,
-    bull: model?.bull ?? null, base: model?.base ?? null, bear: model?.bear ?? null,
+    bull: precisionForConfidence(model?.bull ?? null, confidenceBand), base: precisionForConfidence(model?.base ?? null, confidenceBand), bear: precisionForConfidence(model?.bear ?? null, confidenceBand),
+    valuationConfidenceBand: confidenceBand,
     sensitivity: stock.dcf?.sensitivity ?? null,
     reverseImpliedGrowthPct: stock.dcf?.reverseImpliedGrowthPct ?? null,
     peHistoricalPercentile: stock.peHistoricalPercentile ?? null, peHistory: stock.peHistory ?? null,
@@ -222,33 +239,179 @@ function peerComparison(stock) {
 }
 
 // News catalysts are already shaped exactly for this by companyNews.mjs
-// (title/source/date/url/impact/catalystType/expectedTimeline); the one
-// addition here is a single synthesized "Technical" catalyst row off the
-// technical regime/signal-confidence read, timeline "Ongoing" -- never a
-// fabricated event date (this app has no earnings-calendar data source).
+// (title/source/date/url/impact/signalStrength/catalystType/expectedTimeline
+// -- 7-category taxonomy: Earnings/Valuation/Industry/Regulatory/Technical/
+// Management/Capital allocation, Phase 5); the one addition here is a single
+// synthesized "Technical" catalyst row off the technical regime/signal-
+// confidence read, timeline "Ongoing" -- never a fabricated event date (this
+// app has no earnings-calendar data source). `signalStrength` is a disclosed
+// heuristic proxy (impact + recency), never a statistical probability -- see
+// metricRegistry.mjs's `catalystSignalStrength` entry.
 function catalysts(stock) {
   const news = (stock.news || []).map(n => ({
     title: n.title, source: n.source, date: n.date, url: n.url,
-    impact: n.impact, catalystType: n.catalystType, expectedTimeline: n.expectedTimeline
+    impact: n.impact, signalStrength: n.signalStrength ?? null, catalystType: n.catalystType, expectedTimeline: n.expectedTimeline
   }));
   const ts = stock.technicalScorecard;
   const technical = ts?.regime ? [{
     title: `Technical regime: ${ts.regime}`, source: 'In-house technical scorecard', date: null, url: null,
-    impact: ts.signalConfidence || 'N/A', catalystType: 'Technical', expectedTimeline: 'Ongoing'
+    impact: ts.signalConfidence || 'N/A', signalStrength: ts.signalConfidence || null, catalystType: 'Technical', expectedTimeline: 'Ongoing'
   }] : [];
   return [...news, ...technical];
 }
 
-function finalVerdict(stock, model, execSummary) {
-  const bear = model?.bear ?? null, base = model?.base ?? execSummary.fairValue;
+// Bull/Base/Bear valuation scenario, read from the primary valuation model
+// resolved above, plus this company's own row inside the portfolio-level
+// 5-scenario stress test (data/analytics/scenarios.mjs, already computed
+// once per watchlist at research.portfolio.scenarios) -- no new stress-test
+// math, just this one company's angle on figures already computed for the
+// whole watchlist.
+function scenarioAnalysis(stock, model, research) {
+  const confidenceBand = resolvedConfidenceBand(stock, model);
+  const bull = precisionForConfidence(model?.bull ?? null, confidenceBand), base = precisionForConfidence(model?.base ?? null, confidenceBand), bear = precisionForConfidence(model?.bear ?? null, confidenceBand);
+  const bullUpsidePct = bull != null && stock.price > 0 ? number(((bull - stock.price) / stock.price) * 100) : null;
+  const bearDownsidePct = bear != null && stock.price > 0 ? number(((bear - stock.price) / stock.price) * 100) : null;
+  const stressTests = (research.portfolio?.scenarios || []).map(scenario => {
+    const perStock = (scenario.perStock || []).find(p => p.symbol === stock.symbol);
+    return { key: scenario.key, label: scenario.label, description: scenario.description, impactPct: perStock?.impactPct ?? null };
+  });
+  return {
+    modelSource: model?.source ?? null,
+    currentPrice: stock.price,
+    bull, base, bear, bullUpsidePct, bearDownsidePct,
+    methodology: model?.methodology ?? null,
+    stressTests
+  };
+}
+
+// WACC/growth/sensitivity/confidence-driver breakdown behind the target
+// price -- every field read straight off the DCF (or, for banks/NBFCs, the
+// Justified P/B) model already resolved above; no new modeling. The
+// financial-sector model has no WACC×terminal-growth sensitivity grid (only
+// a fixed ±2pp ROE bull/bear band) and this DCF model discounts reported FCF
+// directly rather than a decomposed revenue-growth-plus-margin assumption --
+// both are disclosed explicitly here rather than fabricated (CLAUDE.md:
+// never estimate a figure this app doesn't actually model).
+function targetPriceRationale(stock, model) {
+  const isFinancialSector = model?.source === 'financialValuation';
+  const marginContext = mapTuples(stock.fundamentalsAnalytics?.marginTrend?.operatingMargin);
+  return {
+    modelSource: model?.source ?? null,
+    wacc: !isFinancialSector ? (stock.dcf?.wacc ?? null) : null,
+    costOfEquityPct: isFinancialSector ? (stock.financialValuation?.costOfEquityPct ?? null) : (stock.dcf?.wacc?.costOfEquityPct ?? null),
+    growthAssumptionPct: isFinancialSector ? (stock.financialValuation?.sustainableGrowthPct ?? null) : (stock.dcf?.growth1Pct ?? null),
+    reverseImpliedGrowthPct: stock.dcf?.reverseImpliedGrowthPct ?? null,
+    sensitivity: !isFinancialSector ? (stock.dcf?.sensitivity ?? null) : null,
+    sensitivityUnavailableReason: isFinancialSector
+      ? 'The financial-sector (Justified P/B) model flexes ROE by a fixed ±2pp band for its Bull/Bear cases rather than a WACC × terminal-growth grid — no sensitivity grid is produced for banks/NBFCs/insurers/asset managers.'
+      : null,
+    valuationConfidenceScore: model?.valuationConfidenceScore ?? null, confidenceBand: model?.confidenceBand ?? null,
+    marginAssumptionNote: 'This model does not decompose growth into a separate margin assumption — it discounts reported free cash flow (or, for financial institutions, applies reported ROE) directly. The historical operating-margin trend below is shown for context only, not as a forward modeling input.',
+    marginContext,
+    methodology: model?.methodology ?? null
+  };
+}
+
+// Reads Phase 5's thesis-tracking classification (data/decision/
+// thesisTracking.mjs, already computed once per watchlist as
+// research.intelligence.thesis) -- pure passthrough, no new classification
+// logic in the reporting layer itself. `breakers` (foundation upgrade, §14)
+// is the same passthrough pattern applied to thesisTracking.mjs's new
+// structured thesisBreakers list.
+function thesisTrackingSection(research, stock) {
+  const entry = research.intelligence?.thesis?.[stock.symbol];
+  return entry
+    ? { status: entry.status, reasons: entry.reasons, breakers: entry.breakers || [] }
+    : { status: 'N/A', reasons: ['Thesis tracking unavailable for this company.'], breakers: [] };
+}
+
+// -- Company Quality vs. Stock Attractiveness (foundation upgrade, §4) -----
+// Pure passthrough of scoringEngine.mjs's already-computed additive scores --
+// the primary rating/compositeScore section (executiveSummary above) is
+// completely unchanged by this section's existence.
+function companyQualitySection(stock) {
+  const rec = stock.recommendation || {};
+  return {
+    companyQuality: rec.companyQuality || { score: null, label: 'N/A' },
+    stockAttractiveness: rec.stockAttractiveness || { score: null, label: 'N/A' },
+    fundamentalView: rec.fundamentalView || { score: null, label: 'N/A' },
+    marketView: rec.marketView || { score: null, label: 'N/A' },
+    actionGuidance: rec.actionGuidance || 'N/A'
+  };
+}
+
+// -- Segment, Capacity & Forward Estimates (foundation upgrade, §6-§9) -----
+// Pure passthrough of data/analytics/forwardFramework.mjs's schema-only
+// contracts, plus the Research Quality Gates read (§13/§18) and evidence-
+// hierarchy summary (§3) -- every field explicitly discloses its own
+// unavailability rather than fabricating a figure this app cannot source.
+function forwardOutlookSection(stock) {
+  return {
+    forwardFramework: stock.forwardFramework || null,
+    researchQuality: stock.researchQuality || null
+  };
+}
+
+// This company's own row inside every already-computed portfolio-level
+// figure: allocation weight, quality/valuation attribution (Stage 1 widened
+// qualityAttribution/valuationAttribution to expose the full per-company
+// `contributors` list, not just the top/bottom 3), marginal risk
+// contribution, diversification impact (Stage 1's new
+// positionConcentration.contributions), and the Portfolio Action Score's own
+// recommendation for this position -- nothing computed here, only looked up.
+function portfolioContext(research, stock) {
+  const portfolio = research.portfolio || {};
+  const qualityRow = (portfolio.qualityAttribution?.contributors || []).find(c => c.symbol === stock.symbol) || null;
+  const valuationRow = (portfolio.valuationAttribution?.contributors || []).find(c => c.symbol === stock.symbol) || null;
+  const riskRow = (portfolio.positionRiskContribution || []).find(c => c.symbol === stock.symbol) || null;
+  const concentrationRow = (portfolio.positionConcentration?.contributions || []).find(c => c.symbol === stock.symbol) || null;
+  const action = research.intelligence?.actionScores?.[stock.symbol] || null;
+  return {
+    weightPct: portfolio.weights?.[stock.symbol] ?? null,
+    qualityContribution: qualityRow?.contribution ?? null,
+    valuationContribution: valuationRow?.contribution ?? null,
+    riskContributionPct: riskRow?.riskContributionPct ?? null,
+    diversificationImpactPct: concentrationRow?.hhiContributionPct ?? null,
+    actionScore: action?.score ?? null, actionLabel: action?.label ?? null, actionCapNote: action?.capNote ?? null
+  };
+}
+
+// Explicit "why this rating/action" breakdown -- the unified recommendation
+// engine's own 5 bucket scores plus the Portfolio Action Score's 6 bucket
+// scores (adds Portfolio Fit), both already computed; this section only
+// presents them side by side instead of leaving the reader to piece them
+// together from the Thesis and Portfolio Context sections above.
+function explainability(research, stock) {
+  const c = stock.recommendation?.components || {};
+  const action = research.intelligence?.actionScores?.[stock.symbol] || null;
+  return {
+    rating: stock.recommendation?.rating ?? null, primaryDriver: stock.recommendation?.primaryDriver ?? null, capNote: stock.recommendation?.capNote ?? null,
+    recommendationComponents: {
+      quality: c.quality?.score ?? null, valuation: c.valuation?.score ?? null,
+      technical: c.technical?.score ?? null, risk: c.risk?.score ?? null,
+      relativePositioning: c.relativePositioning?.score ?? null
+    },
+    actionLabel: action?.label ?? null, actionCapNote: action?.capNote ?? null,
+    actionComponents: action?.components ?? null
+  };
+}
+
+function finalVerdict(stock, model, execSummary, research) {
+  const confidenceBand = resolvedConfidenceBand(stock, model);
+  const bear = precisionForConfidence(model?.bear ?? null, confidenceBand), base = precisionForConfidence(model?.base ?? null, confidenceBand) ?? execSummary.fairValue;
   const downsideToBearPct = bear != null && stock.price > 0 ? number(((bear - stock.price) / stock.price) * 100) : null;
   const riskRewardRatio = Number.isFinite(execSummary.upsideToTargetPct) && Number.isFinite(downsideToBearPct) && downsideToBearPct !== 0
     ? number(Math.abs(execSummary.upsideToTargetPct / downsideToBearPct)) : null;
+  const monitoringTriggers = (research.intelligence?.alerts || [])
+    .filter(a => a.symbol === stock.symbol)
+    .map(a => ({ severity: a.severity, message: a.message }));
   return {
     rating: stock.recommendation?.rating ?? null, confidence: stock.recommendation?.confidence ?? null,
     idealEntryZone: (bear != null && base != null) ? { low: number(Math.min(bear, base)), high: number(Math.max(bear, base)) } : null,
     fairValue: execSummary.fairValue, targetPrice: execSummary.targetPrice,
-    riskReward: { upsideToTargetPct: execSummary.upsideToTargetPct, downsideToBearPct, ratio: riskRewardRatio }
+    riskReward: { upsideToTargetPct: execSummary.upsideToTargetPct, downsideToBearPct, ratio: riskRewardRatio },
+    thesisStatus: research.intelligence?.thesis?.[stock.symbol]?.status ?? null,
+    monitoringTriggers
   };
 }
 
@@ -293,15 +456,22 @@ export async function buildCompanyReport(research, symbol) {
     metricMeta: research.metricMeta,
     cover: coverHeader(stock, research),
     executiveSummary: execSummary,
+    companyQuality: companyQualitySection(stock),
     thesis: investmentThesis(stock),
+    thesisTracking: thesisTrackingSection(research, stock),
     metricsDashboard: metricsDashboard(stock),
     valuationAnalysis: valuationAnalysis(stock, model),
+    targetPriceRationale: targetPriceRationale(stock, model),
     financialQuality: financialQuality(stock),
+    forwardOutlook: forwardOutlookSection(stock),
     technicalOutlook: technicalOutlook(stock),
     riskAnalysis: riskAnalysis(stock),
+    scenarioAnalysis: scenarioAnalysis(stock, model, research),
+    portfolioContext: portfolioContext(research, stock),
+    explainability: explainability(research, stock),
     peerComparison: peerComparison(stock),
     catalysts: catalysts(stock),
-    finalVerdict: finalVerdict(stock, model, execSummary),
+    finalVerdict: finalVerdict(stock, model, execSummary, research),
     charts: buildChartSeries(stock, cachedBundle),
     dataLimitations: research.dataLimitations
   };

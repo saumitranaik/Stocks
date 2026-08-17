@@ -149,3 +149,21 @@ export function computeFactors({ quote, fundamentals, industryPe }) {
 // Re-exported so callers building the Fundamentals tab's ROCE-decomposition
 // card don't need a separate import path for something scoring already pulls in.
 export { roceDecomposition };
+
+// -- Company Quality vs. Stock Attractiveness (foundation upgrade) ----------
+// Two named groupings over the exact same factor list above -- no new
+// calculation, just a conceptual split so "is this a good business" and "is
+// this stock a good buy right now" can be reported as two first-class,
+// separately-labeled scores (see data/scoring/qualityAttractiveness.mjs).
+// Distinct from scoringEngine.mjs's own internal QUALITY_FACTOR_KEYS (which
+// feeds the primary recommendation's Quality *bucket* and is unchanged by
+// this addition) -- these two groupings are a separate analytical lens, the
+// same non-overriding relationship data/quant/factorEngine.mjs already has
+// to the primary recommendation engine.
+export const COMPANY_QUALITY_FACTOR_KEYS = [
+  'businessQuality', 'financialStrength', 'profitability', 'growth',
+  'cashFlowQuality', 'balanceSheet', 'managementGovernance', 'industryPosition'
+];
+export const STOCK_ATTRACTIVENESS_FACTOR_KEYS = [
+  'valuation', 'riskProfile', 'technicalTrend', 'momentumVolume'
+];

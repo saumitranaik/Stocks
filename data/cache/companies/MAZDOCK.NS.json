@@ -1,6 +1,6 @@
 {
   "symbol": "MAZDOCK.NS",
-  "fetchedAt": "2026-08-14T12:23:00.829Z",
+  "fetchedAt": "2026-08-16T18:06:46.779Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 2481.2434997558607,
     "fiftyTwoWeekHigh": 2997,
     "fiftyTwoWeekLow": 2065.199951171875,
-    "regularMarketVolume": 1100929,
+    "regularMarketVolume": 1101261,
     "rsi14": 67.45131410485035,
     "macd": {
       "macdLine": 43.13,
@@ -24,7 +24,7 @@
       "histogram": 27.06
     },
     "oneYearReturnPct": -5.195851672588517,
-    "avgVolume20": 881369.7,
+    "avgVolume20": 881386.3,
     "ohlcv": {
       "open": [
         2750.10009765625,
@@ -1284,19 +1284,19 @@
         629415,
         692659,
         912756,
-        1100929
+        1101261
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.268Z",
+    "asOf": "2026-08-16T18:00:07.991Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 104307,
-      "pe": 36.5,
+      "marketCap": 104072,
+      "pe": 36.4,
       "bookValue": 242,
       "dividendYield": 0.7,
       "roce": 36,
@@ -3264,7 +3264,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 2571
+        "close": 2580
       },
       {
         "date": "2026-08-14",
@@ -3274,22 +3274,28 @@
   },
   "news": [
     {
-      "title": "CFF Fluid Wins ₹27.85 Crore Mazagon Dock Order; Shares Rise 1.89% - HDFC Sky",
-      "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE5LaTFLMHAtQm01WXR5SEZQNGVPNVA5QklfVE5IWGc1ZlhySEdWcV9VOUNWQ2hQRG9admFKM01IcEkyMkNITWppczUyb1BMbTMyMXl1ZUFhSEljaVMyS3RuYWFvWlZfdmdndGFMc3ZaQjlweHVhM1AzMUJtUTFrZw?oc=5",
-      "date": "Thu, 13 Aug 2026 10:23:12 GMT",
-      "source": "HDFC Sky",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
       "title": "Mazagon Dock Shipbuilders Limited Just Missed Earnings - But Analysts Have Updated Their Models - simplywall.st",
       "url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxQdW1SczVKdzN5WWFyZUJSZlBrVTR1Z3pRQzNDZGQxbWd3bl9hcUU1czJzeUFVZEdOVjlxTmdwVThmRFVQMUFOMkNkbEtERU5pbkhqbF9QLWhWYjNTZzg5YXo5R0FtZVBXZC1aTlV1SC05eGZ6QmlfX3hFTndLQ29ZWU1PSEt0SjRxT2lPRVluTzQ1VHg5SU5YSU1QcHp4ZHpwVWdvWm9iei16QlhVbUpFbXBlTzBoTDBlZ1FQMGJPcXQ2cm5JbEdLYTcxNW1qME1yVHRMSHpkanJZN29jTk1LVnVpOXNmQnU0S3l0dtIB8gFBVV95cUxPWnlKR2k2a05TbmJZa29nYmpYWHhPQkJ1cWcwVmNYU3hDV1QxaUJXcGhzZVRfa0VuTUJLMnh0QV9TNHVmVVRWNXFnTm53MDFVWWhka011YUNpU0RmQ1JERXkyTTJ6T1hZYXZPZVJjUmZtYXIxTXUzTjJ5cm01QkE5Y2ZKV0FtZldUX19mR0dONnB0bEhUbW1GU21rVzRONVZGR2xGTE9ZV2I5X2JYR1JDeDZOemctTjA2Y3pDUTVBZDEtbUNubjh5akkwQzNfU2ZwNmRTLS1GdVg4WmczcVlkODlNMmp3SGQxTndodVhyNGQ3UQ?oc=5",
       "date": "Mon, 03 Aug 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
+    },
+    {
+      "title": "CFF Fluid Wins ₹27.85 Crore Mazagon Dock Order; Shares Rise 1.89% - HDFC Sky",
+      "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE5LaTFLMHAtQm01WXR5SEZQNGVPNVA5QklfVE5IWGc1ZlhySEdWcV9VOUNWQ2hQRG9admFKM01IcEkyMkNITWppczUyb1BMbTMyMXl1ZUFhSEljaVMyS3RuYWFvWlZfdmdndGFMc3ZaQjlweHVhM1AzMUJtUTFrZw?oc=5",
+      "date": "Thu, 13 Aug 2026 10:23:12 GMT",
+      "source": "HDFC Sky",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Mazagon Dock Shipbuilders share price jumps 15% this week. Should you buy this defence stock amid US-Iran war? - livemint.com",
@@ -3297,17 +3303,11 @@
       "date": "Fri, 06 Mar 2026 08:00:00 GMT",
       "source": "livemint.com",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Mazagon Dock Shipbuilders promotes Devi Nair as GM (Technical) - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNaFVMaVF3RU50YnNtT3hzWWNUekR2bFJhRVkwY1NzeUJSeVZMUDZRcjVvemZpZ1gxSkhPUWNwRVd4eVYtdGxfb0JnSnVqNU42WEY0MnljWTNJTmFjaHMzcFM5VXRRbkVrai1yTHBHUDY3cENaR0tBOUctSWd1ZGJXWG84MmdjMHJtZHhoc0QtWE5odWxmSXpfUk10S1lCN1BpdlFTOWdWbVFmdXpDUUx6anF6TGQ2RFBp?oc=5",
-      "date": "Mon, 15 Jun 2026 07:00:00 GMT",
-      "source": "scanx.trade",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Mazagon Dock Shares: Surges 7.6% as ₹99,000 cr submarine deal - BusinessLine",
@@ -3315,9 +3315,24 @@
       "date": "Fri, 06 Mar 2026 08:00:00 GMT",
       "source": "BusinessLine",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Mazagon Dock Shipbuilders Share Price Jumps 15% This Week | Stock Market Today - Samco",
+      "url": "https://news.google.com/rss/articles/CBMi-wFBVV95cUxQYWJwUWp3WHJXLWVBck1BVEpXcmRWTkQ1a2lQYWFuY2hYX192eFZSS29SQndUT3o5N1dUcTNqdmctX1ZybENxSUJXcXUwalBjSkFOSHFlRDY1cGdkOUNfQkN1SzAtbkktYXJ6cXRFblRhbHo4c1VpZ05fZzVlTDU5NUlXSlg3TUVwcG9HN0cxM0pJTEJ4WDJWcW9sT2tpQ3Q2UmlCQkk3d1Q5MnRSZWI0REtJLUJYMFRZRzB0aDdicXRQMmtHTFhIZjlQVjJyZS1uN3ZfVlE5RGo5ODY2LTFJNXZnRm9LTmNRUHQ0Nmh2dFZZanVsQlN0cEJvOA?oc=5",
+      "date": "Fri, 06 Mar 2026 08:00:00 GMT",
+      "source": "Samco",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:00.829Z"
+  "newsFetchedAt": "2026-08-16T18:06:46.779Z"
 }

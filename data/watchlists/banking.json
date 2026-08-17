@@ -2,7 +2,7 @@
   "id": "banking",
   "name": "Banking",
   "createdAt": "2026-08-13T13:06:38.735Z",
-  "updatedAt": "2026-08-13T13:31:11.106Z",
+  "updatedAt": "2026-08-15T11:07:30.699Z",
   "companies": [
     {
       "symbol": "HDFCBANK.NS",
@@ -92,5 +92,7 @@
       "targetWeightPct": null,
       "addedAt": "2026-08-13T13:06:38.735Z"
     }
-  ]
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
 }

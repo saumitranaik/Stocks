@@ -1,0 +1,257 @@
+{
+  "watchlistId": "power",
+  "savedAt": "2026-08-16T18:08:41.120Z",
+  "companies": {
+    "NTPC.NS": {
+      "fetchedAt": "2026-08-15T17:20:42.938Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 673.1,
+      "targetPrice": 761.14,
+      "compositeRiskScore": 46,
+      "riskCategories": {
+        "financial": 68,
+        "business": 11,
+        "market": 49,
+        "sector": 50,
+        "governance": 53
+      },
+      "debtTrendPct": 21.57,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 4,
+      "sectorRank": 4,
+      "premiumDiscountScore": -49.37,
+      "primaryDriver": "strong relative positioning vs. peers",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": -1,
+      "relativeStrengthPercentile": 57
+    },
+    "TATAPOWER.NS": {
+      "fetchedAt": "2026-08-16T18:08:14.568Z",
+      "rating": "Insufficient data for institutional score",
+      "confidence": "Low",
+      "fairValue": null,
+      "targetPrice": null,
+      "compositeRiskScore": 56,
+      "riskCategories": {
+        "financial": null,
+        "business": null,
+        "market": 62,
+        "sector": 50,
+        "governance": null
+      },
+      "debtTrendPct": null,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 7,
+      "sectorRank": 7,
+      "premiumDiscountScore": null,
+      "primaryDriver": "neutral technical trend",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 43
+    },
+    "ADANIPOWER.NS": {
+      "fetchedAt": "2026-08-15T17:20:45.238Z",
+      "rating": "Hold",
+      "confidence": "Medium",
+      "fairValue": 136.03,
+      "targetPrice": 204.05,
+      "compositeRiskScore": 55,
+      "riskCategories": {
+        "financial": 63,
+        "business": 24,
+        "market": 88,
+        "sector": 50,
+        "governance": 52
+      },
+      "debtTrendPct": 28.35,
+      "technicalRegime": "Mixed",
+      "watchlistRank": 1,
+      "sectorRank": 1,
+      "premiumDiscountScore": 25.04,
+      "primaryDriver": "elevated valuation",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "neutral",
+      "macdSign": -1,
+      "relativeStrengthPercentile": 100
+    },
+    "TORNTPOWER.NS": {
+      "fetchedAt": "2026-08-15T17:20:45.109Z",
+      "rating": "Hold",
+      "confidence": "Medium",
+      "fairValue": 1183.94,
+      "targetPrice": 1329.45,
+      "compositeRiskScore": 48,
+      "riskCategories": {
+        "financial": 58,
+        "business": 15,
+        "market": 61,
+        "sector": 50,
+        "governance": 56
+      },
+      "debtTrendPct": 32.54,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 2,
+      "sectorRank": 2,
+      "premiumDiscountScore": 17.32,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": -1,
+      "relativeStrengthPercentile": 29
+    },
+    "CESC.NS": {
+      "fetchedAt": "2026-08-15T17:20:45.044Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 291.02,
+      "targetPrice": 299.69,
+      "compositeRiskScore": 54,
+      "riskCategories": {
+        "financial": 68,
+        "business": 24,
+        "market": 73,
+        "sector": 50,
+        "governance": 54
+      },
+      "debtTrendPct": 51.94,
+      "technicalRegime": "Uptrend",
+      "watchlistRank": 3,
+      "sectorRank": 3,
+      "premiumDiscountScore": 11.22,
+      "primaryDriver": "strong relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 71
+    },
+    "JSWENERGY.NS": {
+      "fetchedAt": "2026-08-15T17:20:45.115Z",
+      "rating": "Reduce",
+      "confidence": "Medium",
+      "fairValue": 426.02,
+      "targetPrice": 517.02,
+      "compositeRiskScore": 61,
+      "riskCategories": {
+        "financial": 73,
+        "business": 28,
+        "market": 82,
+        "sector": 50,
+        "governance": 72
+      },
+      "debtTrendPct": 207.16,
+      "technicalRegime": "Uptrend",
+      "watchlistRank": 5,
+      "sectorRank": 5,
+      "premiumDiscountScore": 46.85,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 86
+    },
+    "NHPC.NS": {
+      "fetchedAt": "2026-08-15T17:20:45.120Z",
+      "rating": "Hold",
+      "confidence": "Medium",
+      "fairValue": 109.93,
+      "targetPrice": 113.05,
+      "compositeRiskScore": 59,
+      "riskCategories": {
+        "financial": 75,
+        "business": 28,
+        "market": 60,
+        "sector": 50,
+        "governance": 80
+      },
+      "debtTrendPct": 77.14,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 6,
+      "sectorRank": 6,
+      "premiumDiscountScore": 54.6,
+      "primaryDriver": "attractive valuation",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": -1,
+      "relativeStrengthPercentile": 14
+    }
+  },
+  "portfolio": {
+    "beta": 1.09,
+    "diversificationScore": 43,
+    "compositeRiskScoreAvg": 54.14,
+    "topSectorSharePct": 100,
+    "recentAvgCorrelation": 0.44,
+    "healthScore": 40,
+    "healthHistory": [
+      {
+        "fetchedAt": "2026-08-15T08:29:07.462Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T10:33:02.935Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T10:33:04.571Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T11:46:48.291Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T15:57:53.217Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T16:45:00.857Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T17:19:08.372Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T17:20:43.721Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-15T17:20:45.285Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-16T10:36:18.885Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-16T18:04:32.996Z",
+        "healthScore": 40
+      },
+      {
+        "fetchedAt": "2026-08-16T18:08:41.120Z",
+        "healthScore": 40
+      }
+    ]
+  },
+  "alertLifecycle": {
+    "firing": {
+      "ADANIPOWER.NS|marginOfSafetyCritical": "2026-08-15T11:09:44.567Z",
+      "ADANIPOWER.NS|pePercentileExtremeHigh": "2026-08-15T11:09:44.567Z",
+      "TORNTPOWER.NS|marginOfSafetyHigh": "2026-08-15T16:45:00.857Z",
+      "CESC.NS|pePercentileExtremeHigh": "2026-08-15T11:09:44.567Z",
+      "JSWENERGY.NS|marginOfSafetyCritical": "2026-08-15T11:09:44.567Z",
+      "JSWENERGY.NS|pePercentileExtremeHigh": "2026-08-15T11:09:44.567Z",
+      "PORTFOLIO|sectorConcentration": "2026-08-15T11:09:44.567Z"
+    }
+  }
+}

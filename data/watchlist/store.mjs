@@ -36,6 +36,10 @@ async function readWatchlistFile(id) {
   // any watchlist file written before it existed, rather than migrating
   // every file on disk.
   if (!Number.isFinite(watchlist.cashTargetPct)) watchlist.cashTargetPct = 0;
+  // acknowledgedAlertIds is a later addition (Phase 4) -- default to an
+  // empty list for any watchlist file written before it existed, same
+  // lazy-default-on-read convention as cashTargetPct above.
+  if (!Array.isArray(watchlist.acknowledgedAlertIds)) watchlist.acknowledgedAlertIds = [];
   return watchlist;
 }
 async function writeWatchlistFile(watchlist) {
@@ -175,6 +179,14 @@ export async function addCompany(id, company) {
 export async function removeCompany(id, symbol) {
   const watchlist = await readWatchlistFile(id);
   watchlist.companies = watchlist.companies.filter(c => c.symbol.toUpperCase() !== symbol.toUpperCase());
+  // Stage 3 stale-alert cleanup: an acknowledged alert id is `${symbol}|${type}`
+  // (data/decision/alerts.mjs) -- once the company itself is gone, any
+  // acknowledgement for it is dead weight that can never be re-earned by a
+  // real alert again. Prune it here rather than leaving it to accumulate
+  // forever (store.mjs previously accepted this as "harmless leftover
+  // state" -- cheap to actually clean up while already touching the file).
+  const upperSymbol = symbol.toUpperCase();
+  watchlist.acknowledgedAlertIds = (watchlist.acknowledgedAlertIds || []).filter(alertId => !alertId.toUpperCase().startsWith(`${upperSymbol}|`));
   watchlist.updatedAt = new Date().toISOString();
   await writeWatchlistFile(watchlist);
   await syncSummary(watchlist);
@@ -257,6 +269,42 @@ export async function importWatchlist({ name, companies, cashTargetPct }) {
   idx.watchlists.push(summaryOf(watchlist));
   idx.activeWatchlist = id;
   await writeIndex(idx);
+  return watchlist;
+}
+
+// Sets (or clears) whether a given alert id (data/decision/alerts.mjs, shape
+// `${symbol}|${type}`) is acknowledged -- persisted so it stays suppressed
+// across refreshes until the underlying condition stops firing. An id that
+// never recurs is just harmless leftover state, same tradeoff this file
+// already accepts for other small JSON arrays rather than adding a pruning
+// pass.
+export async function setAlertAcknowledged(id, alertId, acknowledged) {
+  const watchlist = await readWatchlistFile(id);
+  const set = new Set(watchlist.acknowledgedAlertIds || []);
+  if (acknowledged) set.add(alertId); else set.delete(alertId);
+  watchlist.acknowledgedAlertIds = [...set];
+  watchlist.updatedAt = new Date().toISOString();
+  await writeWatchlistFile(watchlist);
+  await syncSummary(watchlist);
+  return watchlist;
+}
+
+// Stage 3 alert lifecycle: removes specific alert ids from the watchlist's
+// acknowledged list -- used when data/decision/index.mjs detects a
+// "reactivated" alert (an id that was acknowledged but has genuinely
+// cleared and re-fired as a new occurrence, per its alertLifecycle.firing
+// bookkeeping) so the user sees it as fresh and can re-acknowledge it,
+// rather than having it silently stay suppressed forever. Same batched
+// read-modify-write shape as updateCompaniesMetadata below, for the same
+// reason (avoid racing concurrent single-id writes).
+export async function pruneAlertAcknowledgements(id, alertIds) {
+  if (!alertIds?.length) return;
+  const watchlist = await readWatchlistFile(id);
+  const remove = new Set(alertIds);
+  watchlist.acknowledgedAlertIds = (watchlist.acknowledgedAlertIds || []).filter(alertId => !remove.has(alertId));
+  watchlist.updatedAt = new Date().toISOString();
+  await writeWatchlistFile(watchlist);
+  await syncSummary(watchlist);
   return watchlist;
 }
 

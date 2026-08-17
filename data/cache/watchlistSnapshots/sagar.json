@@ -1,0 +1,293 @@
+{
+  "watchlistId": "sagar",
+  "savedAt": "2026-08-16T18:08:41.123Z",
+  "companies": {
+    "AZAD.NS": {
+      "fetchedAt": "2026-08-16T18:06:46.720Z",
+      "rating": "Reduce",
+      "confidence": "Medium",
+      "fairValue": 1881.16,
+      "targetPrice": 1448.68,
+      "compositeRiskScore": 53,
+      "riskCategories": {
+        "financial": 72,
+        "business": 19,
+        "market": 76,
+        "sector": 38,
+        "governance": 58
+      },
+      "debtTrendPct": 57.48,
+      "technicalRegime": "Uptrend",
+      "watchlistRank": 7,
+      "sectorRank": 7,
+      "premiumDiscountScore": 58.81,
+      "primaryDriver": "elevated valuation",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "overbought",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 88
+    },
+    "DATAPATTNS.NS": {
+      "fetchedAt": "2026-08-16T18:06:47.119Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 3234.27,
+      "targetPrice": 2208.04,
+      "compositeRiskScore": 61,
+      "riskCategories": {
+        "financial": 73,
+        "business": 44,
+        "market": 88,
+        "sector": 38,
+        "governance": 60
+      },
+      "debtTrendPct": 150,
+      "technicalRegime": "Uptrend",
+      "watchlistRank": 4,
+      "sectorRank": 4,
+      "premiumDiscountScore": 42.35,
+      "primaryDriver": "elevated valuation",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 100
+    },
+    "TATAINVEST.NS": {
+      "fetchedAt": "2026-08-16T18:06:47.025Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 3093.62,
+      "targetPrice": 3806.08,
+      "compositeRiskScore": 42,
+      "riskCategories": {
+        "financial": 28,
+        "business": 21,
+        "market": 73,
+        "sector": 48,
+        "governance": 42
+      },
+      "debtTrendPct": -99.58,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 8,
+      "sectorRank": 1,
+      "premiumDiscountScore": 0,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 50
+    },
+    "HAL.NS": {
+      "fetchedAt": "2026-08-16T18:08:14.108Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 7852.65,
+      "targetPrice": 9657.97,
+      "compositeRiskScore": 52,
+      "riskCategories": {
+        "financial": 65,
+        "business": 23,
+        "market": 81,
+        "sector": 38,
+        "governance": 52
+      },
+      "debtTrendPct": 26.92,
+      "technicalRegime": "Uptrend",
+      "watchlistRank": 3,
+      "sectorRank": 3,
+      "premiumDiscountScore": -30.13,
+      "primaryDriver": "strong business quality",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "overbought",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 75
+    },
+    "BEL.NS": {
+      "fetchedAt": "2026-08-16T18:08:14.293Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 455.71,
+      "targetPrice": 563.39,
+      "compositeRiskScore": 45,
+      "riskCategories": {
+        "financial": 62,
+        "business": 15,
+        "market": 63,
+        "sector": 38,
+        "governance": 46
+      },
+      "debtTrendPct": 6.56,
+      "technicalRegime": "Mixed",
+      "watchlistRank": 1,
+      "sectorRank": 1,
+      "premiumDiscountScore": -2.13,
+      "primaryDriver": "strong business quality",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 63
+    },
+    "BDL.NS": {
+      "fetchedAt": "2026-08-16T18:08:13.994Z",
+      "rating": "Reduce",
+      "confidence": "High",
+      "fairValue": 970.89,
+      "targetPrice": 1070.79,
+      "compositeRiskScore": 47,
+      "riskCategories": {
+        "financial": 50,
+        "business": 21,
+        "market": 81,
+        "sector": 38,
+        "governance": 44
+      },
+      "debtTrendPct": -100,
+      "technicalRegime": "Mixed",
+      "watchlistRank": 6,
+      "sectorRank": 6,
+      "premiumDiscountScore": 145.61,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 25
+    },
+    "MAZDOCK.NS": {
+      "fetchedAt": "2026-08-16T18:06:46.779Z",
+      "rating": "Accumulate",
+      "confidence": "Medium",
+      "fairValue": 3465.48,
+      "targetPrice": 4786.52,
+      "compositeRiskScore": 48,
+      "riskCategories": {
+        "financial": 47,
+        "business": 22,
+        "market": 76,
+        "sector": 38,
+        "governance": 59
+      },
+      "debtTrendPct": 7350,
+      "technicalRegime": "Mixed",
+      "watchlistRank": 2,
+      "sectorRank": 2,
+      "premiumDiscountScore": -32.77,
+      "primaryDriver": "strong relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 38
+    },
+    "COCHINSHIP.NS": {
+      "fetchedAt": "2026-08-16T18:06:46.840Z",
+      "rating": "Hold",
+      "confidence": "Medium",
+      "fairValue": 2052.78,
+      "targetPrice": 2121.14,
+      "compositeRiskScore": 55,
+      "riskCategories": {
+        "financial": 73,
+        "business": 16,
+        "market": 91,
+        "sector": 38,
+        "governance": 56
+      },
+      "debtTrendPct": 184.84,
+      "technicalRegime": "Mixed",
+      "watchlistRank": 5,
+      "sectorRank": 5,
+      "premiumDiscountScore": 232.87,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 13
+    }
+  },
+  "portfolio": {
+    "beta": 1.41,
+    "diversificationScore": 55,
+    "compositeRiskScoreAvg": 50.38,
+    "topSectorSharePct": 87.5,
+    "recentAvgCorrelation": 0.454,
+    "healthScore": 50,
+    "healthHistory": [
+      {
+        "fetchedAt": "2026-08-15T08:29:08.325Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-15T10:57:03.719Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-15T13:25:09.400Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-15T13:25:11.292Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-15T13:25:29.089Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-15T13:40:54.710Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-15T16:45:00.858Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-15T17:19:09.091Z",
+        "healthScore": 49
+      },
+      {
+        "fetchedAt": "2026-08-15T17:20:47.101Z",
+        "healthScore": 49
+      },
+      {
+        "fetchedAt": "2026-08-15T18:40:55.626Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-16T18:00:09.157Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-16T18:04:32.997Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-16T18:06:47.268Z",
+        "healthScore": 50
+      },
+      {
+        "fetchedAt": "2026-08-16T18:08:41.123Z",
+        "healthScore": 50
+      }
+    ]
+  },
+  "alertLifecycle": {
+    "firing": {
+      "AZAD.NS|marginOfSafetyCritical": "2026-08-15T10:57:03.719Z",
+      "AZAD.NS|rsiOverbought": "2026-08-15T10:57:03.719Z",
+      "DATAPATTNS.NS|marginOfSafetyCritical": "2026-08-15T10:57:03.719Z",
+      "DATAPATTNS.NS|pePercentileExtremeHigh": "2026-08-15T10:57:03.719Z",
+      "HAL.NS|pePercentileExtremeHigh": "2026-08-15T18:40:55.625Z",
+      "HAL.NS|rsiOverbought": "2026-08-15T10:57:03.719Z",
+      "BDL.NS|marginOfSafetyCritical": "2026-08-15T18:40:55.626Z",
+      "COCHINSHIP.NS|pePercentileExtremeHigh": "2026-08-15T10:57:03.719Z",
+      "PORTFOLIO|sectorConcentration": "2026-08-15T10:57:03.719Z"
+    }
+  }
+}

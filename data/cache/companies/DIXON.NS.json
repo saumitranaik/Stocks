@@ -1,6 +1,6 @@
 {
   "symbol": "DIXON.NS",
-  "fetchedAt": "2026-08-14T16:26:35.047Z",
+  "fetchedAt": "2026-08-16T18:01:42.896Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 12216.040000000008,
     "fiftyTwoWeekHigh": 18331,
     "fiftyTwoWeekLow": 9673,
-    "regularMarketVolume": 206025,
+    "regularMarketVolume": 206105,
     "rsi14": 57.426080101826706,
     "macd": {
       "macdLine": 235.24,
@@ -24,7 +24,7 @@
       "histogram": -79.76
     },
     "oneYearReturnPct": -12.72929405225125,
-    "avgVolume20": 347512.65,
+    "avgVolume20": 347516.65,
     "ohlcv": {
       "open": [
         15953,
@@ -1284,18 +1284,18 @@
         140977,
         325889,
         433433,
-        206025
+        206105
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T16:25:13.372Z",
+    "asOf": "2026-08-16T17:59:52.051Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 86302,
+      "marketCap": 86394,
       "pe": 46,
       "bookValue": 769,
       "dividendYield": 0.06,
@@ -3282,7 +3282,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 14035
+        "close": 14130
       },
       {
         "date": "2026-08-14",
@@ -3297,8 +3297,11 @@
       "date": "Fri, 31 Jul 2026 07:00:00 GMT",
       "source": "NDTV Profit",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Dixon Technologies (India) Limited Just Beat EPS By 205%: Here's What Analysts Think Will Happen Next - simplywall.st",
@@ -3306,8 +3309,11 @@
       "date": "Tue, 04 Aug 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
-      "catalystType": "Analyst view",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Low",
+      "sentiment": "Positive",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Dixon Technologies to incorporate Adivistar Electronics for smartphone OEM business - scanx.trade",
@@ -3315,8 +3321,11 @@
       "date": "Wed, 12 Aug 2026 12:52:08 GMT",
       "source": "scanx.trade",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Dixon Technologies Share Price Jumps 7% After HKC JV Approval | Stock Market Today - Samco",
@@ -3324,18 +3333,24 @@
       "date": "Tue, 10 Mar 2026 07:00:00 GMT",
       "source": "Samco",
       "impact": "Medium",
-      "catalystType": "Expansion",
-      "expectedTimeline": "Medium-term"
+      "signalStrength": "Low",
+      "sentiment": "Positive",
+      "catalystType": "Industry",
+      "expectedTimeline": "Medium-term",
+      "affectedThesisDriver": "competitivePosition"
     },
     {
-      "title": "Dixon Technologies holds investor meetings with Taurus, Birla Life - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOVGFocklfS29kdVU1QU5RcjV2c3JCRWZYaHVtSmVVYlpockxfSHFDR2tId080TDkzUTUtbUpaVTNfZ0F0c2d2QmIyUVdEY0tMRVZjSHRnZUE1b25XYjBBQ3BFcDJ5QThiOTZ3M19zZkt5bkJndmgwNkx6LWxZcXljOV9OcURIZFdZTjdMandDVWtkeC1Zazc2M0hONkl1U29GV1U0YnRabnIxc0gzVDVVNFBzS2RKUnBnM0tPX3Jvdw?oc=5",
-      "date": "Wed, 12 Aug 2026 08:24:38 GMT",
-      "source": "scanx.trade",
+      "title": "Why Dixon Technologies' Shares Rallied 7% Today? - Equitymaster",
+      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPV3pLcGotUlphOHVxWU5EOC1nMXF4NjZmNlRJZVZrdllqRV9QRlBOTjg1VWVlcFBncFM2QWJQS2xuRkZQV3B2bkRnV0ZoaGlzczNxU3Nyc0JRangxR29tTWV6NVV5RXBvUmJoTW9lWm80U3lOLUdfZWVXUVctSDliN2lPblVGbVNyZ2JBWnc5VlNuVkhVbm1IeXlkdWNrX1NNQVVmMzJEUDBhODRiaUZGcXVpbmRfdw?oc=5",
+      "date": "Tue, 10 Mar 2026 07:00:00 GMT",
+      "source": "Equitymaster",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T16:26:35.047Z"
+  "newsFetchedAt": "2026-08-16T18:01:42.896Z"
 }

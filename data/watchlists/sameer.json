@@ -2,7 +2,7 @@
   "id": "sameer",
   "name": "Sameer",
   "createdAt": "2026-08-14T11:11:24.739Z",
-  "updatedAt": "2026-08-14T11:16:48.945Z",
+  "updatedAt": "2026-08-16T13:40:10.729Z",
   "companies": [
     {
       "symbol": "DIXON.NS",
@@ -47,7 +47,19 @@
       "notes": null,
       "targetWeightPct": null,
       "addedAt": "2026-08-14T11:16:48.144Z"
+    },
+    {
+      "symbol": "GOODLUCK.NS",
+      "name": "Goodluck India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Iron & Steel Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-16T13:40:09.907Z"
     }
   ],
-  "cashTargetPct": 0
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
 }

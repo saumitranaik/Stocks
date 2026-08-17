@@ -1,6 +1,6 @@
 {
   "symbol": "ADANIPOWER.NS",
-  "fetchedAt": "2026-08-14T12:16:42.751Z",
+  "fetchedAt": "2026-08-15T17:20:45.238Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": -0.15
     },
     "oneYearReturnPct": 75.71269950334802,
-    "avgVolume20": 18707388.75,
+    "avgVolume20": 18707701.35,
     "ohlcv": {
       "open": [
         117.37999725341797,
@@ -1284,18 +1284,18 @@
         17507515,
         13943707,
         13554048,
-        13857943
+        13864195
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:41.950Z",
+    "asOf": "2026-08-15T17:20:44.608Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 396974,
+      "marketCap": 395818,
       "pe": 27.8,
       "bookValue": 33.7,
       "dividendYield": 0,
@@ -3288,7 +3288,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 206.10000610351562
+        "close": 205.25
       },
       {
         "date": "2026-08-14",
@@ -3298,13 +3298,16 @@
   },
   "news": [
     {
-      "title": "Adani Power shareholders approve ₹1 lakh crore borrowing limit hike - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOMHVGNkVZUXFfVlZockhlM1dKUDNRYmgzWHFQcW5fVDg4bnRUVEgwVnUxemY0NHBWb3JXd1pyaGY3UmliQnRzSFFRUDBRSEtJdEM2clpidVRRT1Zyc3BjcjlfMkpHQ2h3TW9hRjBRUllKcm8ySHpsckRqT1lBUnJzWWFOa29HbU1aellOR2s0QTVXMHM1M04xY1V0ZDNnUFhfQmlJdzREM0xUbnRQTDZzQzhJSURMQllHUjNnZ0hFS0M?oc=5",
-      "date": "Fri, 14 Aug 2026 09:48:10 GMT",
-      "source": "scanx.trade",
+      "title": "Adani Power: Strong Q1, BUY Maintained With Target ₹240 - HDFC Sky",
+      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE1NNXR2TTM4MnZFTXk3RXQxUXI3dnBZNzRrT3RTcmV3Q1I1OGFXaFFmUjN2amVwVmlPSlJ4N1V4bXdLVnBNQU5HZ1l0WTFrSU9xU2NnSlN5YmNVeGtGLVNBV2hSTHFKREN3Mm5RSEY3emNuTmhPM1Vr?oc=5",
+      "date": "Fri, 24 Jul 2026 07:00:00 GMT",
+      "source": "HDFC Sky",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Adani Power Limited Just Recorded A 32% EPS Beat: Here's What Analysts Are Forecasting Next - simplywall.st",
@@ -3312,17 +3315,11 @@
       "date": "Sat, 25 Jul 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
-      "catalystType": "Analyst view",
-      "expectedTimeline": "Near-term"
-    },
-    {
-      "title": "Adani Power: Strong Q1, BUY Maintained With Target ₹240 - HDFC Sky",
-      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE1NNXR2TTM4MnZFTXk3RXQxUXI3dnBZNzRrT3RTcmV3Q1I1OGFXaFFmUjN2amVwVmlPSlJ4N1V4bXdLVnBNQU5HZ1l0WTFrSU9xU2NnSlN5YmNVeGtGLVNBV2hSTHFKREN3Mm5RSEY3emNuTmhPM1Vr?oc=5",
-      "date": "Fri, 24 Jul 2026 07:00:00 GMT",
-      "source": "HDFC Sky",
-      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Positive",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Top 10 Adani Shares List To Watch Out For In August 2026 - Samco",
@@ -3330,8 +3327,11 @@
       "date": "Wed, 12 Aug 2026 06:50:59 GMT",
       "source": "Samco",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "ADANIPOWER Forecast — Price Target — Prediction for 2027 - TradingView",
@@ -3339,9 +3339,24 @@
       "date": "Thu, 25 Jun 2026 15:20:56 GMT",
       "source": "TradingView",
       "impact": "Low",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Adani Power shareholders approve ₹1 lakh crore borrowing limit hike - scanx.trade",
+      "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOMHVGNkVZUXFfVlZockhlM1dKUDNRYmgzWHFQcW5fVDg4bnRUVEgwVnUxemY0NHBWb3JXd1pyaGY3UmliQnRzSFFRUDBRSEtJdEM2clpidVRRT1Zyc3BjcjlfMkpHQ2h3TW9hRjBRUllKcm8ySHpsckRqT1lBUnJzWWFOa29HbU1aellOR2s0QTVXMHM1M04xY1V0ZDNnUFhfQmlJdzREM0xUbnRQTDZzQzhJSURMQllHUjNnZ0hFS0M?oc=5",
+      "date": "Fri, 14 Aug 2026 09:48:10 GMT",
+      "source": "scanx.trade",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:42.751Z"
+  "newsFetchedAt": "2026-08-15T17:20:45.238Z"
 }

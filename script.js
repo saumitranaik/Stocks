@@ -14,6 +14,37 @@ const RATING_CLASS = { 'Strong Buy': 'strong-buy', Buy: 'buy', Accumulate: 'accu
 const tagClass = (text) => RATING_CLASS[text] || 'neutral';
 const signalTag = (stock) => `<span class="tag tag-lg ${tagClass(stock.signal)}">${escape(stock.signal)}</span>`;
 
+// -- Phase 4 decision layer (payload.intelligence, data/decision/*.mjs): the
+// frontend only formats what the backend already computed -- no score,
+// threshold or band is invented here. Action-band and alert-severity colors
+// reuse the existing rating tag palette rather than introducing new ones.
+const ACTION_TAG_CLASS = { 'Add aggressively': 'strong-buy', Add: 'buy', Hold: 'hold', Reduce: 'reduce', Exit: 'sell' };
+const SEVERITY_TAG_CLASS = { Critical: 'sell', High: 'reduce', Medium: 'hold', Low: 'neutral' };
+// Mirrors data/decision/alerts.mjs's TRANSITION_ALERT_RULES.technicalRegime
+// breakout regime set, for the Watchlists "Technical breakout" filter chip.
+const BREAKOUT_REGIMES = ['Volatile Breakout', 'Strong Uptrend'];
+const companyLink = (symbol, name) => `<button type="button" class="row-company-link" data-symbol="${escape(symbol)}">${escape(name)}</button>`;
+// Native-tooltip explainability for an Action Score cell -- the per-instance
+// bucket contributions (quality/valuation/technical/risk/relative
+// positioning/portfolio fit), all already computed server-side
+// (data/decision/actionScore.mjs); infoIcon('actionScore') carries the
+// general methodology text from the metric registry alongside this.
+function actionScoreTitle(action) {
+  if (!action) return '';
+  const c = action.components || {};
+  const part = (label, key) => `${label} ${c[key] == null ? 'N/A' : c[key]}`;
+  const base = [part('Quality', 'quality'), part('Valuation', 'valuation'), part('Technical', 'technical'), part('Risk', 'risk'), part('Relative positioning', 'relativePositioning'), part('Portfolio fit', 'portfolioFit')].join(' | ');
+  // Stage 3: when actionScore.mjs's resolved-coverage cap applied, say so --
+  // otherwise a capped "Hold" reads as an ordinary score instead of a
+  // disclosed low-coverage cap (mirrors recommendation.capNote's convention).
+  return action.capNote ? `${base} | ${action.capNote}` : base;
+}
+function actionScoreBadge(action) {
+  if (!action) return 'N/A';
+  return `<span class="tag ${ACTION_TAG_CLASS[action.label] || 'neutral'}" title="${escape(actionScoreTitle(action))}">${escape(action.label)}</span>`;
+}
+const fairValueGapCell = (stock) => pct(stock.valuation?.marginOfSafetyPct);
+
 // -- Shared table standard: every comparison table on this page leads with
 // Company, Sector, CMP and P/E in that order (institutional mandate). No
 // table computes its own leading cells or re-sorts/truncates the rows it's
@@ -45,6 +76,11 @@ const avgOf = (values) => { const v = values.filter(Number.isFinite); return v.l
 let wlLastWatchlistId = null, wlSortColumn = null, wlSortDir = 'asc';
 let wlFilterSector = '', wlFilterRecommendation = '', wlSearchQuery = '';
 let wlSelected = new Set();
+// Phase 4: Watchlists tab's monitoring filter chips (Add aggressively/Add/
+// Hold/Reduce/Exit/High risk/High upside/Technical breakout/Recent changes)
+// -- multiple chips OR together, same reset-on-watchlist-switch lifecycle as
+// wlSelected/wlSortColumn above.
+let wlIntelFilters = new Set();
 
 // ---- Company search (add-company typeahead) state: the local index fetched
 // once from /api/companies/index (data/watchlist/searchIndex.mjs -- static
@@ -58,18 +94,74 @@ let wlSearchActiveIndex = -1;
 let wlSelectionFrequency = {};
 try { wlSelectionFrequency = JSON.parse(localStorage.getItem('wl-search-frequency') || '{}'); } catch { /* ignore malformed/unavailable storage */ }
 
-// The Watchlists tab is a full-screen workspace -- it claims the full
-// viewport width (`.full-bleed`, styles.css) instead of the 1500px reading
-// width every other tab keeps. The empty-watchlist placeholder is
-// suppressed on that tab too, since the tab already renders its own clear
-// empty state (an empty table + the Add a company box right above it).
-$$('.tabs button').forEach(button => button.addEventListener('click', () => {
-  $$('.tabs button,.tab').forEach(element => element.classList.remove('active'));
-  button.classList.add('active');
-  $(`#${button.dataset.tab}`).classList.add('active');
-  $('#main').classList.toggle('full-bleed', button.dataset.tab === 'watchlists');
-  if (currentData) $('#empty').hidden = currentData.stocks.length > 0 || button.dataset.tab === 'watchlists';
-}));
+// ---- Phase 6.5: sidebar primary navigation. Research (Fundamentals/
+// Valuation/Profitability/Balance Sheet/Growth/Ownership) is a *virtual
+// group* in the sidebar -- those 6 sections stay independent `.tab`
+// elements exactly as before (own subtabs, own content, untouched); a
+// slim pill-bar (#research-category-bar) picks which one is visible while
+// the sidebar's single "Research" item stays highlighted. Every other
+// sidebar item maps 1:1 to a `.tab` section, same mechanism the old flat
+// `.tabs` nav used. ----
+const RESEARCH_TABS = ['fundamentals', 'valuation', 'profitability', 'balance-sheet', 'growth', 'ownership'];
+const RESEARCH_CATEGORY_STORAGE_KEY = 'researchCategory';
+let activeResearchTab = null;
+try { activeResearchTab = localStorage.getItem(RESEARCH_CATEGORY_STORAGE_KEY); } catch { /* storage unavailable */ }
+if (!RESEARCH_TABS.includes(activeResearchTab)) activeResearchTab = RESEARCH_TABS[0];
+
+function activateWorkspaceTab(tabId) {
+  const isResearch = RESEARCH_TABS.includes(tabId);
+  $$('#app-sidebar .sidebar-item,.tab').forEach(element => element.classList.remove('active'));
+  $(`#${tabId}`)?.classList.add('active');
+  $(`#app-sidebar .sidebar-item[data-${isResearch ? 'group' : 'tab'}="${isResearch ? 'research' : tabId}"]`)?.classList.add('active');
+  $('#research-category-bar').hidden = !isResearch;
+  if (isResearch) {
+    activeResearchTab = tabId;
+    try { localStorage.setItem(RESEARCH_CATEGORY_STORAGE_KEY, tabId); } catch { /* storage unavailable */ }
+    $$('#research-category-bar button').forEach(button => button.classList.toggle('active', button.dataset.tab === tabId));
+  }
+  $('#main').classList.toggle('full-bleed', tabId === 'watchlists');
+  if (currentData) $('#empty').hidden = currentData.stocks.length > 0 || tabId === 'watchlists';
+  closeMobileSidebar();
+}
+$$('#app-sidebar .sidebar-item').forEach(button => button.addEventListener('click', () =>
+  activateWorkspaceTab(button.dataset.group === 'research' ? activeResearchTab : button.dataset.tab)));
+$$('#research-category-bar button').forEach(button => button.addEventListener('click', () => activateWorkspaceTab(button.dataset.tab)));
+
+// ---- Sidebar collapse (desktop, persisted) + mobile drawer (no dependency,
+// same show/hide-a-backdrop pattern as every other overlay in this app). ----
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'sidebarCollapsed';
+function closeMobileSidebar() {
+  document.body.classList.remove('sidebar-open');
+  $('#sidebar-backdrop').hidden = true;
+  $('#sidebar-mobile-open')?.setAttribute('aria-expanded', 'false');
+}
+function syncSidebarCollapseGlyph(collapsed) {
+  const glyph = $('#sidebar-collapse-toggle .sidebar-mono');
+  if (glyph) glyph.textContent = collapsed ? '»' : '«';
+  const label = $('#sidebar-collapse-toggle .sidebar-label');
+  if (label) label.textContent = collapsed ? 'Expand' : 'Collapse';
+}
+$('#sidebar-collapse-toggle')?.addEventListener('click', () => {
+  const collapsed = document.body.classList.toggle('sidebar-collapsed');
+  $('#sidebar-collapse-toggle').setAttribute('aria-pressed', String(collapsed));
+  syncSidebarCollapseGlyph(collapsed);
+  try { localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0'); } catch { /* storage unavailable */ }
+});
+try {
+  if (localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === '1') {
+    document.body.classList.add('sidebar-collapsed');
+    $('#sidebar-collapse-toggle')?.setAttribute('aria-pressed', 'true');
+    syncSidebarCollapseGlyph(true);
+  }
+} catch { /* storage unavailable */ }
+$('#sidebar-mobile-open')?.addEventListener('click', () => {
+  document.body.classList.add('sidebar-open');
+  $('#sidebar-backdrop').hidden = false;
+  $('#sidebar-mobile-open').setAttribute('aria-expanded', 'true');
+});
+$('#sidebar-mobile-close')?.addEventListener('click', closeMobileSidebar);
+$('#sidebar-backdrop')?.addEventListener('click', closeMobileSidebar);
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeMobileSidebar(); });
 
 // ---- Section sub-tabs: two-level navigation within a main tab. Each
 // multi-section main tab gets a sticky pill-row (`.subtabs`, first child of
@@ -193,7 +285,8 @@ function setActiveCompany(symbol, opts = {}) {
   renderPortfolioAnalytics(currentData);
   renderHeaderCompanySelector();
   refreshActiveCompanyHighlights();
-  if (opts.jumpTo) $(`.tabs button[data-tab="${opts.jumpTo}"]`)?.click();
+  renderReportsWorkspace();
+  if (opts.jumpTo) activateWorkspaceTab(opts.jumpTo);
 }
 
 // Compare mode: toggling a pill in Valuation/Technicals/Risks adds/removes a
@@ -208,6 +301,7 @@ function toggleCompareSymbol(symbol) {
   renderRiskDetail(currentData);
   if (currentData) renderProfitability(compareSymbols.length >= 2 ? currentData.stocks.filter(s => compareSymbols.includes(s.symbol)) : currentData.stocks);
   renderCompareBar();
+  renderCompareWorkspace(currentData);
 }
 function setCompareMode(on) {
   compareMode = on;
@@ -216,6 +310,7 @@ function setCompareMode(on) {
   renderRiskDetail(currentData);
   if (currentData) renderProfitability(compareMode && compareSymbols.length >= 2 ? currentData.stocks.filter(s => compareSymbols.includes(s.symbol)) : currentData.stocks);
   renderCompareBar();
+  renderCompareWorkspace(currentData);
 }
 
 // Renders a company row/column into a labelled compare grid -- shared by
@@ -270,6 +365,33 @@ function renderCompareBar() {
         : '<span class="small">Pick 2-4 companies from a pill row on Valuation, Technicals or Risks.</span>')
     : '';
 }
+
+// ---- Phase 6.5 Compare workspace: a dedicated screen for Compare Mode.
+// Reuses renderCompareAwarePillSelector (already shared by Valuation/
+// Technicals/Risks) for the picker and compareGrid()+the same *DetailContent
+// builder functions those three tabs already call -- no new comparison
+// logic, just additional render targets for the same pure functions. ----
+function renderCompareWorkspace(data) {
+  const stocks = (data?.stocks || []).filter(s => !s.unresolved);
+  renderCompareAwarePillSelector('#compare-selector', stocks);
+  const enableBtn = $('#compare-enable-btn');
+  if (enableBtn) enableBtn.hidden = compareMode;
+  const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
+  const prompt = compareMode
+    ? '<p class="small">Pick 2-4 companies above to compare.</p>'
+    : '<p class="small">Turn on Compare Mode above, then pick 2-4 companies.</p>';
+  if (compareStocks.length >= 2) {
+    $('#compare-valuation').innerHTML = compareGrid(compareStocks, valuationDetailContent, 'recommendation') + compareGrid(compareStocks, valuationDetailContent, 'dcf');
+    $('#compare-technical').innerHTML = compareGrid(compareStocks, technicalDetailContent, 'indicators') + compareGrid(compareStocks, technicalDetailContent, 'advancedScores');
+    $('#compare-risk').innerHTML = ['financial', 'business', 'market', 'sector', 'governance'].map(key => compareGrid(compareStocks, riskDetailContent, key)).join('');
+  } else {
+    $('#compare-valuation').innerHTML = prompt;
+    $('#compare-technical').innerHTML = prompt;
+    $('#compare-risk').innerHTML = prompt;
+  }
+}
+$('#compare-enable-btn')?.addEventListener('click', () => setCompareMode(true));
+
 function initCompanyContextBar() {
   const toggleBtn = $('#company-selector-toggle');
   const dropdown = $('#company-selector-dropdown');
@@ -290,10 +412,9 @@ function initCompanyContextBar() {
   $$('#quick-jump button[data-jump]').forEach(button => button.addEventListener('click', () => {
     const target = button.dataset.jump;
     if (target === 'report') {
-      if (!watchlistIndex?.activeWatchlist || !activeCompanySymbol) return;
-      window.open(`report.html?wl=${encodeURIComponent(watchlistIndex.activeWatchlist)}&symbol=${encodeURIComponent(activeCompanySymbol)}`, '_blank');
+      openCompanyReport(activeCompanySymbol);
     } else {
-      $(`.tabs button[data-tab="${target}"]`)?.click();
+      activateWorkspaceTab(target);
     }
   }));
   $('#compare-toggle')?.addEventListener('click', () => setCompareMode(!compareMode));
@@ -881,6 +1002,239 @@ function renderPortfolioAnalytics(data) {
     </article>`).join('');
 }
 
+// ---- Phase 4 decision layer (Stage 2 UI): Dashboard's Portfolio Intelligence
+// and Committee View sub-tabs, Portfolio's Health & Rebalancing sub-tab, and
+// Risks' Alerts sub-tab -- every figure below is read from `data.intelligence`
+// (data/decision/index.mjs's buildPortfolioIntelligence, already attached to
+// the research payload server-side); nothing here recomputes a score,
+// threshold or band, and nothing here triggers a new fetch. The Opportunity
+// Monitor / Risk Monitor sub-categories are a pure client-side grouping of
+// already-computed alert types/fields (data/decision/alerts.mjs's category
+// and type values, and the sign of an already-computed change), not a new
+// heuristic. ----
+function renderPortfolioIntelligence(data) {
+  const intel = data.intelligence;
+  $('#pi-methodology-info').innerHTML = infoIcon('actionScore');
+  if (!intel) {
+    $('#pi-kpis').innerHTML = '';
+    $('#pi-action-table tbody').innerHTML = '<tr><td colspan="8" class="small">Not available.</td></tr>';
+    $('#pi-opportunities').innerHTML = '<p class="small">Not available.</p>';
+    $('#pi-risks').innerHTML = '<p class="small">Not available.</p>';
+    $('#pi-changes').innerHTML = '<p class="small">Not available.</p>';
+    return;
+  }
+  const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
+  const alertsFor = (symbol) => intel.alerts.filter(al => al.symbol === symbol);
+  const changesFor = (symbol) => intel.changes.bySymbol[symbol]?.changes || [];
+
+  const actionable = intel.actionRequired.filter(a => a.label !== 'Hold');
+  $('#pi-kpis').innerHTML = [
+    card('Action Required', actionable.length, 'Names outside a Hold band', actionable.length ? 'amber' : 'positive'),
+    card('Opportunities flagged', intel.opportunities.length, 'Add / Add aggressively with positive upside', 'positive'),
+    card('Risk Monitor', intel.riskMonitor.length, 'Elevated or deteriorating composite risk', intel.riskMonitor.length ? 'amber' : ''),
+    card('Unacknowledged alerts', intel.alerts.length, `${intel.alerts.filter(a => a.severity === 'Critical' || a.severity === 'High').length} Critical/High`, intel.alerts.some(a => a.severity === 'Critical') ? 'amber' : '')
+  ].join('');
+
+  $('#pi-action-table tbody').innerHTML = intel.actionRequired.length ? intel.actionRequired.map(a => {
+    const stock = bySymbol.get(a.symbol);
+    if (!stock) return '';
+    return `<tr data-symbol="${escape(a.symbol)}">
+      <td>${companyLink(a.symbol, stock.name)}</td>
+      <td>${escape(stock.sector || 'N/A')}</td>
+      <td>${actionScoreBadge(intel.actionScores[a.symbol])}</td>
+      <td class="num" title="${escape(actionScoreTitle(intel.actionScores[a.symbol]))}">${a.score}/100</td>
+      <td>${escape(stock.recommendation?.confidence || 'N/A')}</td>
+      <td>${escape(a.rationale || 'N/A')}</td>
+      <td class="num">${fairValueGapCell(stock)}</td>
+      <td>${escape(stock.institutionalRisk?.riskTrend || 'N/A')}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="8" class="small">No action-required names currently.</td></tr>';
+
+  const listRow = (symbol, reason) => { const s = bySymbol.get(symbol); return s ? `<div class="allocation-row" data-symbol="${escape(symbol)}"><span>${companyLink(symbol, s.name)}</span><span class="small">${escape(reason)}</span></div>` : ''; };
+  const group = (label, list) => list.length ? `<div class="small" style="margin-top:10px"><b>${escape(label)}</b></div>${list.map(x => listRow(x.symbol, x.reason)).join('')}` : '';
+
+  const undervalued = intel.opportunities.filter(o => (bySymbol.get(o.symbol)?.recommendation?.components?.valuation?.score ?? 0) >= 60);
+  const improvingQuality = intel.opportunities.filter(o => alertsFor(o.symbol).some(al => al.type === 'recommendationChanged'));
+  const improvingTechnicals = intel.opportunities.filter(o => alertsFor(o.symbol).some(al => ['breakoutConfirmation', 'crossedAbove50DMA', 'crossedAbove200DMA', 'macdCrossedBullish', 'relativeStrengthAcceleration'].includes(al.type)));
+  const fallingRisk = intel.opportunities.filter(o => changesFor(o.symbol).some(c => c.field === 'compositeRiskScore' && c.to < c.from));
+  const catalystMomentum = intel.opportunities.filter(o => (bySymbol.get(o.symbol)?.news || []).some(n => n.impact === 'High'));
+  $('#pi-opportunities').innerHTML = [group('Undervalued', undervalued), group('Improving quality', improvingQuality), group('Improving technicals', improvingTechnicals), group('Falling risk', fallingRisk), group('Positive catalyst momentum', catalystMomentum)].join('') || '<p class="small">No opportunities currently flagged.</p>';
+
+  const risingRisk = intel.riskMonitor.filter(r => changesFor(r.symbol).some(c => c.field === 'compositeRiskScore' && c.to > c.from) || /Deteriorating/.test(r.reason));
+  const deterioratingTechnicals = intel.riskMonitor.filter(r => alertsFor(r.symbol).some(al => ['breakdownConfirmation', 'crossedBelow50DMA', 'crossedBelow200DMA', 'macdCrossedBearish'].includes(al.type)));
+  const governanceConcerns = data.stocks.filter(s => (s.institutionalRisk?.categories?.governance ?? 0) > 65).map(s => ({ symbol: s.symbol, reason: `Governance risk ${s.institutionalRisk.categories.governance}/100.` }));
+  const valuationExcess = [...intel.riskMonitor.filter(r => alertsFor(r.symbol).some(al => ['marginOfSafetyCritical', 'marginOfSafetyHigh', 'pePercentileExtremeHigh'].includes(al.type))),
+    ...data.stocks.filter(s => (s.valuation?.marginOfSafetyPct ?? 0) <= -10).map(s => ({ symbol: s.symbol, reason: `Price ${Math.abs(Math.round(s.valuation.marginOfSafetyPct))}% above modeled fair value.` }))];
+  const topSector = data.portfolio?.sectorAllocation?.allocation?.[0];
+  const concentrationConcerns = (topSector && topSector.sharePct >= 40) ? data.stocks.filter(s => s.sector === topSector.sector).map(s => ({ symbol: s.symbol, reason: `${topSector.sector} is ${Math.round(topSector.sharePct)}% of watchlist weight.` })) : [];
+  $('#pi-risks').innerHTML = [group('Rising risk', risingRisk), group('Deteriorating technicals', deterioratingTechnicals), group('Governance concerns', governanceConcerns), group('Valuation excess', valuationExcess), group('Concentration concerns', concentrationConcerns)].join('') || '<p class="small">No risk conditions currently flagged.</p>';
+
+  $('#pi-changes').innerHTML = intel.changes.summary.length
+    ? intel.changes.summary.slice(0, 40).map(line => {
+        const symbol = line.split(':')[0];
+        const material = /Recommendation|Confidence|Fair value|risk score|regime/i.test(line);
+        return `<div class="allocation-row" data-symbol="${escape(symbol)}"><span>${escape(line)}</span>${material ? '<span class="tag hold">Material</span>' : ''}</div>`;
+      }).join('')
+    : '<p class="small">No changes since the last genuine data refresh.</p>';
+}
+
+// Committee View: a presentation-quality roll-up over the same
+// `data.intelligence`/`data.portfolio`/`data.sectorAllocation` fields the
+// sections above and the Portfolio tab already render -- no independent
+// computation. "Expected return" is a simple average of each holding's own
+// already-computed upside-to-target-price (same avgOf() convention already
+// used for the Watchlists summary cards), not a new return model.
+function renderCommitteeView(data) {
+  const intel = data.intelligence;
+  const p = data.portfolio || {};
+  const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
+  if (!intel) {
+    ['cv-kpis', 'cv-top-opportunities', 'cv-top-risks', 'cv-sector-allocation', 'cv-concentration', 'cv-rebalancing'].forEach(id => { $(`#${id}`).innerHTML = '<p class="small">Not available.</p>'; });
+    return;
+  }
+  const avgUpside = avgOf(data.stocks.filter(s => !s.unresolved).map(s => s.valuation?.upsidePct));
+  $('#cv-kpis').innerHTML = [
+    card('Portfolio beta', fmt(p.beta), "Weighted average of each holding's beta", ''),
+    card('Expected return', avgUpside == null ? 'N/A' : pct(avgUpside), "Simple average of each holding's upside to Target Price", (avgUpside ?? 0) >= 0 ? 'positive' : 'amber'),
+    card('Risk-adjusted outlook', fmt(p.riskAdjustedReturn), 'Weighted avg proxy Sharpe: (1y return - risk-free rate) / volatility', ''),
+    card('Portfolio health', intel.health?.score == null ? 'N/A' : `${intel.health.score}/100`, intel.health?.trend || 'N/A', intel.health?.trend === 'Improving' ? 'positive' : intel.health?.trend === 'Deteriorating' ? 'amber' : '')
+  ].join('');
+
+  const listRow = (symbol, text) => { const s = bySymbol.get(symbol); return s ? `<div class="allocation-row" data-symbol="${escape(symbol)}"><span>${companyLink(symbol, s.name)}</span><span class="small">${escape(text)}</span></div>` : ''; };
+  const topOpportunities = intel.actionRequired.filter(a => ['Add aggressively', 'Add'].includes(a.label)).slice(0, 5);
+  $('#cv-top-opportunities').innerHTML = topOpportunities.length ? topOpportunities.map(a => listRow(a.symbol, `${a.label} · ${a.score}/100 · ${a.rationale || ''}`)).join('') : '<p class="small">None currently.</p>';
+  const topRisks = intel.actionRequired.filter(a => ['Reduce', 'Exit'].includes(a.label)).slice(0, 5);
+  $('#cv-top-risks').innerHTML = topRisks.length ? topRisks.map(a => listRow(a.symbol, `${a.label} · ${a.score}/100`)).join('') : '<p class="small">None currently.</p>';
+
+  const allocation = data.sectorAllocation || { allocation: [] };
+  $('#cv-sector-allocation').innerHTML = allocation.allocation.length ? allocation.allocation.map(entry => `<div class="allocation-row"><span>${escape(entry.sector)}</span><div class="bar"><i style="width:${entry.sharePct}%"></i></div><span>${fmt(entry.sharePct)}%</span></div>`).join('') : '<p class="small">No companies yet.</p>';
+
+  const sectorDiv = p.sectorAllocation || {}, posDiv = p.positionConcentration || {};
+  $('#cv-concentration').innerHTML = [
+    card('Top sector share', sectorDiv.allocation?.[0] ? `${escape(sectorDiv.allocation[0].sector)}: ${fmt(sectorDiv.allocation[0].sharePct)}%` : 'N/A', sectorDiv.concentrated ? 'Concentrated (>40% of allocated weight)' : '', sectorDiv.concentrated ? 'amber' : ''),
+    card('Largest position', pct(posDiv.topPositionPct), '', (posDiv.topPositionPct ?? 0) > 30 ? 'amber' : '')
+  ].join('');
+
+  $('#cv-rebalancing').innerHTML = intel.rebalancing.length ? intel.rebalancing.slice(0, 8).map(r => listRow(r.symbol, `${r.action} · ${r.rationale}`)).join('') : '<p class="small">No rebalancing suggestions currently.</p>';
+}
+
+// Portfolio Health & Rebalancing: health score/trend/contributors/history and
+// the rebalancing table -- all off `data.intelligence.health`/`.rebalancing`
+// (data/decision/portfolioHealth.mjs, rebalancing.mjs), no recomputation.
+function renderHealthRebalancing(data) {
+  $('#health-score-info').innerHTML = infoIcon('portfolioHealthScore');
+  $('#rebalancing-info').innerHTML = infoIcon('rebalancingSuggestion');
+  const health = data.intelligence?.health;
+  if (!health || health.score == null) {
+    $('#health-kpis').innerHTML = card('Portfolio health score', 'N/A', 'Not enough resolved holdings to compute.', '');
+    $('#health-contributors').innerHTML = '';
+    $('#health-history').innerHTML = '<p class="small">Not available.</p>';
+  } else {
+    $('#health-kpis').innerHTML = [
+      card('Portfolio health score', `${health.score}/100`, '', health.score >= 65 ? 'positive' : health.score >= 40 ? 'amber' : 'negative'),
+      card('Trend', health.trend, 'vs. the last genuine data refresh', health.trend === 'Improving' ? 'positive' : health.trend === 'Deteriorating' ? 'amber' : '')
+    ].join('');
+    $('#health-contributors').innerHTML = (health.contributors || []).map(c => `<div class="allocation-row"><span>${escape(c.label)}</span><div class="bar"><i style="width:${c.score}%"></i></div><span>${fmt(c.score)}/100</span></div>`).join('') || '<p class="small">Not available.</p>';
+    const history = health.history || [];
+    $('#health-history').innerHTML = history.length ? history.map(h => `<div class="allocation-row"><span>${new Date(h.fetchedAt).toLocaleDateString()}</span><div class="bar"><i style="width:${h.healthScore}%"></i></div><span>${h.healthScore}/100</span></div>`).join('') : '<p class="small">History accumulates after this watchlist\'s next genuine data refresh.</p>';
+  }
+
+  const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
+  const rebalancing = data.intelligence?.rebalancing || [];
+  $('#rebalancing-table tbody').innerHTML = rebalancing.length ? rebalancing.map(r => {
+    const s = bySymbol.get(r.symbol);
+    if (!s) return '';
+    return `<tr data-symbol="${escape(r.symbol)}">
+      <td>${companyLink(r.symbol, s.name)}</td>
+      <td class="num">${fmt(s.effectiveWeightPct)}%</td>
+      <td class="num">${s.targetWeightPct == null ? 'Equal' : `${fmt(s.targetWeightPct)}%`}</td>
+      <td>${escape(r.action)}</td>
+      <td class="num" title="${escape(actionScoreTitle(data.intelligence.actionScores[r.symbol]))}">${data.intelligence.actionScores[r.symbol] ? `${data.intelligence.actionScores[r.symbol].score}/100` : 'N/A'}</td>
+      <td>${escape(r.rationale)}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="small">No rebalancing suggestions currently.</td></tr>';
+}
+
+// Phase 6 Portfolio Exposure Matrix: reads data.portfolio.exposureMatrix
+// (data/decision/exposureMatrix.mjs), already computed server-side alongside
+// the rest of the Portfolio tab's own aggregates -- pure formatting here.
+const EXPOSURE_TIER_CLASS = { High: 'sell', Moderate: 'hold', Low: 'buy', 'N/A': 'neutral' };
+function renderExposureMatrix(data) {
+  $('#exposure-matrix-info').innerHTML = infoIcon('exposureMatrix');
+  const matrix = data.portfolio?.exposureMatrix;
+  if (!matrix || !matrix.companies?.length) {
+    $('#exposure-portfolio-kpis').innerHTML = '';
+    $('#exposure-matrix-table tbody').innerHTML = '<tr><td colspan="6" class="small">Not available.</td></tr>';
+    return;
+  }
+  const p = matrix.portfolio || {};
+  const tierCard = (label, tag) => card(label, tag?.score == null ? 'N/A' : `${tag.score}/100`, tag?.tier || 'N/A', EXPOSURE_TIER_CLASS[tag?.tier] === 'sell' ? 'amber' : '');
+  $('#exposure-portfolio-kpis').innerHTML = [
+    tierCard('Interest-rate sensitivity', p.interestRate),
+    tierCard('Commodity sensitivity', p.commodity),
+    tierCard('Regulatory sensitivity', p.regulatory),
+    card('Currency exposure', p.currency?.exposure ?? 'N/A', p.currency?.direction || 'N/A', '')
+  ].join('');
+
+  const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
+  $('#exposure-matrix-table tbody').innerHTML = matrix.companies.map(c => {
+    const stock = bySymbol.get(c.symbol);
+    if (!stock) return '';
+    return `<tr data-symbol="${escape(c.symbol)}">
+      <td>${companyLink(c.symbol, stock.name)}</td>
+      <td class="num"><span class="tag ${EXPOSURE_TIER_CLASS[c.interestRate.tier] || 'neutral'}">${c.interestRate.score ?? 'N/A'} &middot; ${escape(c.interestRate.tier)}</span></td>
+      <td>${escape(c.currency.direction)}</td>
+      <td class="num"><span class="tag ${EXPOSURE_TIER_CLASS[c.commodity.tier] || 'neutral'}">${c.commodity.score ?? 'N/A'} &middot; ${escape(c.commodity.tier)}</span></td>
+      <td class="num"><span class="tag ${EXPOSURE_TIER_CLASS[c.regulatory.tier] || 'neutral'}">${c.regulatory.score ?? 'N/A'} &middot; ${escape(c.regulatory.tier)}</span></td>
+      <td>${escape(c.economicCycle.label)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="small">Not available.</td></tr>';
+}
+
+// Risks tab's Alerts sub-tab: severity-filtered, client-side only (the
+// backend already excludes acknowledged alerts from `data.intelligence.alerts`
+// -- see data/decision/index.mjs). Acknowledging calls the Stage 1 route and
+// re-renders from the fresh payload, so an acknowledged alert disappearing is
+// just the normal render() cascade, not special-cased here.
+let alertsSeverityFilter = '';
+function renderAlerts(data) {
+  $('#alerts-methodology-info').innerHTML = infoIcon('alertSeverity');
+  const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
+  const severityRank = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+  const alerts = (data.intelligence?.alerts || [])
+    .filter(a => !alertsSeverityFilter || a.severity === alertsSeverityFilter)
+    .sort((a, b) => (severityRank[b.severity] || 0) - (severityRank[a.severity] || 0) || new Date(b.detectedAt) - new Date(a.detectedAt));
+  $('#alerts-table tbody').innerHTML = alerts.length ? alerts.map(a => {
+    const stock = bySymbol.get(a.symbol);
+    const companyCell = stock ? companyLink(a.symbol, stock.name) : escape(a.symbol === 'PORTFOLIO' ? 'Portfolio' : a.symbol);
+    return `<tr data-symbol="${escape(a.symbol)}">
+      <td><span class="tag ${SEVERITY_TAG_CLASS[a.severity] || 'neutral'}">${escape(a.severity)}</span></td>
+      <td>${companyCell}</td>
+      <td>${escape(a.category)}</td>
+      <td>${escape(a.message)}</td>
+      <td>${escape(a.confidence)}</td>
+      <td>${new Date(a.detectedAt).toLocaleString()}</td>
+      <td><button type="button" class="icon-btn" data-ack-alert="${escape(a.id)}">Acknowledge</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" class="small">No unacknowledged alerts.</td></tr>';
+}
+async function acknowledgeAlert(alertId) {
+  const id = watchlistIndex.activeWatchlist;
+  const { data } = await api(`/api/watchlists/${id}/alerts/${encodeURIComponent(alertId)}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ acknowledged: true }) });
+  render(data);
+}
+$('#alerts-table').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-ack-alert]');
+  if (button) acknowledgeAlert(button.dataset.ackAlert);
+});
+$('#alerts-severity-filter').addEventListener('click', (event) => {
+  const button = event.target.closest('.pill[data-severity]');
+  if (!button) return;
+  alertsSeverityFilter = button.dataset.severity;
+  $$('#alerts-severity-filter .pill').forEach(p => p.classList.toggle('active', p === button));
+  if (currentData) renderAlerts(currentData);
+});
+
 // ---- Fundamentals tab: per-stock selector + DuPont/ROCE decomposition +
 // 10-year statement tables + shareholding trend. ----
 const STATEMENT_ROWS = {
@@ -1020,13 +1374,111 @@ function renderTopOpportunities(data) {
 }
 
 const IMPACT_CLASS = { High: 'sell', Medium: 'hold', Low: 'neutral' };
+// Phase 6 News Intelligence upgrade: sentiment (data/news/companyNews.mjs)
+// alongside the existing impact/catalyst tags -- items fetched before this
+// stage shipped won't carry `sentiment`/`affectedThesisDriver` until their
+// next real refetch (cached bundle, old shape), so both render 'N/A' rather
+// than a blank cell.
+const SENTIMENT_CLASS = { Positive: 'buy', Negative: 'sell', Uncertain: 'hold', Neutral: 'neutral' };
+const THESIS_DRIVER_LABEL = { businessQuality: 'Business quality', growthDrivers: 'Growth drivers', competitivePosition: 'Competitive position', valuationOpportunity: 'Valuation opportunity', keyRisks: 'Key risks' };
 function renderDashboardNews(data) {
   const items = data.stocks.flatMap(stock => (stock.news || []).map(item => ({ ...item, company: stock.name })));
   items.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
   $('#dashboard-news').innerHTML = items.length ? items.slice(0, 20).map(item => `<div class="news-item">
-      <div><a target="_blank" rel="noopener" href="${escape(item.url)}">${escape(item.title)}</a><small>${escape(item.company)} &middot; ${escape(item.source)} &middot; ${escape(item.catalystType || 'General')} &middot; ${escape(item.expectedTimeline || 'Unclassified')}</small></div>
-      <div class="news-meta"><span class="tag ${IMPACT_CLASS[item.impact] || 'neutral'}">${escape(item.impact)}</span><small>${item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}</small></div>
+      <div><a target="_blank" rel="noopener" href="${escape(item.url)}">${escape(item.title)}</a><small>${escape(item.company)} &middot; ${escape(item.source)} &middot; ${escape(item.catalystType || 'General')} &middot; ${escape(item.expectedTimeline || 'Unclassified')}${item.affectedThesisDriver ? ` &middot; Affects: ${escape(THESIS_DRIVER_LABEL[item.affectedThesisDriver] || item.affectedThesisDriver)}` : ''}</small></div>
+      <div class="news-meta"><span class="tag ${IMPACT_CLASS[item.impact] || 'neutral'}">${escape(item.impact)}</span><span class="tag ${SENTIMENT_CLASS[item.sentiment] || 'neutral'}">${escape(item.sentiment || 'N/A')}</span><small>${item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}</small></div>
     </div>`).join('') : '<p class="small">No recent company news was returned by the source.</p>';
+}
+
+// Phase 6 Earnings Intelligence + Event Calendar: reads
+// data.stocks[].earningsIntelligence (real quarterly deltas, data/analytics/
+// earningsAnalytics.mjs) and data.eventCalendar (data/analytics/
+// eventCalendar.mjs) -- both already computed server-side. Pure formatting.
+const IMPACT_CLASS_EI = { High: 'sell', Medium: 'hold', Low: 'buy' };
+function renderEarningsIntelligence(data) {
+  $('#earnings-methodology-info').innerHTML = infoIcon('earningsIntelligence');
+  const eligible = data.stocks.filter(s => !s.unresolved && s.earningsIntelligence);
+  $('#earnings-intel-table tbody').innerHTML = eligible.length ? eligible.map(stock => {
+    const ei = stock.earningsIntelligence;
+    const q = ei.quarterly;
+    if (!q) return `<tr data-symbol="${escape(stock.symbol)}"><td>${companyLink(stock.symbol, stock.name)}</td><td colspan="8" class="small">No quarterly results data available.</td><td><span class="tag neutral">${escape(ei.calendar?.status || 'Future Integration')}</span></td></tr>`;
+    return `<tr data-symbol="${escape(stock.symbol)}">
+      <td>${companyLink(stock.symbol, stock.name)}</td>
+      <td>${escape(q.latestPeriod || 'N/A')}</td>
+      <td class="num">${pct(q.revenue.qoqPct)}</td>
+      <td class="num">${pct(q.revenue.yoyPct)}</td>
+      <td class="num">${pct(q.netProfit.qoqPct)}</td>
+      <td class="num">${pct(q.netProfit.yoyPct)}</td>
+      <td class="num">${q.operatingMargin.qoqDeltaPts == null ? 'N/A' : `${q.operatingMargin.qoqDeltaPts >= 0 ? '+' : ''}${q.operatingMargin.qoqDeltaPts}pp`}</td>
+      <td class="num">${q.operatingMargin.yoyDeltaPts == null ? 'N/A' : `${q.operatingMargin.yoyDeltaPts >= 0 ? '+' : ''}${q.operatingMargin.yoyDeltaPts}pp`}</td>
+      <td class="num">${pct(q.netProfit.deviationVsTrailingAvgPct)}</td>
+      <td><span class="tag neutral">${escape(ei.calendar?.status || 'Future Integration')}</span></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="10" class="small">This watchlist is empty.</td></tr>';
+
+  const events = (data.eventCalendar || []).slice(0, 30);
+  $('#event-calendar-list').innerHTML = events.length ? events.map(item => `<div class="news-item">
+      <div><a target="_blank" rel="noopener" href="${escape(item.url)}">${escape(item.title)}</a><small>${escape(item.name)} &middot; ${escape(item.catalystType || 'General')}</small></div>
+      <div class="news-meta"><span class="tag ${IMPACT_CLASS_EI[item.impact] || 'neutral'}">${escape(item.impact)}</span><small>${item.date ? new Date(item.date).toLocaleDateString() : 'N/A'}</small></div>
+    </div>`).join('') : '<p class="small">No dated events found for this watchlist.</p>';
+}
+
+// Phase 6 Morning Briefing: Dashboard's default sub-tab (see initSubtabs()'s
+// buttons[0] default and index.html's button order). Composes data already
+// computed/fetched elsewhere on this page -- data.executiveSummary/
+// intelligence/stocks (server-computed) plus the module-level macroData/
+// sectorIntelData already fetched once at startup for their own sub-tabs
+// (reused here, never refetched). Zero new computation.
+const IMPACT_RANK = { High: 3, Medium: 2, Low: 1 };
+function renderMorningBriefing(data) {
+  const intel = data.intelligence;
+  const regime = macroData?.regime;
+  const macroRows = (macroData?.indicators || []).map(ind =>
+    `<div class="allocation-row"><span>${escape(ind.label)}</span><span class="${MACRO_DIRECTION_CLASS[ind.direction] || ''}">${pct(ind.changePct)} (${escape(ind.direction)})</span></div>`
+  ).join('');
+  $('#mb-market-moves').innerHTML = macroData
+    ? `<div class="kpi">${escape(regime?.label || 'N/A')} ${infoIcon('marketRegime')}</div><div class="small">Confidence: ${escape(regime?.confidence || 'N/A')}</div>${macroRows}`
+    : '<p class="small">Not available.</p>';
+
+  // Sector state: current-state Sector Intelligence rollup, not a day-over-
+  // day delta -- no historical snapshot exists for cross-watchlist sector
+  // data (a future-work gap, disclosed in sectorIntelligence.mjs's own
+  // dataLimitations), so this shows "today's state," never a fabricated change.
+  const topSectors = (sectorIntelData?.sectors || []).slice(0, 5);
+  $('#mb-sector-state').innerHTML = topSectors.length
+    ? topSectors.map(s => `<div class="allocation-row"><span>${escape(s.sector)} (${s.companyCount})</span><span>${s.avgCompositeScore == null ? 'N/A' : `${s.avgCompositeScore}/100`}</span></div>`).join('')
+    : '<p class="small">Not available.</p>';
+
+  if (!intel) {
+    $('#mb-alerts').innerHTML = '<p class="small">Not available.</p>';
+    $('#mb-opportunities').innerHTML = '<p class="small">Not available.</p>';
+    $('#mb-risks').innerHTML = '<p class="small">Not available.</p>';
+  } else {
+    const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
+    const criticalHigh = intel.alerts.filter(a => a.severity === 'Critical' || a.severity === 'High');
+    $('#mb-alerts').innerHTML = criticalHigh.length
+      ? criticalHigh.slice(0, 8).map(a => { const s = bySymbol.get(a.symbol); return `<div class="allocation-row" data-symbol="${escape(a.symbol)}"><span>${companyLink(a.symbol, s?.name || a.symbol)}</span><span class="tag ${SEVERITY_TAG_CLASS[a.severity] || 'neutral'}">${escape(a.severity)}</span><span class="small">${escape(a.message || '')}</span></div>`; }).join('')
+      : '<p class="small">No Critical/High alerts currently.</p>';
+
+    const actionRow = (a) => { const s = bySymbol.get(a.symbol); return s ? `<div class="allocation-row" data-symbol="${escape(a.symbol)}"><span>${companyLink(a.symbol, s.name)}</span><span class="small">${actionScoreBadge(intel.actionScores[a.symbol])} ${escape(a.rationale || '')}</span></div>` : ''; };
+    const topOpportunities = intel.actionRequired.filter(a => ['Add aggressively', 'Add'].includes(a.label)).slice(0, 5);
+    $('#mb-opportunities').innerHTML = topOpportunities.length ? topOpportunities.map(actionRow).join('') : '<p class="small">None currently.</p>';
+    const topRisks = intel.actionRequired.filter(a => ['Reduce', 'Exit'].includes(a.label)).slice(0, 5);
+    $('#mb-risks').innerHTML = topRisks.length ? topRisks.map(actionRow).join('') : '<p class="small">None currently.</p>';
+  }
+
+  // Earnings today: always empty -- no earnings-calendar data source exists
+  // (nextEarningsDate is always null, data/analytics/earningsAnalytics.mjs)
+  // -- disclosed explicitly rather than silently showing an empty list that
+  // reads as "nothing due today" when it actually means "can't know."
+  $('#mb-earnings-today').innerHTML = '<p class="small">Not available &mdash; no earnings calendar data source is configured in this app (see the Earnings &amp; Events sub-tab). Dates are never estimated or fabricated.</p>';
+
+  const newsItems = data.stocks.flatMap(stock => (stock.news || []).map(item => ({ ...item, company: stock.name })))
+    .sort((a, b) => (IMPACT_RANK[b.impact] ?? 0) - (IMPACT_RANK[a.impact] ?? 0) || new Date(b.date || 0) - new Date(a.date || 0));
+  $('#mb-top-news').innerHTML = newsItems.length ? newsItems.slice(0, 6).map(item => `<div class="news-item">
+      <div><a target="_blank" rel="noopener" href="${escape(item.url)}">${escape(item.title)}</a><small>${escape(item.company)} &middot; ${escape(item.catalystType || 'General')}</small></div>
+      <div class="news-meta"><span class="tag ${IMPACT_CLASS[item.impact] || 'neutral'}">${escape(item.impact)}</span><span class="tag ${SENTIMENT_CLASS[item.sentiment] || 'neutral'}">${escape(item.sentiment || 'N/A')}</span></div>
+    </div>`).join('') : '<p class="small">No recent news.</p>';
 }
 
 function renderExecStatus(data) {
@@ -1083,9 +1535,128 @@ function renderDashboardRiskFlags(data) {
   $('#dashboard-risk-flags').innerHTML = rows.length ? rows.join('') : '<p class="small">No named risk conditions currently flagged.</p>';
 }
 
+// ---- Phase 6 Macro Intelligence: watchlist-independent (data/watchlist/
+// macro.mjs, GET /api/macro), so it is fetched once at startup (see start()
+// below) rather than being part of the render(data) cascade -- nothing here
+// depends on the active watchlist. Re-fetching on tab reopen is cheap: the
+// server's own 30min TTL (macro.mjs) decides whether that triggers a real
+// Yahoo hit or just serves the disk cache. ----
+let macroData = null;
+async function loadMacroIntelligence() {
+  try { macroData = (await api('/api/macro')).data; }
+  catch { macroData = null; }
+  renderMacroIntelligence();
+  if (currentData) renderMorningBriefing(currentData); // Morning Briefing reuses macroData -- re-render once it lands, if the watchlist already rendered first
+}
+const MACRO_STATUS_CLASS = { Live: 'buy', Delayed: 'hold', Unavailable: 'sell', 'Future Integration': 'neutral' };
+const MACRO_DIRECTION_CLASS = { Rising: 'positive', Falling: 'negative', Flat: '', 'N/A': '' };
+function renderMacroIntelligence() {
+  $('#macro-methodology-info').innerHTML = infoIcon('macroIndicator');
+  if (!macroData) {
+    $('#macro-regime').innerHTML = '<p class="small">Not available.</p>';
+    $('#macro-data-quality').innerHTML = '';
+    $('#macro-indicators-table tbody').innerHTML = '<tr><td colspan="8" class="small">Not available.</td></tr>';
+    $('#macro-unavailable-table tbody').innerHTML = '';
+    return;
+  }
+  const regime = macroData.regime || {};
+  $('#macro-regime').innerHTML = `
+    <div class="kpi">${escape(regime.label || 'N/A')} ${infoIcon('marketRegime')}</div>
+    <div class="small">Confidence: ${escape(regime.confidence || 'N/A')}</div>
+    <ul>${(regime.notes || []).map(note => `<li>${escape(note)}</li>`).join('')}</ul>`;
+
+  const dq = macroData.dataQuality || {};
+  $('#macro-data-quality').innerHTML = [
+    card('Live', dq.live ?? 0, 'Fetched within the last 30 minutes', 'positive'),
+    card('Delayed', dq.delayed ?? 0, 'Serving a stale cached reading (fresh fetch failed)', dq.delayed ? 'amber' : ''),
+    card('Unavailable', dq.unavailable ?? 0, 'Fetch failed and no cached reading exists', dq.unavailable ? 'amber' : ''),
+    card('Future Integration', dq.futureIntegration ?? 0, 'No data source configured for these indicators', 'neutral')
+  ].join('');
+
+  $('#macro-indicators-table tbody').innerHTML = (macroData.indicators || []).length ? macroData.indicators.map(ind => `
+    <tr>
+      <td>${escape(ind.label)}</td>
+      <td>${escape(ind.category)}</td>
+      <td class="num">${ind.value == null ? 'N/A' : `${fmt(ind.value)} ${escape(ind.unit || '')}`}</td>
+      <td class="num">${pct(ind.changePct)}</td>
+      <td class="num">${pct(ind.oneYearChangePct)}</td>
+      <td><span class="${MACRO_DIRECTION_CLASS[ind.direction] || ''}">${escape(ind.direction)}</span></td>
+      <td><span class="tag ${MACRO_STATUS_CLASS[ind.status] || 'neutral'}">${escape(ind.status)}</span></td>
+      <td>${ind.asOf ? new Date(ind.asOf).toLocaleString() : 'N/A'}</td>
+    </tr>`).join('') : '<tr><td colspan="8" class="small">Not available.</td></tr>';
+
+  $('#macro-unavailable-table tbody').innerHTML = (macroData.unavailable || []).map(ind =>
+    `<tr><td>${escape(ind.label)}</td><td>${escape(ind.category)}</td><td><span class="tag neutral">${escape(ind.status)}</span></td></tr>`
+  ).join('');
+}
+
+// ---- Phase 6 Sector Intelligence: cross-watchlist (data/watchlist/
+// sectorIntelligence.mjs, GET /api/sector-intelligence) -- watchlist-
+// independent like macro data above, fetched once at startup. ----
+let sectorIntelData = null;
+async function loadSectorIntelligence() {
+  try { sectorIntelData = (await api('/api/sector-intelligence')).data; }
+  catch { sectorIntelData = null; }
+  renderSectorIntelligence();
+  if (currentData) renderMorningBriefing(currentData); // Morning Briefing reuses sectorIntelData too
+}
+// The Phase 6 brief names these 8 sectors explicitly -- matched against this
+// app's real per-company sector strings by the same keyword patterns
+// data/analytics/institutionalRisk.mjs's SECTOR_RISK_RULES already uses
+// server-side (kept textually identical so this coverage-gap check can never
+// disagree with the sector risk tags shown in the same table), purely to
+// show which of the 8 have zero coverage in your saved watchlists today.
+// Never used to relabel or reclassify a real sector string. Real Screener
+// sector labels don't always match a brief's plain-English name (e.g.
+// defence-sector companies are labeled "Capital Goods," not "Defence" --
+// see docs/governance/roadmap.md TD-1) -- a "gap" here can mean either
+// "genuinely no such company added" or "added, but under a sector label this
+// pattern doesn't catch," which the panel's own caption discloses.
+const PRIORITY_SECTOR_PATTERNS = [
+  { label: 'Banking', pattern: /bank|financ|nbfc|insur/i }, { label: 'Power', pattern: /power|utilit/i },
+  { label: 'Defence', pattern: /defence|defense|aerospace/i }, { label: 'IT', pattern: /\bit\b|tech|software|internet/i },
+  { label: 'Energy', pattern: /oil|gas|petro|energy/i }, { label: 'Chemicals', pattern: /chemical/i },
+  { label: 'Pharma', pattern: /pharma|health/i }, { label: 'Auto', pattern: /auto/i }
+];
+function renderSectorIntelligence() {
+  $('#sector-intel-methodology-info').innerHTML = infoIcon('sectorIntelligence');
+  if (!sectorIntelData) {
+    $('#sector-intel-kpis').innerHTML = '';
+    $('#sector-intel-table tbody').innerHTML = '<tr><td colspan="11" class="small">Not available.</td></tr>';
+    $('#sector-intel-gaps').innerHTML = '';
+    return;
+  }
+  const sectors = sectorIntelData.sectors || [];
+  $('#sector-intel-kpis').innerHTML = [
+    card('Companies covered', sectorIntelData.companyCount ?? 0, 'Distinct symbols across every saved watchlist', ''),
+    card('Watchlists scanned', sectorIntelData.watchlistCount ?? 0, 'Cache-only -- no new fetch triggered', ''),
+    card('Sectors represented', sectors.length, 'Groups with at least 1 company', ''),
+    card('Largest sector', sectors[0] ? `${escape(sectors[0].sector)} (${sectors[0].companyCount})` : 'N/A', 'By company count', '')
+  ].join('');
+
+  $('#sector-intel-table tbody').innerHTML = sectors.length ? sectors.map(s => `
+    <tr>
+      <td>${escape(s.sector)}</td>
+      <td class="num">${s.companyCount}</td>
+      <td class="num">${s.avgCompositeScore == null ? 'N/A' : `${s.avgCompositeScore}/100`}</td>
+      <td class="num">${s.avgValuationScore == null ? 'N/A' : `${s.avgValuationScore}/100`}</td>
+      <td class="num">${s.avgTechnicalScore == null ? 'N/A' : `${s.avgTechnicalScore}/100`}</td>
+      <td class="num">${s.avgRiskScore == null ? 'N/A' : `${s.avgRiskScore}/100`}</td>
+      <td class="num">${pct(s.avgRelativeStrengthPct)}</td>
+      <td class="num">${pct(s.avgEpsCagr5yPct)}</td>
+      <td class="num">${s.regulatorySensitivity ?? 'N/A'}${s.sectorTagsMatched ? '' : ' <span class="small">(baseline)</span>'}</td>
+      <td class="num">${s.commoditySensitivity ?? 'N/A'}</td>
+      <td>${Object.entries(s.ratingCounts || {}).map(([r, n]) => `<span class="tag ${tagClass(r)}">${escape(r)} ${n}</span>`).join(' ')}</td>
+    </tr>`).join('') : '<tr><td colspan="11" class="small">No companies in any saved watchlist yet.</td></tr>';
+
+  const covered = (label) => sectors.some(s => PRIORITY_SECTOR_PATTERNS.find(p => p.label === label)?.pattern.test(s.sector));
+  const gaps = PRIORITY_SECTOR_PATTERNS.map(p => p.label).filter(label => !covered(label));
+  $('#sector-intel-gaps').innerHTML = gaps.length ? gaps.map(label => `<span class="tag neutral">${escape(label)}</span>`).join(' ') : '<p>All 8 priority sectors have at least 1 company in a saved watchlist.</p>';
+}
+
 function render(data) {
   currentData = data;
-  const activeTab = $('.tabs button.active')?.dataset.tab;
+  const activeTab = $('.tab.active')?.id;
   $('#empty').hidden = data.stocks.length > 0 || activeTab === 'watchlists';
   // Company selection survives a refresh/mutation of the same watchlist (it
   // used to be wiped on every render); only an actual watchlist switch tries
@@ -1103,6 +1674,7 @@ function render(data) {
   $('#summary').textContent = data.summary;
   $('#data-limitations').innerHTML = (data.dataLimitations || []).map(item => `<li>${escape(item)}</li>`).join('');
 
+  renderMorningBriefing(data);
   renderExecStatus(data);
   renderDashboardKpis(data);
   renderTopOpportunities(data);
@@ -1121,9 +1693,13 @@ function render(data) {
   renderTechnicalDetail(data);
   renderPortfolioTab(data.stocks);
   renderPortfolioAnalytics(data);
+  renderExposureMatrix(data);
+  renderCompareWorkspace(data);
+  renderReportsWorkspace();
 
   renderDashboardRisks(data);
   renderDashboardRiskFlags(data);
+  renderEarningsIntelligence(data);
   const eligible = data.stocks.filter(s => !s.unresolved && s.institutionalRisk);
   const avgCategory = (key) => { const values = eligible.map(s => s.institutionalRisk.categories?.[key]).filter(v => v != null); return values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : null; };
   $('#risk-cards').innerHTML = [
@@ -1139,6 +1715,19 @@ function render(data) {
   }).join('') : '<tr><td colspan="14" class="small">This watchlist is empty.</td></tr>';
   renderRiskDetail(data);
   $('#risk-summary').textContent = eligible.length ? `The composite risk score for ${data.watchlistName} blends Financial, Business, Market, Sector and Governance risk for each company, shown above alongside two price-based downside scenarios (reversion to the 200-day average and to the 52-week low). Sector risk is a static, disclosed qualitative lookup, not a live feed; several Business/Governance sub-items have no data source and are not estimated -- see the deep-dive panel below. These are comparative screening indicators, not predictions.` : 'Risk analysis will appear once the watchlist has companies.';
+  renderAlerts(data);
+
+  renderPortfolioIntelligence(data);
+  renderCommitteeView(data);
+  renderHealthRebalancing(data);
+  // Phase 6: re-render (not re-fetch) the Macro Intelligence panel here too --
+  // macroData itself is watchlist-independent and fetched once in start(),
+  // but its info icons read currentData.metricMeta, which may not exist yet
+  // the first time loadMacroIntelligence()'s own fetch resolves (macro is a
+  // lighter fetch than a watchlist's research payload and often wins the
+  // race). This just re-applies already-fetched macroData to the DOM.
+  renderMacroIntelligence();
+  renderSectorIntelligence();
 
   renderWatchlistsTab(data);
   renderHeaderCompanySelector();
@@ -1188,6 +1777,26 @@ function highlightWlRow(symbol) {
 // ---- Watchlists tab rendering: portfolio summary, filter options and the
 // company table -- client-side sort/filter/search/multi-select over
 // data.stocks, never mutating that canonical watchlist-order array. ----
+// Phase 4: predicate for the Watchlists "monitoring" filter chips -- every
+// branch reads a field data.intelligence/data.stocks already computed
+// (data/decision/*.mjs); "High upside" is the one plain UI-display threshold
+// (20% upside to Target Price), disclosed via the chip's own label rather
+// than hidden inside a new tier.
+function stockMatchesIntelFilter(stock, filter, intel) {
+  switch (filter) {
+    case 'Add aggressively': case 'Add': case 'Hold': case 'Reduce': case 'Exit':
+      return intel?.actionScores?.[stock.symbol]?.label === filter;
+    case 'High risk':
+      return (stock.institutionalRisk?.compositeRiskScore ?? 0) >= 65;
+    case 'High upside':
+      return (stock.valuation?.upsidePct ?? 0) >= 20;
+    case 'Technical breakout':
+      return BREAKOUT_REGIMES.includes(stock.technicalScorecard?.regime);
+    case 'Recent changes':
+      return !!intel?.changes?.bySymbol?.[stock.symbol]?.hasChanges;
+    default: return true;
+  }
+}
 function wlFilteredSortedStocks(data) {
   let stocks = [...data.stocks];
   if (wlFilterSector) stocks = stocks.filter(s => (s.sector || 'Unclassified') === wlFilterSector);
@@ -1196,6 +1805,7 @@ function wlFilteredSortedStocks(data) {
     const q = wlSearchQuery.toLowerCase();
     stocks = stocks.filter(s => s.name.toLowerCase().includes(q) || s.symbol.toLowerCase().includes(q));
   }
+  if (wlIntelFilters.size) stocks = stocks.filter(s => [...wlIntelFilters].some(f => stockMatchesIntelFilter(s, f, data.intelligence)));
   if (wlSortColumn) {
     const dir = wlSortDir === 'asc' ? 1 : -1;
     const accessor = {
@@ -1203,7 +1813,14 @@ function wlFilteredSortedStocks(data) {
       signal: s => RATING_RANK[s.signal] || 0, confidence: s => CONVICTION_RANK[s.recommendation?.confidence] || 0,
       weight: s => s.effectiveWeightPct, marketCap: s => s.marketCap, roe: s => s.roe, roce: s => s.roce,
       growth: s => s.metrics?.revenueCagr3y, risk: s => s.institutionalRisk?.compositeRiskScore,
-      updated: s => s.fetchedAt ? new Date(s.fetchedAt).getTime() : 0
+      updated: s => s.fetchedAt ? new Date(s.fetchedAt).getTime() : 0,
+      actionScore: s => data.intelligence?.actionScores?.[s.symbol]?.score,
+      action: s => ({ 'Add aggressively': 5, Add: 4, Hold: 3, Reduce: 2, Exit: 1 }[data.intelligence?.actionScores?.[s.symbol]?.label] || 0),
+      fvGap: s => s.valuation?.marginOfSafetyPct,
+      riskTrend: s => s.institutionalRisk?.riskTrend || '',
+      techTrend: s => s.technicalScorecard?.regime || '',
+      alertCount: s => (data.intelligence?.alerts || []).filter(a => a.symbol === s.symbol).length,
+      lastChange: s => data.intelligence?.changes?.bySymbol?.[s.symbol]?.hasChanges ? 1 : 0
     }[wlSortColumn];
     stocks.sort((a, b) => {
       const av = accessor(a), bv = accessor(b);
@@ -1257,6 +1874,10 @@ function renderWlTable(data) {
   });
   $('#wl-table tbody').innerHTML = stocks.length ? stocks.map((stock) => {
     const naturalIndex = data.stocks.indexOf(stock);
+    const action = data.intelligence?.actionScores?.[stock.symbol];
+    const alertCount = (data.intelligence?.alerts || []).filter(a => a.symbol === stock.symbol).length;
+    const changeEntry = data.intelligence?.changes?.bySymbol?.[stock.symbol];
+    const lastChangeLabel = changeEntry?.hasChanges ? (changeEntry.changes[0]?.label || 'Changed') : '—';
     return `<tr data-symbol="${escape(stock.symbol)}">
       <td><input type="checkbox" class="wl-row-select" data-symbol="${escape(stock.symbol)}" ${wlSelected.has(stock.symbol) ? 'checked' : ''}></td>
       <td><button type="button" class="row-company-link" data-symbol="${escape(stock.symbol)}">${escape(stock.name)}</button></td>
@@ -1272,6 +1893,13 @@ function renderWlTable(data) {
       <td class="num">${pct(stock.metrics?.revenueCagr3y)}</td>
       <td class="num">${scoreText(stock.institutionalRisk?.compositeRiskScore, true)}</td>
       <td>${escape(wlLastUpdatedText(stock))}</td>
+      <td class="num" title="${escape(actionScoreTitle(action))}">${action ? `${action.score}/100` : 'N/A'}</td>
+      <td>${actionScoreBadge(action)}</td>
+      <td class="num">${fairValueGapCell(stock)}</td>
+      <td>${escape(stock.institutionalRisk?.riskTrend || 'N/A')}</td>
+      <td>${escape(stock.technicalScorecard?.regime || 'N/A')}</td>
+      <td class="num">${alertCount}</td>
+      <td>${escape(lastChangeLabel)}</td>
       <td class="wl-notes-cell"><input type="text" class="wl-notes-input" placeholder="Add note" value="${escape(stock.notes || '')}" data-symbol="${escape(stock.symbol)}"></td>
       <td class="company-row-actions">
         <button type="button" class="icon-btn" data-action="refresh-one" data-symbol="${escape(stock.symbol)}" title="Refresh this company">&#8635;</button>
@@ -1281,7 +1909,7 @@ function renderWlTable(data) {
         <button type="button" class="icon-btn" data-action="remove" data-symbol="${escape(stock.symbol)}" title="Remove">&#10005;</button>
       </td>
     </tr>`;
-  }).join('') : `<tr><td colspan="16" class="small">No companies match the current filter, or this watchlist is empty.</td></tr>`;
+  }).join('') : `<tr><td colspan="23" class="small">No companies match the current filter, or this watchlist is empty.</td></tr>`;
   $('#wl-select-all').checked = stocks.length > 0 && stocks.every(s => wlSelected.has(s.symbol));
   $('#wl-bulk-bar').hidden = wlSelected.size === 0;
   $('#wl-bulk-count').textContent = `${wlSelected.size} selected`;
@@ -1291,7 +1919,9 @@ function renderWatchlistsTab(data) {
     wlLastWatchlistId = data.watchlistId;
     wlSelected = new Set(); wlSortColumn = null; wlSortDir = 'asc';
     wlFilterSector = ''; wlFilterRecommendation = ''; wlSearchQuery = '';
+    wlIntelFilters = new Set();
     $('#wl-search').value = '';
+    $$('#wl-intel-filters .pill').forEach(p => p.classList.remove('active'));
   }
   const symbolSet = new Set(data.stocks.map(s => s.symbol));
   for (const symbol of [...wlSelected]) if (!symbolSet.has(symbol)) wlSelected.delete(symbol);
@@ -1328,6 +1958,8 @@ async function loadWatchlist(id, initialData) {
 
 async function start() {
   loadCompanySearchIndex(); // fire-and-forget -- runs concurrently with the research load below, not on its critical path
+  loadMacroIntelligence(); // fire-and-forget -- watchlist-independent (Phase 6), not on the research load's critical path either
+  loadSectorIntelligence(); // fire-and-forget -- cross-watchlist (Phase 6), same rationale
   try {
     watchlistIndex = (await api('/api/watchlists')).data;
     renderWatchlistSelect();
@@ -1412,6 +2044,40 @@ $('#wl-export-btn').addEventListener('click', () => {
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 });
+// Phase 5: printable Portfolio Review Pack -- a standalone page
+// (portfolio-review.html/js) mirroring report.html's per-company report
+// pattern at watchlist scope. Read-only navigation, same as the per-company
+// "Report" launch points (Quick Jump, the Watchlists table row button).
+// Phase 6.5: these 3 helpers are the single canonical way any button in this
+// app opens a standalone report page -- the Reports workspace and every
+// pre-existing launch point (Quick Jump, Watchlists manage row, Committee
+// View, the per-row report action) all call the same 3 functions instead of
+// each constructing its own window.open URL.
+function openCompanyReport(symbol) {
+  if (!watchlistIndex?.activeWatchlist || !symbol) return;
+  window.open(`report.html?wl=${encodeURIComponent(watchlistIndex.activeWatchlist)}&symbol=${encodeURIComponent(symbol)}`, '_blank');
+}
+function openPortfolioReview() {
+  if (!watchlistIndex?.activeWatchlist) return;
+  window.open(`portfolio-review.html?wl=${encodeURIComponent(watchlistIndex.activeWatchlist)}`, '_blank');
+}
+function openCommitteePack() {
+  if (!watchlistIndex?.activeWatchlist) return;
+  window.open(`committee-pack.html?wl=${encodeURIComponent(watchlistIndex.activeWatchlist)}`, '_blank');
+}
+function renderReportsWorkspace() {
+  const stock = currentData?.stocks.find(s => s.symbol === activeCompanySymbol);
+  const label = $('#reports-active-company');
+  if (label) label.textContent = stock ? `Active company: ${stock.name} (${stock.symbol})` : 'No company selected';
+  const btn = $('#reports-company-report-btn');
+  if (btn) btn.disabled = !stock;
+}
+$('#wl-portfolio-review-btn').addEventListener('click', openPortfolioReview);
+$('#cv-portfolio-review-btn').addEventListener('click', openPortfolioReview);
+$('#cv-committee-pack-btn').addEventListener('click', openCommitteePack);
+$('#reports-company-report-btn')?.addEventListener('click', () => openCompanyReport(activeCompanySymbol));
+$('#reports-portfolio-review-btn')?.addEventListener('click', openPortfolioReview);
+$('#reports-committee-pack-btn')?.addEventListener('click', openCommitteePack);
 $('#wl-import-btn').addEventListener('click', () => $('#wl-import-file').click());
 $('#wl-import-file').addEventListener('change', async () => {
   const file = $('#wl-import-file').files[0];
@@ -1434,6 +2100,14 @@ $('#wl-import-file').addEventListener('change', async () => {
 $('#wl-search').addEventListener('input', () => { wlSearchQuery = $('#wl-search').value.trim(); if (currentData) renderWlTable(currentData); });
 $('#wl-filter-sector').addEventListener('change', () => { wlFilterSector = $('#wl-filter-sector').value; if (currentData) renderWlTable(currentData); });
 $('#wl-filter-recommendation').addEventListener('change', () => { wlFilterRecommendation = $('#wl-filter-recommendation').value; if (currentData) renderWlTable(currentData); });
+$('#wl-intel-filters').addEventListener('click', (event) => {
+  const button = event.target.closest('.pill[data-intel-filter]');
+  if (!button) return;
+  const filter = button.dataset.intelFilter;
+  if (wlIntelFilters.has(filter)) wlIntelFilters.delete(filter); else wlIntelFilters.add(filter);
+  button.classList.toggle('active');
+  if (currentData) renderWlTable(currentData);
+});
 
 $('#wl-table thead').addEventListener('click', (event) => {
   const th = event.target.closest('th[data-sort]');
@@ -1460,7 +2134,7 @@ $('#wl-table tbody').addEventListener('click', async (event) => {
   const { action, symbol } = button.dataset;
   const id = watchlistIndex.activeWatchlist;
   if (action === 'report') {
-    window.open(`report.html?wl=${encodeURIComponent(id)}&symbol=${encodeURIComponent(symbol)}`, '_blank');
+    openCompanyReport(symbol);
     return;
   }
   if (action === 'remove') {

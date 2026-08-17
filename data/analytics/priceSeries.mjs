@@ -104,6 +104,22 @@ export function annualizedVolatilityPct(points) {
   return number(Math.sqrt(variance) * Math.sqrt(52) * 100);
 }
 
+// Annualized downside deviation from weekly returns (Sortino-style downside
+// risk: only returns below `thresholdPct` count, squared-and-averaged over
+// ALL observations -- not just the negative ones -- then annualized the same
+// way as annualizedVolatilityPct above). Same weekly-sample/sqrt(52)
+// annualization convention as realized volatility, so the two are directly
+// comparable; a Sortino-like ratio built on this is not a full-history daily
+// downside-deviation calculation.
+export function downsideDeviationPct(points, thresholdPct = 0) {
+  const returns = returnsOf(points);
+  if (returns.length < 10) return null;
+  const threshold = thresholdPct / 100;
+  const downsideSqSum = returns.reduce((sum, r) => sum + Math.min(0, r - threshold) ** 2, 0);
+  const downsideVariance = downsideSqSum / returns.length;
+  return number(Math.sqrt(downsideVariance) * Math.sqrt(52) * 100);
+}
+
 // Max peak-to-trough drawdown (%) over the available window -- a real
 // calculation over real historical closes, not a simulated stress scenario.
 export function maxDrawdownPct(points) {

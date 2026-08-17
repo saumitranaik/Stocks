@@ -1,6 +1,6 @@
 {
   "symbol": "KOTAKBANK.NS",
-  "fetchedAt": "2026-08-14T12:16:37.929Z",
+  "fetchedAt": "2026-08-16T18:08:14.799Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 401.270350189209,
     "fiftyTwoWeekHigh": 445.1199951171875,
     "fiftyTwoWeekLow": 353.3999938964844,
-    "regularMarketVolume": 9514927,
+    "regularMarketVolume": 9519332,
     "rsi14": 50.97334317747074,
     "macd": {
       "macdLine": 1.33,
@@ -24,7 +24,7 @@
       "histogram": 0.08
     },
     "oneYearReturnPct": -1.1348752870568264,
-    "avgVolume20": 12109185.15,
+    "avgVolume20": 12109405.4,
     "ohlcv": {
       "open": [
         397.6000061035156,
@@ -1284,18 +1284,18 @@
         7853813,
         10733474,
         5726518,
-        9514927
+        9519332
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:37.342Z",
+    "asOf": "2026-08-16T18:02:15.975Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 389344,
+      "marketCap": 389091,
       "pe": 19.4,
       "bookValue": 182,
       "dividendYield": 0.17,
@@ -3083,7 +3083,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 392.3999938964844
+        "close": 391.1499938964844
       },
       {
         "date": "2026-08-14",
@@ -3098,8 +3098,11 @@
       "date": "Thu, 25 Jun 2026 11:58:40 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Kotak Mahindra Bank Shares Fall 3% As Investors React To Margin Pressure - HDFC Sky",
@@ -3107,17 +3110,11 @@
       "date": "Mon, 20 Jul 2026 07:00:00 GMT",
       "source": "HDFC Sky",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Negative",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Kotak Bank Q1FY27 PAT rises 23% to ₹5,480 crore; earnings call transcript released - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNbE5wbXpUa3FvZ0VGSnlNWENjb210Y01NQ0RLQ1dQS0NjM2xTYTlxdGZscU9YMGwyc2dodEd5R2txRFY2X2M2YjFuS0ZXZnk0eDRqUkl0SXdIR29CV3A4M3pUZWhReFFLdThTcUVhSWxfN2JUcThEZ1E5RUJYa2ZjVldhdVc3a1NlVjB2Y19kenVBZWU2b1UxZmlUcXBPTk9wektZdUUwREpycFZBd1A5VnFScVI?oc=5",
-      "date": "Sun, 26 Jul 2026 07:00:00 GMT",
-      "source": "scanx.trade",
-      "impact": "High",
-      "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Kotak Mahindra Bank Limited's (NSE:KOTAKBANK) large institutional owners must be happy as stock continues to impress, up 3.2% over the past week - simplywall.st",
@@ -3125,8 +3122,11 @@
       "date": "Wed, 11 Feb 2026 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Kotak Mahindra Bank Share Price | 1:5 Stock Split Record Date &amp; Market Update - Samco",
@@ -3134,9 +3134,24 @@
       "date": "Tue, 30 Dec 2025 08:00:00 GMT",
       "source": "Samco",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Why Kotak Mahindra Bank Shares Appeared to Crash 80% Today - outlookbusiness.com",
+      "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNNWFPb1Y4d1ctejBDcHVMdXljc21YZUFkTVJId2RiUGJrOXBHR1N6TzJEVVV0Z0ZvNG11OW1vUXo2Y3BwbHl5RnlodU03VzJLWGRFRTlteDJFMXA2T0FaWTZfbHNGZlU1N201enVBUWJfWXhFVkJhWno0T0lqbWFoakNNbkVDUkt6TlBGSVRhY0JjcWI5RlNjdzBrMmJ4Z9IBqwFBVV95cUxQLVFzb25NT1FibGtyZ0Q3N3ZqeVduUThaVHAwckdsRk5XWEk2UVRUdHo1c0pGR0FNamlicGdsaVhpdG1MVHYxUF82ZURWM1RrVk1BdUgyU2h2NE1CNFAwVnpLcEZWU25ISUxNQWRVdmpVRzMxeVJzc1dPZ243SmVTMm9pbEJTR0IzZThEendtR0RPa0VhbEx3cHIyaU9adnRlcTc2T244WWZEb2c?oc=5",
+      "date": "Wed, 14 Jan 2026 08:00:00 GMT",
+      "source": "outlookbusiness.com",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:37.929Z"
+  "newsFetchedAt": "2026-08-16T18:08:14.799Z"
 }

@@ -14,8 +14,11 @@ export function ratingFor(compositeScore) {
 
 // Best-to-worst order, used by the unified recommendation engine's
 // cross-signal consistency guards (scoringEngine.mjs) to cap a rating down
-// without hard-coding tier comparisons in multiple places.
-const TIER_ORDER = ['Strong Buy', 'Buy', 'Accumulate', 'Hold', 'Reduce', 'Sell'];
+// without hard-coding tier comparisons in multiple places. Exported so any
+// other module needing a single source of truth for rating rank (e.g.
+// data/decision/thesisTracking.mjs's upgrade/downgrade detection) reads
+// this instead of duplicating the 6-tier scale.
+export const TIER_ORDER = ['Strong Buy', 'Buy', 'Accumulate', 'Hold', 'Reduce', 'Sell'];
 export const BUY_SIDE_TIERS = ['Strong Buy', 'Buy', 'Accumulate'];
 
 // Returns `rating` unchanged if it's already at or below (worse than or

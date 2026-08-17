@@ -1,6 +1,6 @@
 {
   "symbol": "BANKBARODA.NS",
-  "fetchedAt": "2026-08-14T12:16:37.824Z",
+  "fetchedAt": "2026-08-16T13:39:49.445Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": 1.2
     },
     "oneYearReturnPct": 2.244921881751772,
-    "avgVolume20": 9043880.5,
+    "avgVolume20": 9043915.35,
     "ohlcv": {
       "open": [
         241.99000549316406,
@@ -1284,18 +1284,18 @@
         13598893,
         8298917,
         3547993,
-        7811524
+        7812221
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:37.386Z",
+    "asOf": "2026-08-16T13:39:48.745Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 128250,
+      "marketCap": 128364,
       "pe": 5.81,
       "bookValue": 326,
       "dividendYield": 3.42,
@@ -3110,7 +3110,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 248
+        "close": 248.22000122070312
       },
       {
         "date": "2026-08-14",
@@ -3120,22 +3120,28 @@
   },
   "news": [
     {
+      "title": "These 6 banking stocks have an upside potential of up to 25% in 1 year, according to analysts - The Economic Times",
+      "url": "https://news.google.com/rss/articles/CBMi-AFBVV95cUxNYzZXZkFKZVVxTnNmUmx0RlZCcjZhbU0wVkVEXzNPT3NhRUVGdVhBZFpsSVdLbVlubWwzLS1xV0hudzZUWk93ZElXQV95OXhRU1JsUm5kR3RrYmxGTHpXWkFkaDJIeHptQ3dVSUpXbHVsMTBOUzhwNEViZHd3THhiUi0tblBrRW1KQUJ5TTB5WFNpc214NG40b0JqTzNkR3k0U1VwSmdMZjdqX1FQVHU4VHBhMGV6OW9CM1M3c1FzNWtsbG8wb0lRdlBrM3VTbXEybTlmNl9TaGhiOFpXNlZlS2RNRlNpZm1oTDBMM0RCVEh2Y2lKYXc4ZtIB_gFBVV95cUxQTVNhSFdkR3NCRWhrZUZnakpXOEJ0TVdkNkRYaGdodUlfeU1TTV85eGhJTnVfbEVzMXY4Q0ctMHVZYnJHM1hCV21DLS11Z3B5ck1tS2EwV0hJUkV2RjNMTVpWb1U4cWZNY2ZBM3JRc1dTNzNWd3YyVTFkOG5nNk1Vd3FiZXdWLUZTakNNLW43M0t3Q1JJaDFRYTBmVUsxWlpMX1BaTTVhbzM0T3hpeUNCSTZFZWZxc3d2ZkJ3R0F6WkxSUjQ4ak5Mc1ZXLVJiTVJPZWcxQXVUbnM3a05LTnhld1RqS2lsOU9RWXJLRkpLenVIODM2eDJnNmxhYkl6UQ?oc=5",
+      "date": "Wed, 12 Aug 2026 00:12:52 GMT",
+      "source": "The Economic Times",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
       "title": "Bank of Baroda (NSE:BANKBARODA) jumps 5.8% this week, though earnings growth is still tracking behind five-year shareholder returns - simplywall.st",
       "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxOSVl3bDJhelJpN0pPcnZpMnNwWXZlVmpPZ08zMzI3b2s3enFQQ1hsLWlENGZwUFJhY1FEbUpaODNxMTdDYlAzME8tLUNLaDRJNTA5UDlOV09IQURFWTdrT0dmc1UwV05mbkFWdUFZQi1DYktDRjVRV0RnRGJfTDM4cTN6SGhlQ2xpa3JZWUhTb2xPRDJzY3FxdVhiVzNpV3Rhc1pPX0NYZmxpd0pFaEtzNk1iX1dKdC1zX2c2dlFLN2dHejI2M1JPTFBJRkN4YkZkS1RTSnBaRdIB3AFBVV95cUxQOHpFMldNZ3hHOEN6LXJFaGJiSzVDRHRNd212TGlYYTdLNFREVHVsQ2RyLUxsQVpLN0NfaDJRcmZXOHZReXFqRXhjQXN2dkhvRl9fMVd4emtIZzNHeGFnYjJMMlFjbUd2N2xXOFZwNkN4X05rVUVBRDE4cTVJcy15dmFwNmtJajVDaEs2VlZrWjZFT0lFSE9PeEZYWU1UWUVjbWxhWmtjTWNNS0ItZEpRNm5RdVBVdGpxNXpYUkdkMHJnUWZwZVVpaThXR1lCVG8tWjFKdXVVdkNtdF9Z?oc=5",
       "date": "Mon, 05 Jan 2026 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Positive",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
-    },
-    {
-      "title": "These 7 private and public banking stocks have an upside of up to 29% in one year, according to analysts - economictimes.com",
-      "url": "https://news.google.com/rss/articles/CBMihwJBVV95cUxPcmQwOVRkX1pjc1NHWjU1ZksyV0lISzJOQ3ZWbmJ3MWtWYTIxbkJmZGJ1TXh5U3daNFZvR1dmNzZnUTMwTURhOEhWeEZWTW5remluNS1zeTBpUG1nZlBXOGhadW5WZjdRYUFpRlo1bzlybzhFV3hIQ3JIdkhqdEdMaF9jd2lxQWQ2UlNsNTZqNUx0NGJLSUY4cXhwZ01mTFNBdy1rM0UwNlhxdVBSRHFOS18xRUR1SHQyWEhaSlFLVkg5aUJ4U3FVTkpzNHN2RzVFVEJ2Q2tEc1ZpWmgzOXp5THBkcEVDWXdBVmQ4M3pPNkdCNjZ5b1BLXzZFbmlOc3RBZHB3MmpqY9IBjAJBVV95cUxPOFYyaFBfa0lNdTJiaTV3TWNxb0JiclVEdmlMMUpDVTN4WklKZ3VpQ2ZGbnU0MEhmREtaQ1NNZ2l0aXFrSHVtc1VHVWtkTzJtX01jcEx1MUUybkU3cWFRNWZ3MDFZSVFIV0toMnFBY1doWkRFNktzYjNyU3Z0a2NGN0duMFJvaEtVcFByZndjWXFVenBpS0VUaXRGTVIxdmlISU90aG1ZMXdRNVU5YWwyUlMyOXl1R0Q4ekp6ZWl0eU9YUlltbGNlR29vSUNzMlFCOXgtek5GTm5QaV9IVkNBbWpJTGZwcXlWcGw3Z1ZqLWFMNGxkdDVONUtuWFo0X3BFNEt6U0QwNG9WVU15?oc=5",
-      "date": "Tue, 28 Jul 2026 07:00:00 GMT",
-      "source": "economictimes.com",
-      "impact": "Low",
-      "catalystType": "Analyst view",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Bank of Baroda Limited announces Annual dividend, payable on July 23, 2026 - marketscreener.com",
@@ -3143,8 +3149,11 @@
       "date": "Sat, 09 May 2026 07:00:00 GMT",
       "source": "marketscreener.com",
       "impact": "Medium",
-      "catalystType": "Capital action",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "Bank of Baroda Limited's (NSE:BANKBARODA) top owners are state or government with 64% stake, while 23% is held by institutions - simplywall.st",
@@ -3152,8 +3161,11 @@
       "date": "Thu, 13 Nov 2025 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Bank of Baroda Share Price Today 14 Aug 2026: Live NSE/BSE Rates, Technical Analysis and Expert Forecasts - livemint.com",
@@ -3161,9 +3173,12 @@
       "date": "Thu, 07 Jul 2022 14:05:51 GMT",
       "source": "livemint.com",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:37.824Z"
+  "newsFetchedAt": "2026-08-16T13:39:49.445Z"
 }

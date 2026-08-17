@@ -1,6 +1,6 @@
 {
   "symbol": "AZAD.NS",
-  "fetchedAt": "2026-08-14T12:23:00.704Z",
+  "fetchedAt": "2026-08-16T18:06:46.720Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -15,7 +15,7 @@
     "twoHundredDayAverage": 1860.2485083007819,
     "fiftyTwoWeekHigh": 2717.800048828125,
     "fiftyTwoWeekLow": 1366.5,
-    "regularMarketVolume": 621779,
+    "regularMarketVolume": 621810,
     "rsi14": 70.88780305645982,
     "macd": {
       "macdLine": 90.41,
@@ -23,7 +23,7 @@
       "histogram": 23.38
     },
     "oneYearReturnPct": 75.25148073614348,
-    "avgVolume20": 580328.55,
+    "avgVolume20": 580330.1,
     "ohlcv": {
       "open": [
         1522.800048828125,
@@ -1283,18 +1283,18 @@
         367151,
         218236,
         1826213,
-        621779
+        621810
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.155Z",
+    "asOf": "2026-08-16T18:00:08.006Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 17573,
+      "marketCap": 17552,
       "pe": 126,
       "bookValue": 237,
       "dividendYield": 0,
@@ -2519,11 +2519,11 @@
       },
       {
         "date": "2026-08-09",
-        "close": 2665.10009765625
+        "close": 2717.800048828125
       },
       {
         "date": "2026-08-14",
-        "close": 2717.800048828125
+        "close": 2722.800048828125
       }
     ]
   },
@@ -2534,8 +2534,11 @@
       "date": "Thu, 25 Jun 2026 16:13:31 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Earnings Update: Azad Engineering Limited (NSE:AZAD) Just Reported Its Third-Quarter Results And Analysts Are Updating Their Forecasts - simplywall.st",
@@ -2543,8 +2546,11 @@
       "date": "Wed, 18 Feb 2026 08:00:00 GMT",
       "source": "simplywall.st",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
       "title": "Azad Engineering delivers first indigenous turbo jet engine to DRDO - scanx.trade",
@@ -2552,8 +2558,23 @@
       "date": "Wed, 22 Jul 2026 07:00:00 GMT",
       "source": "scanx.trade",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Azad Engineering Limited Actuals &amp; Estimates (NSE:AZAD) - TradingView",
+      "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxPVUpJcnpNazhIXzJoTGEweE10b3F4YWQzb0xYX1BPMmdqaWY5dF94N1VnU3lYMHhZcmM1SlB5NGRWZkFXMUVUU0ktcFZpczlNUDBQTzRiOC0yTy1HZy1oYjJGUF9UeHdZNXItME5fRk1YUGZlY2NmRXpqTVBOZWMyMW1R?oc=5",
+      "date": "Fri, 26 Jun 2026 05:13:13 GMT",
+      "source": "TradingView",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Azad Engineering share price gains 5% on inking this deal with P&amp;W Canada - Business Standard",
@@ -2561,18 +2582,12 @@
       "date": "Wed, 19 Nov 2025 08:00:00 GMT",
       "source": "Business Standard",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Azad Engineering's (NSE:AZAD) Earnings Are Weaker Than They Seem - simplywall.st",
-      "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPdFVna25jRGQ4RVJKejVzR21FdDY0MkZsTG9fVk9Qa2ZYUHYxdnlweTlSbVg4MTZTeDNKblk3VnRsV1pjUUs0MGgzTW5ZOFIwOEdzY1drQTZWTnlua1IwVVJBWDg1RjBWc0t2OFFHT3hqVmR0T1ZoTThMLXR6R3h1N2h6eGk3UUNqYTlIbTBuSnJOSmlhalN5QXNQdGlCbjM2OXIwWk4yMGtZY05XTUhNY3NKZUt4ZzlfdVphU1d1R1Rhb2NSVVNMUUEyVEgtR0xOS0NsX2t1Q2ZyNXBU0gHiAUFVX3lxTFBEcF9abVhQeW0zQkFUY1huSXg2MDhwX1lfeUltMUpwRVplWUliSHFwZm9GS2dZd3E3cE5sdkQzV2FuUlRyN2phRG95emJFYzJORURLUlpSQkdpMHZxWlZrSXFzYTFJN2ZBS0t3eWttMFdXWjd6Uzgzc25qdUFJajB0U3U2Sm1pWWZvM0JiRkUzR3lIdk16QkJSUDJWRnNRWjFDa2QxcDFiMUNVRWtnekkyTlJ0RjdYVnVvejFJdlhzckdEdnVaOGxuQ05Yci1RN19mZGxoT180VmhIMkQyUG5Ka1E?oc=5",
-      "date": "Sun, 24 May 2026 07:00:00 GMT",
-      "source": "simplywall.st",
-      "impact": "High",
-      "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:00.704Z"
+  "newsFetchedAt": "2026-08-16T18:06:46.720Z"
 }

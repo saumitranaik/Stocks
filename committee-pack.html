@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title id="report-title">Weekly Investment Committee Pack</title>
+<style>
+/* ============================================================================
+   Weekly Investment Committee Pack -- WYSIWYG screen/print stylesheet
+   (Phase 6). Same paper theme, A4-sheet, <details>-section chrome and print
+   handling as portfolio-review.html/report.html -- deliberately not shared
+   via a linked stylesheet, for the same reason those pages keep their own
+   inline copy: a "Download standalone HTML" export must be a single self-
+   contained file with no external dependency.
+   ============================================================================ */
+:root{
+  --paper:#ffffff; --ink:#1a2332; --muted:#5b6472; --rule:#c9ccd3; --rule-light:#e3e5ea;
+  --navy:#0c2340; --navy-light:#173a63; --gold:#a87c1f;
+  --green:#1c7a4d; --red:#b3261e; --amber:#a86a10;
+  --tag-buy-bg:#e4f3ea; --tag-buy-ink:#1c7a4d;
+  --tag-hold-bg:#fbeed7; --tag-hold-ink:#a86a10;
+  --tag-sell-bg:#fbe4e2; --tag-sell-ink:#b3261e;
+  --tag-neutral-bg:#eceef2; --tag-neutral-ink:#5b6472;
+  --backdrop:#d9dee7;
+  print-color-adjust:exact; -webkit-print-color-adjust:exact;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--backdrop);color:var(--ink);font:13px/1.55 Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3,h4{font-family:Georgia,'Times New Roman',serif;margin:0}
+a{color:var(--navy-light)}
+table{border-collapse:collapse;width:100%;font-size:11.5px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule-light);vertical-align:top}
+th{background:#f2f4f7;color:var(--navy);font-weight:700;font-size:10.5px;letter-spacing:.02em;text-transform:uppercase}
+td.num,th.num{text-align:right;white-space:nowrap}
+.small{color:var(--muted);font-size:11px}
+.muted{color:var(--muted)}
+
+.report-toolbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--navy);color:#fff;font-size:12.5px}
+.report-toolbar b{font-weight:700}
+.report-toolbar .spacer{flex:1}
+.report-toolbar button,.report-toolbar a.tb-link{font:inherit;cursor:pointer;color:#fff;background:var(--navy-light);border:1px solid #2a4d78;padding:7px 14px;border-radius:6px;text-decoration:none}
+.report-toolbar button:hover,.report-toolbar a.tb-link:hover{background:#254a76}
+.report-toolbar button.primary{background:var(--gold);border-color:var(--gold);color:#241a05;font-weight:700}
+
+.a4-sheet{width:210mm;min-height:297mm;margin:24px auto;padding:16mm 14mm;background:var(--paper);box-shadow:0 8px 28px rgba(12,35,64,.25)}
+
+.masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:3px solid var(--navy);padding-bottom:12px;margin-bottom:14px}
+.masthead .brand{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:4px}
+.masthead h1{font-size:26px;color:var(--navy)}
+.masthead .sub{color:var(--muted);font-size:12px;margin-top:4px}
+.masthead .meta{text-align:right;font-size:11px;color:var(--muted);white-space:nowrap}
+
+.tag{display:inline-block;padding:3px 10px;border-radius:3px;font-size:11px;font-weight:700;letter-spacing:.02em}
+.tag-strong-buy,.tag-buy,.tag-accumulate{background:var(--tag-buy-bg);color:var(--tag-buy-ink)}
+.tag-hold{background:var(--tag-hold-bg);color:var(--tag-hold-ink)}
+.tag-reduce,.tag-sell{background:var(--tag-sell-bg);color:var(--tag-sell-ink)}
+.tag-neutral{background:var(--tag-neutral-bg);color:var(--tag-neutral-ink)}
+.pos{color:var(--green)} .neg{color:var(--red)} .amber-text{color:var(--amber)}
+
+details.section{border-top:1px solid var(--rule);margin-top:14px;padding-top:10px;break-inside:auto}
+details.section summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-family:Georgia,'Times New Roman',serif;font-size:15px;font-weight:700;color:var(--navy);padding:2px 0}
+details.section summary::-webkit-details-marker{display:none}
+details.section summary .num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;font-family:Arial,sans-serif}
+details.section summary::after{content:'\25BE';margin-left:auto;color:var(--muted);font-size:12px}
+details.section[open] summary::after{content:'\25B4'}
+.section-body{padding:10px 2px 4px 30px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0}
+.kpi-grid.three{grid-template-columns:repeat(3,1fr)}
+.kpi-grid.five{grid-template-columns:repeat(5,1fr)}
+.kpi{border:1px solid var(--rule);border-radius:6px;padding:9px 11px;break-inside:avoid}
+.kpi .label{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.kpi .value{font-size:17px;font-weight:700;color:var(--navy);margin-top:3px}
+.kpi .note{font-size:10.5px;color:var(--muted);margin-top:2px}
+
+.card{border:1px solid var(--rule);border-radius:6px;padding:11px 13px;margin-bottom:10px;break-inside:avoid}
+.card h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--navy);margin-bottom:6px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bullets{margin:4px 0 0;padding-left:18px}
+.bullets li{margin-bottom:4px}
+
+.bar-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:11.5px}
+.bar-row .bl{flex:0 0 150px;color:var(--ink)}
+.bar-row .bt{flex:1;height:9px;background:var(--rule-light);border-radius:5px;overflow:hidden}
+.bar-row .bt i{display:block;height:100%;background:var(--navy-light);border-radius:5px}
+.bar-row .bv{flex:0 0 60px;text-align:right;font-weight:700;color:var(--navy)}
+
+.data-tag{font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;padding:1px 5px;border-radius:3px;border:1px solid var(--rule);color:var(--muted);margin-left:5px;white-space:nowrap}
+.data-tag.sourced{border-color:#9fcdb2;color:var(--green)}
+.data-tag.calculated{border-color:#9db8d8;color:#1f5fa8}
+.data-tag.heuristic{border-color:#e0c383;color:var(--amber)}
+
+.disclaimer-box{margin-top:18px;padding:10px 12px;border:1px solid var(--rule);border-radius:6px;background:#f7f8fa;font-size:10.5px;color:var(--muted)}
+.disclaimer-box ul{margin:6px 0 0;padding-left:16px}
+.disclaimer-box li{margin-bottom:3px}
+.report-footer{margin-top:16px;padding-top:8px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+
+@media(max-width:900px){
+  .a4-sheet{width:100%;min-height:0;padding:20px}
+  .kpi-grid,.kpi-grid.three,.kpi-grid.five{grid-template-columns:repeat(2,1fr)}
+  .two-col{grid-template-columns:1fr}
+  .masthead{flex-direction:column}
+  .masthead .meta{text-align:left}
+  .bar-row .bl{flex-basis:110px}
+}
+
+@page{ size:A4; margin:0; }
+@media print{
+  .report-toolbar{display:none!important}
+  body{background:var(--paper)}
+  .a4-sheet{width:auto;min-height:auto;margin:0;padding:14mm 12mm;box-shadow:none}
+  details.section{page-break-inside:auto;break-inside:auto}
+  details.section summary{cursor:default}
+  details.section summary::after{display:none}
+  details.section:not([open]) > .section-body{display:block!important}
+  .kpi,.card{break-inside:avoid;page-break-inside:avoid}
+  table{page-break-inside:auto}
+  tr{page-break-inside:avoid}
+  thead{display:table-header-group}
+  .masthead{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="report-toolbar" id="toolbar">
+  <span>&#9670;</span> <b id="toolbar-name">Weekly Investment Committee Pack</b>
+  <span class="spacer"></span>
+  <a class="tb-link" id="back-link" href="index.html">&larr; Back to dashboard</a>
+  <button type="button" id="download-btn">Download HTML</button>
+  <button type="button" id="print-btn" class="primary">Print / Save as PDF</button>
+</div>
+
+<main class="a4-sheet" id="report-root">
+  <div class="no-data" id="loading-state">Loading committee pack&hellip;</div>
+</main>
+
+<script src="committee-pack.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
   "id": "power",
   "name": "Power",
   "createdAt": "2026-08-13T13:06:38.735Z",
-  "updatedAt": "2026-08-13T14:09:41.444Z",
+  "updatedAt": "2026-08-15T10:33:29.993Z",
   "companies": [
     {
       "symbol": "PGCIL.NS",
@@ -92,5 +92,7 @@
       "targetWeightPct": null,
       "addedAt": "2026-08-13T13:06:38.735Z"
     }
-  ]
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
 }

@@ -113,6 +113,8 @@ report.html / report.js          — standalone printable report page
 
 data/analytics/     — pure calculation modules (valuation, technical, portfolio, risk)
 data/scoring/        — the unified recommendation/rating engine
+data/decision/         — Portfolio Action Score, alerts, health, rebalancing (pure composition, own config.mjs)
+data/quant/              — Phase 7 quantitative research domain: factor engine (Stage 1), benchmark & performance engine (Stage 2) (pure composition, own config.mjs)
 data/reporting/       — per-company report model (derives from research, computes nothing new)
 data/providers/        — external data source abstraction (Yahoo, Screener.in)
 data/parse/              — Screener.in HTML parsing

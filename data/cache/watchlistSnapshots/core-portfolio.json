@@ -1,0 +1,254 @@
+{
+  "watchlistId": "core-portfolio",
+  "savedAt": "2026-08-16T18:08:41.121Z",
+  "companies": {
+    "TCS.NS": {
+      "fetchedAt": "2026-08-15T17:07:02.467Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 2023.94,
+      "targetPrice": 2209.74,
+      "compositeRiskScore": 42,
+      "riskCategories": {
+        "financial": 60,
+        "business": 5,
+        "market": 47,
+        "sector": 49,
+        "governance": 51
+      },
+      "debtTrendPct": 46.76,
+      "technicalRegime": "Mixed",
+      "watchlistRank": 1,
+      "sectorRank": 1,
+      "premiumDiscountScore": 0,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": -1,
+      "relativeStrengthPercentile": 33
+    },
+    "NTPC.NS": {
+      "fetchedAt": "2026-08-15T17:20:42.938Z",
+      "rating": "Reduce",
+      "confidence": "High",
+      "fairValue": 582,
+      "targetPrice": 658.13,
+      "compositeRiskScore": 46,
+      "riskCategories": {
+        "financial": 68,
+        "business": 11,
+        "market": 49,
+        "sector": 50,
+        "governance": 53
+      },
+      "debtTrendPct": 21.57,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 3,
+      "sectorRank": 1,
+      "premiumDiscountScore": 0,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": -1,
+      "relativeStrengthPercentile": 83
+    },
+    "HDFCBANK.NS": {
+      "fetchedAt": "2026-08-16T13:39:49.404Z",
+      "rating": "Reduce",
+      "confidence": "High",
+      "fairValue": 1345.19,
+      "targetPrice": 1497.73,
+      "compositeRiskScore": 54,
+      "riskCategories": {
+        "financial": 75,
+        "business": null,
+        "market": 38,
+        "sector": 48,
+        "governance": null
+      },
+      "debtTrendPct": null,
+      "technicalRegime": "Strong Downtrend",
+      "watchlistRank": 5,
+      "sectorRank": 1,
+      "premiumDiscountScore": 0,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": -1,
+      "relativeStrengthPercentile": 17
+    },
+    "RELIANCE.NS": {
+      "fetchedAt": "2026-08-15T17:20:43.034Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 1612.59,
+      "targetPrice": 1758.05,
+      "compositeRiskScore": 42,
+      "riskCategories": {
+        "financial": 49,
+        "business": 7,
+        "market": 48,
+        "sector": 60,
+        "governance": 47
+      },
+      "debtTrendPct": -10.78,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 2,
+      "sectorRank": 1,
+      "premiumDiscountScore": 0,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 50
+    },
+    "TATAPOWER.NS": {
+      "fetchedAt": "2026-08-16T18:08:14.568Z",
+      "rating": "Insufficient data for institutional score",
+      "confidence": "Low",
+      "fairValue": null,
+      "targetPrice": null,
+      "compositeRiskScore": 56,
+      "riskCategories": {
+        "financial": null,
+        "business": null,
+        "market": 62,
+        "sector": 50,
+        "governance": null
+      },
+      "debtTrendPct": null,
+      "technicalRegime": "Downtrend",
+      "watchlistRank": 6,
+      "sectorRank": 2,
+      "premiumDiscountScore": null,
+      "primaryDriver": "neutral technical trend",
+      "priceAboveFifty": false,
+      "priceAboveTwoHundred": false,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 67
+    },
+    "HAL.NS": {
+      "fetchedAt": "2026-08-16T18:08:14.108Z",
+      "rating": "Hold",
+      "confidence": "High",
+      "fairValue": 2713.77,
+      "targetPrice": 3337.67,
+      "compositeRiskScore": 52,
+      "riskCategories": {
+        "financial": 65,
+        "business": 23,
+        "market": 81,
+        "sector": 38,
+        "governance": 52
+      },
+      "debtTrendPct": 26.92,
+      "technicalRegime": "Uptrend",
+      "watchlistRank": 2,
+      "sectorRank": 1,
+      "premiumDiscountScore": 0,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "overbought",
+      "macdSign": 1,
+      "relativeStrengthPercentile": 100
+    }
+  },
+  "portfolio": {
+    "beta": 1.07,
+    "diversificationScore": 81,
+    "compositeRiskScoreAvg": 48.67,
+    "topSectorSharePct": 33.33,
+    "recentAvgCorrelation": 0.169,
+    "healthScore": 59,
+    "healthHistory": [
+      {
+        "fetchedAt": "2026-08-15T08:29:06.602Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T10:21:04.118Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T10:27:00.475Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T10:27:05.515Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T11:16:48.812Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T15:37:39.279Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T16:42:28.465Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T17:07:02.588Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-15T17:19:08.017Z",
+        "healthScore": 58
+      },
+      {
+        "fetchedAt": "2026-08-15T17:20:43.130Z",
+        "healthScore": 58
+      },
+      {
+        "fetchedAt": "2026-08-15T17:20:47.097Z",
+        "healthScore": 58
+      },
+      {
+        "fetchedAt": "2026-08-16T10:36:18.883Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-16T10:36:43.343Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-16T17:59:51.639Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-16T18:04:32.994Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-16T18:07:27.675Z",
+        "healthScore": 59
+      },
+      {
+        "fetchedAt": "2026-08-16T18:08:41.121Z",
+        "healthScore": 59
+      }
+    ]
+  },
+  "alertLifecycle": {
+    "firing": {
+      "TCS.NS|marginOfSafetyHigh": "2026-08-16T10:36:18.881Z",
+      "TCS.NS|pePercentileExtremeLow": "2026-08-15T11:09:43.721Z",
+      "NTPC.NS|fairValueChanged": "2026-08-16T10:36:18.882Z",
+      "NTPC.NS|targetPriceChanged": "2026-08-16T10:36:18.882Z",
+      "HDFCBANK.NS|pePercentileExtremeLow": "2026-08-15T11:09:43.721Z",
+      "RELIANCE.NS|fairValueChanged": "2026-08-16T10:36:18.882Z",
+      "RELIANCE.NS|targetPriceChanged": "2026-08-16T10:36:18.882Z",
+      "HAL.NS|marginOfSafetyCritical": "2026-08-16T10:36:18.883Z",
+      "HAL.NS|pePercentileExtremeHigh": "2026-08-16T10:36:18.883Z",
+      "HAL.NS|rsiOverbought": "2026-08-15T11:09:43.722Z"
+    }
+  }
+}

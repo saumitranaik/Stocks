@@ -2,6 +2,7 @@ import { TtlCache, memoize } from '../cache.mjs';
 import { fetchFundamentals as screenerFetch } from './screenerProvider.mjs';
 import { fetchFundamentals as notConfiguredFetch } from './notConfiguredProvider.mjs';
 import { fetchQuote } from './yahooQuoteProvider.mjs';
+import { fetchMacroQuote } from './macroProvider.mjs';
 
 // The entire integration surface for a future paid data API: implement
 // fetchFundamentals(symbol) against the same normalized shape (see
@@ -24,3 +25,10 @@ export async function getCachedQuotes(symbols) {
   const settled = await Promise.allSettled(symbols.map(getCachedQuote));
   return settled.filter(item => item.status === 'fulfilled' && item.value).map(item => item.value);
 }
+
+// Phase 6 macro indicators: same short-TTL in-memory de-dupe as quotes above,
+// layered under data/watchlist/macro.mjs's own longer-lived (30min) disk
+// cache -- this only guards against redundant concurrent Yahoo hits within
+// one process tick, it doesn't govern staleness (the disk cache's TTL does).
+const macroQuoteCache = new TtlCache(2 * 60 * 1000);
+export const getCachedMacroQuote = memoize(macroQuoteCache, fetchMacroQuote);

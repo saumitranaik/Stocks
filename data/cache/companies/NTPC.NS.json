@@ -1,6 +1,6 @@
 {
   "symbol": "NTPC.NS",
-  "fetchedAt": "2026-08-14T12:16:33.779Z",
+  "fetchedAt": "2026-08-15T17:20:42.938Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": -0.01
     },
     "oneYearReturnPct": 0.19154085304070992,
-    "avgVolume20": 9471760,
+    "avgVolume20": 9471844.1,
     "ohlcv": {
       "open": [
         339.95001220703125,
@@ -1284,23 +1284,23 @@
         10043994,
         10152704,
         9672695,
-        7505942
+        7507624
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:32.968Z",
+    "asOf": "2026-08-15T17:20:42.045Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 329842,
+      "marketCap": 329687,
       "pe": 11.9,
       "bookValue": 210,
-      "dividendYield": 2.64,
-      "roce": 8.33,
-      "roe": 14,
+      "dividendYield": 2.65,
+      "roce": 8.92,
+      "roe": 15.1,
       "faceValue": 10
     },
     "classification": {
@@ -1339,7 +1339,7 @@
             176207,
             178525,
             188138,
-            187379,
+            187385,
             191059
           ],
           "expenses": [
@@ -1354,7 +1354,7 @@
             128611,
             127056,
             133783,
-            134563,
+            131952,
             138937
           ],
           "operatingProfit": [
@@ -1369,7 +1369,7 @@
             47596,
             51469,
             54355,
-            52816,
+            55432,
             52121
           ],
           "opmPct": [
@@ -1384,7 +1384,7 @@
             27,
             29,
             29,
-            28,
+            30,
             27
           ],
           "otherIncome": [
@@ -1399,7 +1399,7 @@
             2561,
             5177,
             8526,
-            5284,
+            2668,
             7938
           ],
           "interest": [
@@ -1578,8 +1578,8 @@
             69751,
             77253,
             81437,
-            89330,
-            84463
+            89565,
+            84262
           ],
           "totalLiabilities": [
             219712,
@@ -1592,8 +1592,8 @@
             415831,
             447189,
             479278,
-            523497,
-            558644
+            523732,
+            558442
           ],
           "fixedAssets": [
             91853,
@@ -1607,7 +1607,7 @@
             240424,
             258934,
             271437,
-            318821
+            318697
           ],
           "cwip": [
             67555,
@@ -1621,7 +1621,7 @@
             89179,
             87664,
             100859,
-            84833
+            84957
           ],
           "investments": [
             1902,
@@ -1648,8 +1648,8 @@
             89156,
             103651,
             116795,
-            131498,
-            130810
+            131733,
+            130609
           ],
           "totalAssets": [
             219712,
@@ -1662,8 +1662,8 @@
             415831,
             447189,
             479278,
-            523497,
-            558644
+            523732,
+            558442
           ]
         }
       },
@@ -1694,7 +1694,7 @@
             41788,
             47152,
             40099,
-            50436,
+            50488,
             50902
           ],
           "cfi": [
@@ -1708,7 +1708,7 @@
             -22891,
             -26145,
             -31456,
-            -45800,
+            -45852,
             -37578
           ],
           "cff": [
@@ -1765,7 +1765,7 @@
             108,
             85,
             101,
-            103
+            98
           ]
         }
       },
@@ -1852,8 +1852,8 @@
             -62,
             -43,
             -45,
-            -38,
-            -55
+            -37,
+            -54
           ],
           "rocePct": [
             8,
@@ -1867,7 +1867,7 @@
             10,
             10,
             11,
-            8
+            9
           ]
         }
       }
@@ -3315,7 +3315,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 344.25
+        "close": 340
       },
       {
         "date": "2026-08-14",
@@ -3330,17 +3330,23 @@
       "date": "Tue, 28 Jul 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "Earnings",
-      "expectedTimeline": "Near-term"
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     },
     {
-      "title": "NTPC, CESC, Tata Power, NHPC, To JSW Energy: Brokerage Is Bullish On THESE Power Stocks | Target Price - goodreturns.in",
+      "title": "NTPC, CESC, Tata Power, NHPC, To JSW Energy: Brokerage Is Bullish On THESE Power Stocks | Target Price - Goodreturns",
       "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxNeUx5dUhFeDhZSFlZSmxTemJoVG5xcHFiMlg5c0pxYTV2UjJCZEJJNjVVdjZFaC1xQngyeFQwdjJuSlJnVGx5VlQ0Zlk5Ymp6bVZIMzdGUlgwR19sVXl6UHNoeHV0M1oyVk13ajlrZVpvRXhEbXRRQWdJVkhCVDcwOVVsazJMRU50aEdzRFpyel84a3F0RkRvLTA0LU1aU2FDQy1kUVpGUjJXdW1YdFpac05tMlNpQUx0R3pKZDhXdDUyQm9tZGVZMXkwR2RMcm5pY25UMg?oc=5",
       "date": "Wed, 12 Aug 2026 18:10:47 GMT",
-      "source": "goodreturns.in",
+      "source": "Goodreturns",
       "impact": "Medium",
-      "catalystType": "Analyst view",
-      "expectedTimeline": "Near-term"
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
+      "catalystType": "Valuation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "NTPC Limited Stock 12‑Month Price Target Raised to INR 437, Implies 12% Upside - TradingView",
@@ -3348,27 +3354,36 @@
       "date": "Mon, 25 May 2026 07:00:00 GMT",
       "source": "TradingView",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "Ntpc Stock Price Forecast. Should You Buy NTPC.NS? - StockInvest.us",
-      "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE9HUFEtX25EZFMwdHYzWjRKWnVWSl8zRkItS2l5VXJrRC0ySHV1ZnF0cmZCUHZPVmZ5cm9nX2hoOUxrS2EwVDhaeExLdGE?oc=5",
-      "date": "Fri, 07 Aug 2026 12:48:54 GMT",
-      "source": "StockInvest.us",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "NTPC shares rally 2.4%: Firm signs MoU with Octopus Energy Group, UK, for co-operation in power sector - Upstox",
       "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxPQk9ab1JSQ3NZNzc1Q2diM29Id3RrQUZzOW9lSzRuZ090NkRhRXlvam84Mnd4NFBpeFBvWmlfQ2Y1T2VwSjFPMXFqaFZNcE1id05jY2tGRjZkR1BKNmJ2eXFuWmdrOWZIZWhHbk9FdmFSa3ZMdEdLLXVQQzY1VGpxSTI1VV9NNWx0ZEJXUmJRVE9Hd0xQRWtENWhJYnRSOHBvVlFYeGlJNVRaSDh6QURDazNQdnRUMHYzRUhMaG91SktSbmJQcFFwRDlBZjN1YXZzdW9LZmptdWhzTmN3NTk1TVlZODVyMnQ4N0drOUJB?oc=5",
-      "date": "Thu, 19 Mar 2026 07:00:00 GMT",
+      "date": "Thu, 19 Mar 2026 17:03:51 GMT",
       "source": "Upstox",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "Earnings call transcript: NTPC’s Q4 FY 2026 sees profit surge despite revenue dip - Investing.com India",
+      "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxPX0YxekdqR0tDQ0JVcDFSWXB3Q2N1VkFtQ0NCY0FpdkpRX1FyQzVqOXZtTFJvMHZWbGdLQ19wYlBRWDhaQzVVQUNrNHdCTHhOZ2dZUUhBNm5MM2l6SmNyT3hydTlweGwxT19USF9IUXJ1NVhIblQ1MWo3alFpNFktalQtTFVKcFVXd2hfc2lWek5ycmtIT2JjcHM2bm5nSDhDV1JTSHhrSndEMFRwdnlYQzBpbGxOdjFzNG5Mb1VfdHVLZEJWcllqT0xuUzRyRWZfSm9qOXpZaw?oc=5",
+      "date": "Sat, 23 May 2026 07:00:00 GMT",
+      "source": "Investing.com India",
+      "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Positive",
+      "catalystType": "Earnings",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "growthDrivers"
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:33.779Z"
+  "newsFetchedAt": "2026-08-15T17:20:42.938Z"
 }

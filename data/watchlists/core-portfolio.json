@@ -2,7 +2,7 @@
   "id": "core-portfolio",
   "name": "Core Portfolio",
   "createdAt": "2026-08-13T13:06:38.735Z",
-  "updatedAt": "2026-08-14T04:58:43.553Z",
+  "updatedAt": "2026-08-15T10:27:19.314Z",
   "companies": [
     {
       "symbol": "TCS.NS",
@@ -71,5 +71,6 @@
       "addedAt": "2026-08-13T13:06:38.735Z"
     }
   ],
-  "cashTargetPct": 0
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
 }

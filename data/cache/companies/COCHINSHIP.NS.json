@@ -1,6 +1,6 @@
 {
   "symbol": "COCHINSHIP.NS",
-  "fetchedAt": "2026-08-14T12:23:01.085Z",
+  "fetchedAt": "2026-08-16T18:06:46.840Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -16,7 +16,7 @@
     "twoHundredDayAverage": 1530.9394995117193,
     "fiftyTwoWeekHigh": 1926.9000244140625,
     "fiftyTwoWeekLow": 1193.0999755859375,
-    "regularMarketVolume": 1026735,
+    "regularMarketVolume": 1027659,
     "rsi14": 59.15668613969349,
     "macd": {
       "macdLine": 18.82,
@@ -24,7 +24,7 @@
       "histogram": 10.71
     },
     "oneYearReturnPct": -11.50206978119456,
-    "avgVolume20": 993835.9,
+    "avgVolume20": 993882.1,
     "ohlcv": {
       "open": [
         1685,
@@ -1284,19 +1284,19 @@
         462009,
         622999,
         1161993,
-        1026735
+        1027659
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:23:00.177Z",
+    "asOf": "2026-08-16T18:00:08.014Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 39527,
-      "pe": 55.2,
+      "marketCap": 39370,
+      "pe": 57.9,
       "bookValue": 223,
       "dividendYield": 0.5,
       "roce": 16,
@@ -1320,7 +1320,8 @@
           "Mar 2023",
           "Mar 2024",
           "Mar 2025",
-          "Mar 2026"
+          "Mar 2026",
+          "TTM"
         ],
         "rows": {
           "sales": [
@@ -1332,7 +1333,8 @@
             2365,
             3830,
             4820,
-            5022
+            5022,
+            5047
           ],
           "expenses": [
             1891,
@@ -1343,7 +1345,8 @@
             2103,
             2949,
             3925,
-            4210
+            4210,
+            4284
           ],
           "operatingProfit": [
             465,
@@ -1354,7 +1357,8 @@
             262,
             882,
             895,
-            811
+            811,
+            763
           ],
           "opmPct": [
             20,
@@ -1365,7 +1369,8 @@
             11,
             23,
             19,
-            16
+            16,
+            15
           ],
           "otherIncome": [
             189,
@@ -1376,7 +1381,8 @@
             269,
             310,
             389,
-            410
+            410,
+            423
           ],
           "interest": [
             12,
@@ -1387,7 +1393,8 @@
             43,
             46,
             55,
-            92
+            92,
+            106
           ],
           "depreciation": [
             38,
@@ -1398,7 +1405,8 @@
             69,
             75,
             103,
-            130
+            130,
+            128
           ],
           "profitBeforeTax": [
             604,
@@ -1409,7 +1417,8 @@
             418,
             1071,
             1125,
-            999
+            999,
+            952
           ],
           "taxPct": [
             34,
@@ -1420,7 +1429,8 @@
             27,
             27,
             26,
-            28
+            28,
+            null
           ],
           "netProfit": [
             396,
@@ -1431,7 +1441,8 @@
             305,
             783,
             827,
-            717
+            717,
+            680
           ],
           "epsInRs": [
             14.58,
@@ -1442,7 +1453,8 @@
             11.58,
             29.77,
             31.45,
-            27.24
+            27.24,
+            25.86
           ],
           "dividendPayoutPct": [
             41,
@@ -1453,7 +1465,8 @@
             73,
             33,
             31,
-            6
+            6,
+            null
           ]
         }
       },
@@ -1748,7 +1761,6 @@
     "quarterly": {
       "profitLoss": {
         "periods": [
-          "Mar 2023",
           "Jun 2023",
           "Sep 2023",
           "Dec 2023",
@@ -1760,11 +1772,11 @@
           "Jun 2025",
           "Sep 2025",
           "Dec 2025",
-          "Mar 2026"
+          "Mar 2026",
+          "Jun 2026"
         ],
         "rows": {
           "sales": [
-            600,
             476,
             1012,
             1056,
@@ -1776,10 +1788,10 @@
             1069,
             1119,
             1350,
-            1484
+            1484,
+            1094
           ],
           "expenses": [
-            667,
             397,
             821,
             746,
@@ -1791,10 +1803,10 @@
             827,
             1045,
             1164,
-            1175
+            1175,
+            901
           ],
           "operatingProfit": [
-            -67,
             79,
             191,
             310,
@@ -1806,10 +1818,10 @@
             241,
             74,
             187,
-            310
+            310,
+            193
           ],
           "opmPct": [
-            -11,
             17,
             19,
             29,
@@ -1821,10 +1833,10 @@
             23,
             7,
             14,
-            21
+            21,
+            18
           ],
           "otherIncome": [
-            133,
             84,
             89,
             58,
@@ -1836,10 +1848,10 @@
             54,
             127,
             71,
-            157
+            157,
+            67
           ],
           "interest": [
-            -1,
             9,
             10,
             8,
@@ -1851,10 +1863,10 @@
             12,
             20,
             28,
-            32
+            32,
+            25
           ],
           "depreciation": [
-            11,
             17,
             19,
             20,
@@ -1866,10 +1878,10 @@
             34,
             31,
             33,
+            32,
             32
           ],
           "profitBeforeTax": [
-            57,
             137,
             251,
             340,
@@ -1881,10 +1893,10 @@
             250,
             150,
             197,
-            403
+            403,
+            202
           ],
           "taxPct": [
-            30,
             28,
             28,
             28,
@@ -1896,10 +1908,10 @@
             25,
             28,
             26,
-            31
+            31,
+            25
           ],
           "netProfit": [
-            39,
             99,
             182,
             244,
@@ -1911,10 +1923,10 @@
             188,
             108,
             145,
-            276
+            276,
+            151
           ],
           "epsInRs": [
-            1.5,
             3.75,
             6.9,
             9.29,
@@ -1926,7 +1938,8 @@
             7.14,
             4.09,
             5.5,
-            10.51
+            10.51,
+            5.76
           ]
         }
       }
@@ -3155,7 +3168,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 1507
+        "close": 1496.5
       },
       {
         "date": "2026-08-14",
@@ -3165,22 +3178,16 @@
   },
   "news": [
     {
-      "title": "Cochin Shipyard appoints Subramanian K K as General Manager - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQNXg1UnBNWFJoN3N4bmV1cFdCeW5PajBaQm0yemx4TE93Z3hBY1hkQXV0T0FyNktES1FsYlBGb0RCVWU1Q0Z1Tk1TTEdtcGZzYWc4OTdhT3lEWHIwbmtmbDZLZmdiYmMzRjFxbG5XZDFndDB6RzJCM0pFZlh5dy1WMlpkbmt5RTk0Wm8tS3ljZmFJd1dURjluenB5ZjU1ajFZYTkzMFVnVFRUNmk4UHBWUlBpaktmQ3c?oc=5",
-      "date": "Tue, 11 Aug 2026 15:30:54 GMT",
-      "source": "scanx.trade",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
       "title": "Cochin Shipyard OFS kicks off: Shares fall over 4% as govt begins 5% stake sale — key details - Upstox",
       "url": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxNcHR1a1AzWVdJWWZHNmxmTV9ZaWlLSG5HYzBfTVFiNXV5VkpHMXhlaXV6cS1iQUJWN2NJeEtiNEp3OU1oWXdLb3FKWWJ4R0RjVFRrbmwxZWpucHdLR2pkTkpVY2ZLZng1WWdlSkt1ckRpX0lfZFBQSHBSMnJTZ0M3QWJiSkFlVm5ZSlZtR0trODR2U0E3YmNsYnRHX202MmZZdGVvRjZsenVfdEhQZ3VWWlNMY3NnQmNkT3BXVXE1ZzhwNjRhejEtSDR6Nnk2by1WWnRhazU0ek5xWHkxM3VfNmp3?oc=5",
       "date": "Wed, 08 Jul 2026 07:00:00 GMT",
       "source": "Upstox",
       "impact": "High",
-      "catalystType": "M&A",
-      "expectedTimeline": "Medium-term"
+      "signalStrength": "Medium",
+      "sentiment": "Negative",
+      "catalystType": "Capital allocation",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "valuationOpportunity"
     },
     {
       "title": "Cochin Shipyard's (NSE:COCHINSHIP) Problems Go Beyond Weak Profit - simplywall.st",
@@ -3188,17 +3195,35 @@
       "date": "Sun, 24 May 2026 07:00:00 GMT",
       "source": "simplywall.st",
       "impact": "High",
+      "signalStrength": "Medium",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
-      "title": "Kerala Government to Sell 5.04% Stake in Cochin Shipyard via ₹1,400 Floor Price OFS - sahi.com",
+      "title": "Cochin Shipyard appoints Subramanian K K as General Manager - scanx.trade",
+      "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQNXg1UnBNWFJoN3N4bmV1cFdCeW5PajBaQm0yemx4TE93Z3hBY1hkQXV0T0FyNktES1FsYlBGb0RCVWU1Q0Z1Tk1TTEdtcGZzYWc4OTdhT3lEWHIwbmtmbDZLZmdiYmMzRjFxbG5XZDFndDB6RzJCM0pFZlh5dy1WMlpkbmt5RTk0Wm8tS3ljZmFJd1dURjluenB5ZjU1ajFZYTkzMFVnVFRUNmk4UHBWUlBpaktmQ3c?oc=5",
+      "date": "Tue, 11 Aug 2026 15:30:54 GMT",
+      "source": "scanx.trade",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Management",
+      "expectedTimeline": "Near-term",
+      "affectedThesisDriver": "businessQuality"
+    },
+    {
+      "title": "Kerala Government to Sell 5.04% Stake in Cochin Shipyard via ₹1,400 Floor Price OFS - Sahi",
       "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNMjVxbUtQYTZSYUp3cW00Qk1Ja28wSlc1UnZnbjRQekhETkUzQjJISWNMTzJiQnpxdktmYXZUWUFFRmNvT2JabGI0RmZyX0VyMUxDSVZxNGRlNWFvbHVJdF9SZWdleDNHUWU1enFmRllWOWdyYk53UC1zdHlFS0J0dXhfbVJESUZhekJRR1VZaFU5RlNUNXlscTdlT0ZTc24yMVdDcnBRemtTSV92SURZa2x0bTNNOUJzSmpjNw?oc=5",
       "date": "Mon, 06 Jul 2026 07:00:00 GMT",
-      "source": "sahi.com",
+      "source": "Sahi",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Want a stake in Cochin Shipyard? Centre launches offer for sale at Rs 1,400 per share - The Times of India",
@@ -3206,9 +3231,12 @@
       "date": "Tue, 07 Jul 2026 07:00:00 GMT",
       "source": "The Times of India",
       "impact": "Medium",
-      "catalystType": "Expansion",
-      "expectedTimeline": "Medium-term"
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "Industry",
+      "expectedTimeline": "Medium-term",
+      "affectedThesisDriver": "competitivePosition"
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:23:01.085Z"
+  "newsFetchedAt": "2026-08-16T18:06:46.840Z"
 }

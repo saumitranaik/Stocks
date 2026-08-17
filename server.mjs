@@ -7,6 +7,10 @@ import { buildLocalIndex } from './data/watchlist/searchIndex.mjs';
 import * as store from './data/watchlist/store.mjs';
 import { buildResearch } from './data/watchlist/research.mjs';
 import { buildCompanyReport } from './data/reporting/researchReport.mjs';
+import { buildPortfolioReviewPack } from './data/reporting/portfolioReviewPack.mjs';
+import { buildMacroSnapshot } from './data/watchlist/macro.mjs';
+import { buildSectorIntelligence } from './data/watchlist/sectorIntelligence.mjs';
+import { buildCommitteePack } from './data/reporting/committeePack.mjs';
 
 const port = process.env.PORT || 4173;
 const root = process.cwd();
@@ -36,6 +40,16 @@ const routes = [
   // queries the local index comes up short on.
   { method: 'GET', pattern: /^\/api\/companies\/index$/, handler: async (req, res) => send(res, 200, { generatedAt: new Date().toISOString(), companies: await buildLocalIndex() }) },
 
+  // Phase 6 Macro Intelligence: watchlist-independent, cache-first (own 30min
+  // TTL -- see data/watchlist/macro.mjs), never triggered by a watchlist's
+  // own networkPass. Includes the Market Regime read (data/decision/
+  // marketRegime.mjs) since both are market-wide, not per-watchlist.
+  { method: 'GET', pattern: /^\/api\/macro$/, handler: async (req, res) => send(res, 200, await buildMacroSnapshot()) },
+  // Phase 6 Sector Intelligence: the one cross-watchlist read in this app --
+  // cache-only across every saved watchlist (data/watchlist/
+  // sectorIntelligence.mjs), never triggers a new fetch.
+  { method: 'GET', pattern: /^\/api\/sector-intelligence$/, handler: async (req, res) => send(res, 200, await buildSectorIntelligence()) },
+
   { method: 'GET', pattern: /^\/api\/watchlists$/, handler: async (req, res) => send(res, 200, await store.listWatchlists()) },
   { method: 'POST', pattern: /^\/api\/watchlists$/, handler: async (req, res) => { const { name } = await readJsonBody(req); const watchlist = await store.createWatchlist(clean(name)); send(res, 201, { watchlist, index: await store.listWatchlists() }); } },
   { method: 'POST', pattern: /^\/api\/watchlists\/active$/, handler: async (req, res) => { const { id } = await readJsonBody(req); const index = await store.setActiveWatchlist(id); send(res, 200, { index, research: await researchFor(id, 'none') }); } },
@@ -52,6 +66,24 @@ const routes = [
       const research = await researchFor(id, 'none');
       const report = await buildCompanyReport(research, decodeURIComponent(symbol));
       send(res, report.error ? 404 : 200, report);
+    }
+  },
+  // Portfolio Review Pack (Phase 5): cache-only, same convention as the
+  // per-company report above -- opening the pack never triggers a fetch.
+  {
+    method: 'GET', pattern: /^\/api\/watchlists\/([^/]+)\/portfolio-review$/, handler: async (req, res, [, id]) => {
+      const research = await researchFor(id, 'none');
+      send(res, 200, buildPortfolioReviewPack(research));
+    }
+  },
+  // Weekly Investment Committee Pack (Phase 6): cache-only for the watchlist
+  // research; macro/sector intelligence are their own cache-first,
+  // watchlist-independent builders (may fetch if their own TTL has lapsed,
+  // same as opening the Macro/Sector Intelligence dashboard sub-tabs would).
+  {
+    method: 'GET', pattern: /^\/api\/watchlists\/([^/]+)\/committee-pack$/, handler: async (req, res, [, id]) => {
+      const [research, macroSnapshot, sectorIntel] = await Promise.all([researchFor(id, 'none'), buildMacroSnapshot(), buildSectorIntelligence()]);
+      send(res, 200, buildCommitteePack(research, macroSnapshot, sectorIntel));
     }
   },
   {
@@ -86,7 +118,11 @@ const routes = [
   { method: 'DELETE', pattern: /^\/api\/watchlists\/([^/]+)\/companies\/([^/]+)$/, handler: async (req, res, [, id, symbol]) => { await store.removeCompany(id, decodeURIComponent(symbol)); send(res, 200, await researchFor(id, 'none')); } },
   { method: 'PUT', pattern: /^\/api\/watchlists\/([^/]+)\/companies\/order$/, handler: async (req, res, [, id]) => { const { order } = await readJsonBody(req); await store.reorderCompanies(id, Array.isArray(order) ? order : []); send(res, 200, await researchFor(id, 'none')); } },
   { method: 'PUT', pattern: /^\/api\/watchlists\/([^/]+)\/companies\/([^/]+)\/weight$/, handler: async (req, res, [, id, symbol]) => { const { weightPct } = await readJsonBody(req); await store.setCompanyWeight(id, decodeURIComponent(symbol), Number.isFinite(weightPct) ? Number(weightPct) : null); send(res, 200, await researchFor(id, 'none')); } },
-  { method: 'PUT', pattern: /^\/api\/watchlists\/([^/]+)\/companies\/([^/]+)\/notes$/, handler: async (req, res, [, id, symbol]) => { const { notes } = await readJsonBody(req); await store.setCompanyNotes(id, decodeURIComponent(symbol), clean(notes)); send(res, 200, await researchFor(id, 'none')); } }
+  { method: 'PUT', pattern: /^\/api\/watchlists\/([^/]+)\/companies\/([^/]+)\/notes$/, handler: async (req, res, [, id, symbol]) => { const { notes } = await readJsonBody(req); await store.setCompanyNotes(id, decodeURIComponent(symbol), clean(notes)); send(res, 200, await researchFor(id, 'none')); } },
+  // Phase 4 decision layer: acknowledge/unacknowledge one alert (id shape
+  // `${symbol}|${type}`, see data/decision/alerts.mjs) -- same mutate-then-
+  // return-fresh-payload shape as every other mutation route above.
+  { method: 'PUT', pattern: /^\/api\/watchlists\/([^/]+)\/alerts\/([^/]+)$/, handler: async (req, res, [, id, alertId]) => { const { acknowledged } = await readJsonBody(req); await store.setAlertAcknowledged(id, decodeURIComponent(alertId), !!acknowledged); send(res, 200, await researchFor(id, 'none')); } }
 ];
 
 await store.init();

@@ -2,7 +2,7 @@
   "id": "defence",
   "name": "Defence",
   "createdAt": "2026-08-13T13:06:38.735Z",
-  "updatedAt": "2026-08-14T10:54:21.516Z",
+  "updatedAt": "2026-08-15T10:33:30.156Z",
   "companies": [
     {
       "symbol": "HAL.NS",
@@ -82,5 +82,6 @@
       "addedAt": "2026-08-13T13:06:38.735Z"
     }
   ],
-  "cashTargetPct": 0
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
 }

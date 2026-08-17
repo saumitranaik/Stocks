@@ -13,7 +13,7 @@ const sanitize = (key) => key.replace(/[^A-Za-z0-9.-]/g, '_');
 // (Relative Strength). Not the same thing as data/cache.mjs's in-memory
 // TtlCache -- that one dies with the process; this one is what makes
 // "cached data on startup" possible at all.
-function makeDiskCache(namespace) {
+export function makeDiskCache(namespace) {
   const dir = join(root, namespace);
   let ensured = false;
   const ensureDir = async () => { if (!ensured) { await mkdir(dir, { recursive: true }); ensured = true; } };
@@ -37,3 +37,7 @@ function makeDiskCache(namespace) {
 
 export const companyCache = makeDiskCache('companies');
 export const benchmarkCache = makeDiskCache('benchmarks');
+// Phase 6: one file per macro indicator (USD/INR, US 10Y yield, crude,
+// natural gas, gold, India VIX -- see data/providers/macroProvider.mjs),
+// fetched independently of any watchlist's own refresh cycle.
+export const macroCache = makeDiskCache('macro');

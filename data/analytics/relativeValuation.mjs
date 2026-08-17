@@ -136,6 +136,17 @@ export function relativeValuation(stocks) {
 
   // Pass 1: per-stock comparison table + core scores -- needs only its own
   // sector's peer group, independent of any other stock's result.
+  //
+  // -- Peer-framework correction (foundation upgrade, §5) ------------------
+  // `peers` (and therefore `sectorPeerCount`) includes the stock itself, as
+  // it always has -- kept unchanged so existing "sector rank 2 of 5"-style
+  // report text keeps its established meaning. `peerCount` below is the new,
+  // genuine comparison-peer count (self excluded). Below 3 real peers, a
+  // "beats the median" or z-score/percentile read is a self-comparison
+  // artifact, not a meaningful relative-value signal -- those three scores
+  // are withheld (null, with a disclosed reason) rather than shown, same
+  // "insufficient data, not a fabricated figure" floor data/quant/
+  // factorEngine.mjs already applies to its own peer-relative percentiles.
   const core = new Map();
   for (const stock of resolved) {
     const sector = stock.sector || 'Unclassified';
@@ -143,6 +154,14 @@ export function relativeValuation(stocks) {
     const sectorMedians = Object.fromEntries(Object.keys(METRIC_ACCESSORS).map(key => [key, median(peers.map(METRIC_ACCESSORS[key]))]));
     const leader = sectorLeader.get(sector);
     const sectorRank = [...peers].sort((a, b) => qualityProxy(b) - qualityProxy(a)).findIndex(s => s.symbol === stock.symbol) + 1;
+
+    const peerCount = peers.length - 1;
+    const directPeerCount = stock.industry ? peers.filter(p => p.symbol !== stock.symbol && p.industry === stock.industry).length : null;
+    const peerTier = directPeerCount > 0 ? 'Direct' : peerCount > 0 ? 'Sector' : 'Unavailable';
+    const peerCompleteness = peerCount >= 6 ? 'Strong' : peerCount >= 3 ? 'Adequate' : peerCount >= 1 ? 'Weak' : 'Unavailable';
+    const hasMeaningfulPeers = peerCount >= 3;
+    const peerInsufficiencyReason = hasMeaningfulPeers ? null
+      : `Only ${peerCount} other compan${peerCount === 1 ? 'y' : 'ies'} share this sector in the current watchlist — below the 3-peer floor for a meaningful relative-valuation score. No market-wide peer database exists in this app (see docs/governance/roadmap.md TD-10), so this renders as unavailable rather than a self-comparison artifact.`;
 
     const comparison = Object.keys(METRIC_ACCESSORS).map(key => ({
       key, value: METRIC_ACCESSORS[key](stock), sectorMedian: sectorMedians[key],
@@ -156,7 +175,7 @@ export function relativeValuation(stocks) {
       return HIGHER_BETTER.has(key) ? value > sectorMedian : value < sectorMedian;
     }).filter(v => v !== null);
     const decided = comparison.filter(({ key, value, sectorMedian }) => Number.isFinite(value) && Number.isFinite(sectorMedian) && (HIGHER_BETTER.has(key) || VALUATION_METRICS.includes(key)));
-    const relativeValuationScore = decided.length ? Math.round((beats.length / decided.length) * 100) : null;
+    const relativeValuationScore = hasMeaningfulPeers && decided.length ? Math.round((beats.length / decided.length) * 100) : null;
 
     const deviations = VALUATION_METRICS.map(key => {
       const value = METRIC_ACCESSORS[key](stock), med = sectorMedians[key];
@@ -167,8 +186,9 @@ export function relativeValuation(stocks) {
     core.set(stock.symbol, {
       comparison, relativeValuationScore, premiumDiscountScore,
       sectorRank, sectorPeerCount: peers.length, watchlistRank: watchlistRankBySymbol.get(stock.symbol) ?? null, watchlistCount: resolved.length,
-      multiFactorPeerScore: multiFactorScore(stock, peers),
-      sectorNormalizedValuationScore: sectorNormalizedScore(stock, peers),
+      peerCount, directPeerCount, peerTier, peerCompleteness, peerInsufficiencyReason,
+      multiFactorPeerScore: hasMeaningfulPeers ? multiFactorScore(stock, peers) : null,
+      sectorNormalizedValuationScore: hasMeaningfulPeers ? sectorNormalizedScore(stock, peers) : null,
       historicalValuationBand: historicalValuationBand(stock)
     });
   }

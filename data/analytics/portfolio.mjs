@@ -70,7 +70,9 @@ export function resolveWeights(companies, cashTargetPct = 0) {
   return raw.map(w => number((w / total) * investedTarget));
 }
 
-function weightedAverage(pairs) {
+// Exported for reuse by data/quant/performanceEngine.mjs (Phase 7 Stage 2) --
+// a generic weight-aggregation utility, not a portfolio-specific analytic.
+export function weightedAverage(pairs) {
   const withValues = pairs.filter(([value]) => Number.isFinite(value));
   const weightSum = withValues.reduce((sum, [, weight]) => sum + weight, 0);
   return weightSum ? number(withValues.reduce((sum, [value, weight]) => sum + value * weight, 0) / weightSum) : null;
@@ -117,14 +119,21 @@ export function weightedSectorAllocation(stocks, weights) {
 
 // Position-level concentration: same real HHI/effective-holdings formulas as
 // sectorAllocation() above, applied to individual weights instead of sector
-// buckets.
+// buckets. `contributions` decomposes the portfolio-level hhi into each
+// position's own share of it (share_i^2 / hhi) -- pure arithmetic on the
+// `shares`/`hhi` this function already computes, not a new calculation --
+// so a reporting consumer can show "this position accounts for X% of the
+// portfolio's concentration" per holding, not just the aggregate figure.
 export function positionConcentration(stocks, weights) {
   const resolved = stocks.map((stock, i) => ({ stock, weight: weights[i] })).filter(({ stock }) => !stock.unresolved);
   const total = resolved.reduce((sum, { weight }) => sum + weight, 0);
-  if (!total) return { hhi: null, effectiveHoldings: null, topPositionPct: null, diversificationScore: null };
+  if (!total) return { hhi: null, effectiveHoldings: null, topPositionPct: null, diversificationScore: null, contributions: [] };
   const shares = resolved.map(({ weight }) => weight / total);
   const hhi = shares.reduce((sum, share) => sum + share ** 2, 0);
-  return { hhi: number(hhi, 4), effectiveHoldings: number(1 / hhi), topPositionPct: number(Math.max(...shares) * 100), diversificationScore: Math.round((1 - hhi) * 100) };
+  const contributions = resolved
+    .map(({ stock }, i) => ({ symbol: stock.symbol, name: stock.name, weightPct: number(shares[i] * 100), hhiContributionPct: number((shares[i] ** 2 / hhi) * 100) }))
+    .sort((a, b) => b.hhiContributionPct - a.hhiContributionPct);
+  return { hhi: number(hhi, 4), effectiveHoldings: number(1 / hhi), topPositionPct: number(Math.max(...shares) * 100), diversificationScore: Math.round((1 - hhi) * 100), contributions };
 }
 
 // Weight-aggregated portfolio quality: no new computation, just a weighted
@@ -201,6 +210,26 @@ export function sectorContribution(stocks, weights) {
 // symbols the correlation matrix itself could resolve (>=10 overlapping
 // weekly price points) -- same coverage constraint the matrix already
 // discloses.
+// Real portfolio volatility from the same variance decomposition
+// positionRiskContribution() below already needs internally (portfolioVariance
+// = SUM_i SUM_j w_i*w_j*sigma_i*sigma_j*rho_ij) -- extracted so the
+// benchmark/performance engine (data/quant/performanceEngine.mjs, Phase 7
+// Stage 2) can reuse the identical portfolio-level volatility figure rather
+// than approximating it with a correlation-blind weighted average of
+// individual volatilities. Same >=10-overlapping-weekly-point coverage
+// constraint as the correlation matrix itself (only symbols it could
+// resolve are passed in).
+export function portfolioVolatilityPct(symbols, weightBySymbol, volatilityBySymbol, correlation) {
+  if (!symbols?.length) return null;
+  const w = symbols.map(s => (weightBySymbol.get(s) || 0) / 100);
+  const sigma = symbols.map(s => { const v = volatilityBySymbol.get(s); return Number.isFinite(v) ? v / 100 : 0; });
+  const n = symbols.length;
+  let variance = 0;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) variance += w[i] * w[j] * sigma[i] * sigma[j] * (i === j ? 1 : (correlation.matrix[i][j] ?? 0));
+  const vol = Math.sqrt(Math.max(0, variance));
+  return vol > 0 ? number(vol * 100) : null;
+}
+
 export function positionRiskContribution(stocks, weights, correlation, volatilityBySymbol) {
   const symbols = correlation?.symbols || [];
   if (!symbols.length) return [];
@@ -209,9 +238,8 @@ export function positionRiskContribution(stocks, weights, correlation, volatilit
   const w = symbols.map(s => (weightBySymbol.get(s) || 0) / 100);
   const sigma = symbols.map(s => { const v = volatilityBySymbol.get(s); return Number.isFinite(v) ? v / 100 : 0; });
   const n = symbols.length;
-  let portfolioVariance = 0;
-  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) portfolioVariance += w[i] * w[j] * sigma[i] * sigma[j] * (i === j ? 1 : (correlation.matrix[i][j] ?? 0));
-  const portfolioVol = Math.sqrt(Math.max(0, portfolioVariance));
+  const portfolioVolPct = portfolioVolatilityPct(symbols, weightBySymbol, volatilityBySymbol, correlation);
+  const portfolioVol = Number.isFinite(portfolioVolPct) ? portfolioVolPct / 100 : 0;
   if (!(portfolioVol > 0)) return [];
   const raw = symbols.map((symbol, i) => {
     let covWithPortfolio = 0;
@@ -227,15 +255,19 @@ export function positionRiskContribution(stocks, weights, correlation, volatilit
 // which holdings pull a portfolio-level score up vs. down, not just the
 // portfolio-level average itself (already available from portfolioQuality()
 // above). Used once for the quality score and once for the valuation score.
+// `contributors` (full, symbol-sorted-by-contribution) is returned alongside
+// the existing `topPositive`/`topNegative` slices -- this was already
+// computed internally before being sliced down; exposing the full list lets
+// a per-company report look up its own contribution without recomputing.
 export function attributionBreakdown(stocks, weights, scoreAccessor) {
   const resolved = stocks.map((stock, i) => ({ stock, weight: weights[i] })).filter(({ stock }) => !stock.unresolved && Number.isFinite(scoreAccessor(stock)));
   const portfolioAverage = weightedAverage(resolved.map(({ stock, weight }) => [scoreAccessor(stock), weight]));
-  if (portfolioAverage == null) return { portfolioAverage: null, topPositive: [], topNegative: [] };
+  if (portfolioAverage == null) return { portfolioAverage: null, topPositive: [], topNegative: [], contributors: [] };
   const contributors = resolved.map(({ stock, weight }) => ({
     symbol: stock.symbol, name: stock.name, score: number(scoreAccessor(stock)),
     contribution: number((weight / 100) * (scoreAccessor(stock) - portfolioAverage))
   })).sort((a, b) => b.contribution - a.contribution);
-  return { portfolioAverage: number(portfolioAverage), topPositive: contributors.slice(0, 3), topNegative: contributors.slice(-3).reverse() };
+  return { portfolioAverage: number(portfolioAverage), topPositive: contributors.slice(0, 3), topNegative: contributors.slice(-3).reverse(), contributors };
 }
 
 // Factor exposure: 5 disclosed in-house factor tilts -- not a commercial

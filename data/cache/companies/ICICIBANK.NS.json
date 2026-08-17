@@ -1,6 +1,6 @@
 {
   "symbol": "ICICIBANK.NS",
-  "fetchedAt": "2026-08-14T12:16:37.889Z",
+  "fetchedAt": "2026-08-16T13:39:49.538Z",
   "provider": "Screener.in",
   "market": "India",
   "quote": {
@@ -24,7 +24,7 @@
       "histogram": -7.06
     },
     "oneYearReturnPct": -0.7216456579386923,
-    "avgVolume20": 12256829.65,
+    "avgVolume20": 12257232.5,
     "ohlcv": {
       "open": [
         1412,
@@ -1284,18 +1284,18 @@
         10471914,
         8201733,
         11408206,
-        6089877
+        6097934
       ]
     }
   },
   "fundamentals": {
     "source": "Screener.in",
-    "asOf": "2026-08-14T12:16:37.356Z",
+    "asOf": "2026-08-16T13:39:48.711Z",
     "currency": "INR",
     "unit": "Cr",
     "statementBasis": "Consolidated",
     "snapshot": {
-      "marketCap": 1015269,
+      "marketCap": 1016860,
       "pe": 18.1,
       "bookValue": 527,
       "dividendYield": 0.85,
@@ -3083,7 +3083,7 @@
       },
       {
         "date": "2026-08-09",
-        "close": 1406.800048828125
+        "close": 1417
       },
       {
         "date": "2026-08-14",
@@ -3093,31 +3093,52 @@
   },
   "news": [
     {
+      "title": "HDFC Bank, Axis, ICICI, Karur Vysya, Ujjivan SFB shares: What SBI Securities' Sunny Agrawal says - Business Today",
+      "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxOaUZvWVFlR29XdktudDVTMXV0a2VBYVIxTGtmYWhFblZZSHc5VzFhNGZSSGMybUx3ODZDa2tUX3FQTEpsRF9CWjR6d3FzblZCTkF3Q1UxaEFsNjM2aU11ckJISnpPRHE2YkxoczFEanFMZjlhNk16ZmduOW40S2JZWHdtT2NwNllrWDA3U1k5enlGWE8zTlQtc3MzVktwWmFQelNLSGg3MlFPREQ1em9wT3ZwVEhiNjk2WmZvR0xaMXZ0Sl9WZFhDR25OTmJKVG9wb0tOdWd0ZzZDRG52M0J4c2R2bDY0YkJiV3hmUmgtMNIB9AFBVV95cUxNTE5VMXVybGlqeXo3Q1c5UTVQWGxVcjY0TG1XVGJGazNwS2F4MFFCRTVjVGhfUXFCZ3doNHN6SVllLTNpTDRGNTdSeG41NlgyQ3duaDd6ZDVmeFJ2Wm9nQ01RMXdRS1J0d0w5dzdpa2gwWnN5cnFULTUyVkdiUmdjVHYzTE1uRzI4MmgzdWI4THB0N0h5LWp3WC1tX2tLUU9XY1Q3NzRrdkYzYU9vRjZ2TnZ0UkpfWEVDNzVTMFQyZVpsaFZNb2dMMkJsVmMzSVdpZE5kQlNHMFFPVmUwaFFsVkFUS0Z1aDloaVk0dF9JelcyV25i?oc=5",
+      "date": "Sat, 15 Aug 2026 03:30:04 GMT",
+      "source": "Business Today",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
+      "title": "HDFC Bank, Axis, ICICI, Karur Vysya, Ujjivan SFB shares: What SBI Securities' Sunny Agrawal says - BusinessToday - IndiaIPO",
+      "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxQZkg4dVN0U2dUNDFmX0J6TlZ2MVFFWUJZSUUyd3NnejRPb1hMNnRvZXFjVWlBWHUxbXF1YmhaeEhlWEdBdGt0OUJSNmZUT05Bd19WY0dLRlN0QzBBU2tTelRyeEJwVk5pQlZMRzdzcFpidXMtZnlTSmVYLVZENnhpcS15VkhFb3ZNVnYySmtUemUyVzE2dmo4aE9nUHhsdUVVZU1WSE80MGt6eFlSX0w1VTNsbHphTmE2R2JYWDRxU3lMR0JBUTJlSk1jNFBzVndfNE5URkNtVQ?oc=5",
+      "date": "Sat, 15 Aug 2026 06:39:07 GMT",
+      "source": "IndiaIPO",
+      "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
+      "catalystType": "General",
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
+    },
+    {
       "title": "ICICI Bank Insiders Sell ₹282m Of Stock, Possibly Signalling Caution - simplywall.st",
       "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxOMXl6R3dtcExzOERicUgwTmd5b2JXN2dXNGFLVnQ1TmptSFhGdW9seG54LThPR1hXdll4c0pNWW1ZR1V3R0NjY24wancxZmJYMzBNOWQ2cGJPOFpPLW5ueFFwUWpDcDctWlFLMW5oanlnbEg1Mjh6VUNja2k1QTRLTzBPMVNSdnFmeVhuc0ZxMzB5ajNuNU9Gak1xd01Da29ibkdqVWIzUWh6S2lid2lTWW11YVFZd01VeTZqeTFLVFZGZlBmMTNWSnR5ZTM1RnRl0gHWAUFVX3lxTE9WZjB3OHBYWjZ0LUFiZy1nLWx3bjRSWEtkcUdCbmNRLWxPZF9QbHNGc09MZ2tFRTFoWUtjRURYRG5wOGZGblZ4YW1XLWZnYjkxdVVCa016bFBXOUFmQTFqLVl5SE90REhZSS0yLXlXblRqX3dRQUMxNHhxdjVzUnhRdVF2eFVzNjR1NFh5RmM3QmNNUlVFTFpQNUdBM1pBanZVR1N4V1NvTzFQVXMzOXhLSk1mM0FwYU1uV3RJYW91UEhnSGtlckNLeDFPSl8wTUJGOGdLVXc?oc=5",
       "date": "Tue, 11 Aug 2026 00:22:09 GMT",
       "source": "simplywall.st",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Uncertain",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Top 12 Bank Stocks To Buy In India August 2026 - Samco",
       "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQVTJGTjNBTndCWnlCMVF4am9OclFTVEN0clJWVXBKc3BWX0E4bDhwTUxlVWFKd0xReUJWSVl6T0M3UnExVHowUHZHdkExQ016S1MtX1lJdjNKYUNoRzBpM19fbTZYeTNOVGpNY0NPMTQydUdvWDZWMGFveE12Umh4eVRkVC02b1FMYVJhZQ?oc=5",
-      "date": "Wed, 12 Aug 2026 06:50:59 GMT",
+      "date": "Sat, 15 Aug 2026 06:51:04 GMT",
       "source": "Samco",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "ICICI Bank schedules investor meets on August 17 and 18 - scanx.trade",
-      "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOaDdsM0Z1Qy0xVXFic0tBWjRiY3RKT0NScjFNOVJpbjVuWXpCM08tcF9tcE1wNDdlZDNsbEt0TGprM2xzZ093MXVJMnZKdm5sYzdubW1xS3Fsc0gtVXpMN1lzZnhKWTg4ZXQtZTBBTEh1VllRTXpBcVRMODI1QktyYy1vaVFKdXEzOG9QWEJjNmRVUmlTVC0ta0d6WW5Kb3Z3VWdWUmFBMmJtQnZoN1d0bkVR?oc=5",
-      "date": "Tue, 11 Aug 2026 16:16:29 GMT",
-      "source": "scanx.trade",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     },
     {
       "title": "Is ICICI Bank Limited (IBN) The Best Deep Value Stock to Invest in? - Yahoo Finance",
@@ -3125,18 +3146,12 @@
       "date": "Wed, 10 Jun 2026 07:00:00 GMT",
       "source": "Yahoo Finance",
       "impact": "Low",
+      "signalStrength": "Low",
+      "sentiment": "Neutral",
       "catalystType": "General",
-      "expectedTimeline": "Unclassified"
-    },
-    {
-      "title": "ETFs Investing in ICICI Bank Limited Sponsored ADR Stocks - TradingView",
-      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBHN2JqQThNLVVVdzFpQllWZHlieVlSclM5eDM4QzE5NkNZbzBMQkdfSHotYkVDZ3I2SEo5eXhyQmpEM1ZjTDZtOVNGQjZ5MGl3bmlxYlloSkZxUzVXelZJ?oc=5",
-      "date": "Tue, 04 Aug 2026 21:41:25 GMT",
-      "source": "TradingView",
-      "impact": "Low",
-      "catalystType": "General",
-      "expectedTimeline": "Unclassified"
+      "expectedTimeline": "Unclassified",
+      "affectedThesisDriver": null
     }
   ],
-  "newsFetchedAt": "2026-08-14T12:16:37.889Z"
+  "newsFetchedAt": "2026-08-16T13:39:49.538Z"
 }

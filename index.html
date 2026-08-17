@@ -7,9 +7,30 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="app-shell">
+  <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+  <nav class="sidebar" id="app-sidebar" aria-label="Primary workspaces">
+    <div class="sidebar-top">
+      <button type="button" id="sidebar-mobile-close" class="sidebar-mobile-close" aria-label="Close navigation">&times;</button>
+      <button type="button" class="sidebar-item active" data-tab="dashboard" title="Dashboard"><span class="sidebar-mono">Da</span><span class="sidebar-label">Dashboard</span></button>
+      <button type="button" class="sidebar-item" data-tab="watchlists" title="Watchlists"><span class="sidebar-mono">Wl</span><span class="sidebar-label">Watchlists</span></button>
+      <button type="button" class="sidebar-item" data-group="research" title="Research"><span class="sidebar-mono">Re</span><span class="sidebar-label">Research</span></button>
+      <button type="button" class="sidebar-item" data-tab="technical" title="Technicals"><span class="sidebar-mono">Te</span><span class="sidebar-label">Technicals</span></button>
+      <button type="button" class="sidebar-item" data-tab="portfolio" title="Portfolio"><span class="sidebar-mono">Po</span><span class="sidebar-label">Portfolio</span></button>
+      <button type="button" class="sidebar-item" data-tab="risks" title="Risks"><span class="sidebar-mono">Ri</span><span class="sidebar-label">Risks</span></button>
+      <button type="button" class="sidebar-item" data-tab="reports" title="Reports"><span class="sidebar-mono">Rp</span><span class="sidebar-label">Reports</span></button>
+      <button type="button" class="sidebar-item" data-tab="market-intelligence" title="Market Intelligence"><span class="sidebar-mono">Mi</span><span class="sidebar-label">Market Intelligence</span></button>
+      <button type="button" class="sidebar-item" data-tab="compare" title="Compare"><span class="sidebar-mono">Cm</span><span class="sidebar-label">Compare</span></button>
+    </div>
+    <button type="button" id="sidebar-collapse-toggle" class="sidebar-collapse-toggle" aria-label="Collapse sidebar" aria-pressed="false">
+      <span class="sidebar-mono">&laquo;</span><span class="sidebar-label">Collapse</span>
+    </button>
+  </nav>
+  <div class="app-main">
 <header>
   <div class="container">
     <div class="title">
+      <button type="button" id="sidebar-mobile-open" class="sidebar-mobile-open" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
       <div>
         <h1 id="dashboard-title">Watchlist Research Workspace</h1>
         <p>Institutional equity research | your saved companies, every tab in sync</p>
@@ -40,20 +61,6 @@
       <button type="button" id="compare-toggle" class="pill" aria-pressed="false">Compare</button>
       <div id="compare-chip-row" class="compare-chip-row" hidden></div>
     </div>
-
-    <nav class="tabs">
-      <button class="active" data-tab="dashboard">Dashboard</button>
-      <button data-tab="watchlists">Watchlists</button>
-      <button data-tab="fundamentals">Fundamentals</button>
-      <button data-tab="valuation">Valuation</button>
-      <button data-tab="profitability">Profitability</button>
-      <button data-tab="balance-sheet">Balance sheet</button>
-      <button data-tab="growth">Growth</button>
-      <button data-tab="ownership">Ownership</button>
-      <button data-tab="technical">Technicals</button>
-      <button data-tab="portfolio">Portfolio</button>
-      <button data-tab="risks">Risks</button>
-    </nav>
   </div>
 </header>
 <main class="container" id="main">
@@ -96,6 +103,7 @@
         <button type="button" id="wl-delete-btn">Delete</button>
         <button type="button" id="wl-export-btn">Export</button>
         <button type="button" id="wl-import-btn">Import</button>
+        <button type="button" id="wl-portfolio-review-btn" title="Open the printable Portfolio Review Pack for the active watchlist">Portfolio Review Pack</button>
         <input type="file" id="wl-import-file" accept="application/json" hidden>
         <label class="cash-target-label">Cash target %
           <input type="number" id="wl-cash-target" min="0" max="100" step="1" title="Illustrative cash allocation target — invested company weights normalize against the remainder">
@@ -111,6 +119,17 @@
           <select id="wl-filter-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
           <select id="wl-filter-recommendation" aria-label="Filter by recommendation"><option value="">All recommendations</option></select>
         </div>
+      </div>
+      <div class="pill-row" id="wl-intel-filters">
+        <button type="button" class="pill" data-intel-filter="Add aggressively">Add aggressively</button>
+        <button type="button" class="pill" data-intel-filter="Add">Add</button>
+        <button type="button" class="pill" data-intel-filter="Hold">Hold</button>
+        <button type="button" class="pill" data-intel-filter="Reduce">Reduce</button>
+        <button type="button" class="pill" data-intel-filter="Exit">Exit</button>
+        <button type="button" class="pill" data-intel-filter="High risk">High risk</button>
+        <button type="button" class="pill" data-intel-filter="High upside">High upside</button>
+        <button type="button" class="pill" data-intel-filter="Technical breakout">Technical breakout</button>
+        <button type="button" class="pill" data-intel-filter="Recent changes">Recent changes</button>
       </div>
       <div id="wl-bulk-bar" class="wl-bulk-bar" hidden>
         <span id="wl-bulk-count" class="small"></span>
@@ -135,6 +154,13 @@
               <th class="num" data-sort="growth">Growth</th>
               <th class="num" data-sort="risk">Risk</th>
               <th data-sort="updated">Last Updated</th>
+              <th class="num" data-sort="actionScore">Action Score</th>
+              <th data-sort="action">Action</th>
+              <th class="num" data-sort="fvGap">Fair Value Gap</th>
+              <th data-sort="riskTrend">Risk Trend</th>
+              <th data-sort="techTrend">Technical Trend</th>
+              <th class="num" data-sort="alertCount">Alerts</th>
+              <th data-sort="lastChange">Last Change</th>
               <th>Notes</th>
               <th>Actions</th>
             </tr>
@@ -147,15 +173,53 @@
 
   <section class="tab active" id="dashboard">
     <nav class="subtabs" role="tablist" aria-label="Dashboard sections">
+      <button type="button" role="tab" data-subtab="morning-briefing">Morning Briefing</button>
+      <button type="button" role="tab" data-subtab="portfolio-intelligence">Portfolio Intelligence</button>
+      <button type="button" role="tab" data-subtab="committee-view">Committee View</button>
       <button type="button" role="tab" data-subtab="executive-summary">Executive summary</button>
       <button type="button" role="tab" data-subtab="kpi-ribbon">KPI ribbon</button>
       <button type="button" role="tab" data-subtab="top-opportunities">Top opportunities</button>
-      <button type="button" role="tab" data-subtab="news-catalysts">News &amp; catalysts</button>
       <button type="button" role="tab" data-subtab="sector-allocation">Sector allocation</button>
       <button type="button" role="tab" data-subtab="watchlist-snapshot">Watchlist snapshot</button>
       <button type="button" role="tab" data-subtab="key-risks">Key risks</button>
-      <button type="button" role="tab" data-subtab="upcoming-earnings">Upcoming earnings</button>
     </nav>
+    <p class="small">Full Macro Intelligence, Sector Intelligence, Earnings &amp; Events and News &amp; Catalysts detail moved to the <b>Market Intelligence</b> workspace &mdash; Morning Briefing below still gives the condensed daily version of each.</p>
+
+    <div class="subsection" data-subtab="morning-briefing" role="tabpanel">
+      <p class="small">A daily roll-up over data already computed elsewhere on this page &mdash; nothing here is calculated independently. Set as the default Dashboard view.</p>
+      <div class="two-col">
+        <article class="card">
+          <h3>Overnight market moves &amp; regime</h3>
+          <div id="mb-market-moves"></div>
+        </article>
+        <article class="card">
+          <h3>Sector state (top 5 by size)</h3>
+          <div id="mb-sector-state"></div>
+        </article>
+      </div>
+      <article class="card">
+        <h3>Portfolio alerts (Critical / High)</h3>
+        <div id="mb-alerts"></div>
+      </article>
+      <div class="two-col">
+        <article class="card">
+          <h3>Top opportunities</h3>
+          <div id="mb-opportunities"></div>
+        </article>
+        <article class="card">
+          <h3>Top risks</h3>
+          <div id="mb-risks"></div>
+        </article>
+      </div>
+      <article class="card">
+        <h3>Earnings today</h3>
+        <div id="mb-earnings-today"></div>
+      </article>
+      <article class="card">
+        <h3>Top news</h3>
+        <div id="mb-top-news" class="news-list"></div>
+      </article>
+    </div>
 
     <div class="subsection" data-subtab="executive-summary" role="tabpanel">
       <article class="card">
@@ -198,13 +262,6 @@
       </article>
     </div>
 
-    <div class="subsection" data-subtab="news-catalysts" role="tabpanel">
-      <article class="card">
-        <h3>Recent news &amp; catalysts</h3>
-        <div id="dashboard-news" class="news-list"></div>
-      </article>
-    </div>
-
     <div class="subsection" data-subtab="sector-allocation" role="tabpanel">
       <article class="card">
         <h3>Sector allocation</h3>
@@ -227,17 +284,76 @@
       </article>
     </div>
 
-    <div class="subsection" data-subtab="upcoming-earnings" role="tabpanel">
+    <div class="subsection" data-subtab="portfolio-intelligence" role="tabpanel">
+      <p class="small">Decision layer built entirely from analytics already computed elsewhere in this app (recommendation, valuation, risk, technical) plus one persisted run-over-run snapshot per watchlist &mdash; see <span id="pi-methodology-info"></span> for the Action Score methodology. Nothing here triggers a new fetch.</p>
+      <div class="grid four" id="pi-kpis"></div>
       <article class="card">
-        <h3>Upcoming earnings &amp; events</h3>
-        <p class="small">No earnings/events calendar data source is configured in this app &mdash; dates are never estimated or fabricated here.</p>
+        <h3>Action Required</h3>
+        <div class="scroll">
+          <table id="pi-action-table" class="tech-table">
+            <thead><tr><th>Company</th><th>Sector</th><th>Action</th><th class="num">Action Score</th><th>Confidence</th><th>Primary driver</th><th class="num">Fair value gap</th><th>Risk trend</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </article>
-
-      <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. "N/A" means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
-        <ul id="data-limitations"></ul>
+      <div class="two-col">
+        <article class="card">
+          <h3>Opportunity Monitor</h3>
+          <div id="pi-opportunities"></div>
+        </article>
+        <article class="card">
+          <h3>Risk Monitor</h3>
+          <div id="pi-risks"></div>
+        </article>
       </div>
+      <article class="card">
+        <h3>What changed since last refresh</h3>
+        <div id="pi-changes"></div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="committee-view" role="tabpanel">
+      <div class="section-head">
+        <p class="small">A presentation-quality roll-up of the Portfolio Intelligence and Portfolio tabs' own already-computed figures &mdash; nothing on this page is computed independently of those tabs.</p>
+        <button type="button" id="cv-portfolio-review-btn" title="Open the printable, presentation-quality Portfolio Review Pack in a new tab">Open Portfolio Review Pack &#8599;</button>
+        <button type="button" id="cv-committee-pack-btn" title="Open the printable Weekly Investment Committee Pack (portfolio/macro/sector/thesis changes + recommended actions) in a new tab">Open Weekly Committee Pack &#8599;</button>
+      </div>
+      <div class="grid four" id="cv-kpis"></div>
+      <div class="two-col">
+        <article class="card">
+          <h3>Top opportunities</h3>
+          <div id="cv-top-opportunities"></div>
+        </article>
+        <article class="card">
+          <h3>Top risks</h3>
+          <div id="cv-top-risks"></div>
+        </article>
+      </div>
+      <div class="two-col">
+        <article class="card">
+          <h3>Sector allocation</h3>
+          <div id="cv-sector-allocation"></div>
+        </article>
+        <article class="card">
+          <h3>Concentration analysis</h3>
+          <div id="cv-concentration"></div>
+        </article>
+      </div>
+      <article class="card">
+        <h3>Rebalancing priorities</h3>
+        <div id="cv-rebalancing"></div>
+      </article>
     </div>
   </section>
+
+  <div id="research-category-bar" class="pill-row" role="tablist" aria-label="Research category" hidden>
+    <button type="button" role="tab" class="pill active" data-tab="fundamentals">Fundamentals</button>
+    <button type="button" role="tab" class="pill" data-tab="valuation">Valuation</button>
+    <button type="button" role="tab" class="pill" data-tab="profitability">Profitability</button>
+    <button type="button" role="tab" class="pill" data-tab="balance-sheet">Balance sheet</button>
+    <button type="button" role="tab" class="pill" data-tab="growth">Growth</button>
+    <button type="button" role="tab" class="pill" data-tab="ownership">Ownership</button>
+  </div>
 
   <section class="tab" id="fundamentals">
     <nav class="subtabs" role="tablist" aria-label="Fundamentals sections">
@@ -667,6 +783,8 @@
       <button type="button" role="tab" data-subtab="factor-exposure">Factor exposure</button>
       <button type="button" role="tab" data-subtab="scenarios">Scenarios</button>
       <button type="button" role="tab" data-subtab="attribution">Attribution</button>
+      <button type="button" role="tab" data-subtab="health-rebalancing">Health &amp; Rebalancing</button>
+      <button type="button" role="tab" data-subtab="exposure-matrix">Exposure Matrix</button>
     </nav>
     <p class="small">Allocation weights are an optional, user-entered target % per company (set via Manage &rarr; company rows). Unset companies split the remaining weight equally; the full vector is normalized to sum to 100%. An all-unset watchlist is treated as equal-weighted. These are illustrative allocation percentages, not real currency holdings.</p>
 
@@ -757,6 +875,44 @@
         </article>
       </div>
     </div>
+
+    <div class="subsection" data-subtab="health-rebalancing" role="tabpanel">
+      <p class="small">Portfolio Health Score is a weighted blend of this tab's own already-computed quality, diversification, risk and technical figures &mdash; see <span id="health-score-info"></span>. Trend compares against a run-over-run history persisted per watchlist, advanced only on a genuine data refresh.</p>
+      <div class="two-col">
+        <article class="card">
+          <h3>Portfolio health</h3>
+          <div class="grid two" id="health-kpis"></div>
+          <div id="health-contributors"></div>
+        </article>
+        <article class="card">
+          <h3>Historical health trend</h3>
+          <div id="health-history"></div>
+        </article>
+      </div>
+      <article class="card">
+        <h3>Rebalancing suggestions <span id="rebalancing-info"></span></h3>
+        <div class="scroll">
+          <table id="rebalancing-table" class="tech-table">
+            <thead><tr><th>Company</th><th class="num">Current weight</th><th class="num">Target weight</th><th>Suggested action</th><th class="num">Action Score</th><th>Rationale</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="exposure-matrix" role="tabpanel">
+      <p class="small">Each company is tagged by its own sector against 4 disclosed static sensitivity lookup tables (not a live regulatory/rates/FX feed) &mdash; see <span id="exposure-matrix-info"></span>. Portfolio-level figures are a weighted average using each holding's own illustrative target weight, same as every other portfolio aggregate on this tab.</p>
+      <div class="grid four" id="exposure-portfolio-kpis"></div>
+      <article class="card">
+        <h3>Per-company exposure</h3>
+        <div class="scroll">
+          <table id="exposure-matrix-table" class="tech-table">
+            <thead><tr><th>Company</th><th class="num">Interest-rate</th><th>Currency</th><th class="num">Commodity</th><th class="num">Regulatory</th><th>Economic cycle</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
   </section>
 
   <section class="tab" id="risks">
@@ -767,6 +923,7 @@
       <button type="button" role="tab" data-subtab="market">Market</button>
       <button type="button" role="tab" data-subtab="sector">Sector</button>
       <button type="button" role="tab" data-subtab="governance">Governance</button>
+      <button type="button" role="tab" data-subtab="alerts">Alerts</button>
     </nav>
     <p class="small">5-category institutional risk framework: Financial, Business, Market, Sector and Governance. Financial/Market risk sub-scores are computed from real reported/priced data; Sector risk is a static, disclosed qualitative sector lookup (not a live regulatory/commodity feed); Business-risk concentration fields and Governance pledge/related-party exposure have no data source and are shown as unavailable rather than estimated.</p>
 
@@ -787,6 +944,26 @@
       </article>
     </div>
 
+    <div class="subsection" data-subtab="alerts" role="tabpanel">
+      <p class="small">Rule-based severity off fixed thresholds &mdash; see <span id="alerts-methodology-info"></span>. Standing conditions keep firing until the condition clears or the alert is acknowledged; crossing events fire once, off the persisted run-over-run snapshot.</p>
+      <div class="section-head">
+        <h3>Unacknowledged alerts</h3>
+        <div class="pill-row" id="alerts-severity-filter">
+          <button type="button" class="pill active" data-severity="">All</button>
+          <button type="button" class="pill" data-severity="Critical">Critical</button>
+          <button type="button" class="pill" data-severity="High">High</button>
+          <button type="button" class="pill" data-severity="Medium">Medium</button>
+          <button type="button" class="pill" data-severity="Low">Low</button>
+        </div>
+      </div>
+      <div class="scroll">
+        <table id="alerts-table" class="tech-table">
+          <thead><tr><th>Severity</th><th>Company</th><th>Category</th><th>Alert</th><th>Confidence</th><th>Time</th><th>Acknowledge</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
     <article class="card">
       <div class="section-head"><h3>Risk deep-dive</h3></div>
       <div class="pill-row" id="risk-selector"></div>
@@ -797,7 +974,142 @@
       <div class="subsection" data-subtab="governance" role="tabpanel" id="risk-detail-governance"></div>
     </article>
   </section>
+
+  <section class="tab" id="reports">
+    <p class="small">Every report below is generated from the same already-computed research payload &mdash; nothing here recomputes an analytic. This is the single discoverable launch point; the same reports also remain reachable from Quick Jump, the Watchlists manage row and Committee View, unchanged.</p>
+    <div class="grid three">
+      <article class="card">
+        <h3>Company Research Report</h3>
+        <p class="small">15-section institutional research note for the active company (header selector).</p>
+        <div class="small" id="reports-active-company">No company selected</div>
+        <button type="button" id="reports-company-report-btn">Open Company Report &#8599;</button>
+      </article>
+      <article class="card">
+        <h3>Portfolio Review Pack</h3>
+        <p class="small">9-section investment-committee document for the active watchlist.</p>
+        <button type="button" id="reports-portfolio-review-btn">Open Portfolio Review Pack &#8599;</button>
+      </article>
+      <article class="card">
+        <h3>Weekly Investment Committee Pack</h3>
+        <p class="small">Portfolio/macro/sector/thesis changes plus recommended actions since the watchlist's own last genuine refresh.</p>
+        <button type="button" id="reports-committee-pack-btn">Open Weekly Committee Pack &#8599;</button>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab" id="market-intelligence">
+    <nav class="subtabs" role="tablist" aria-label="Market Intelligence sections">
+      <button type="button" role="tab" data-subtab="macro-intelligence">Macro Intelligence</button>
+      <button type="button" role="tab" data-subtab="sector-intelligence">Sector Intelligence</button>
+      <button type="button" role="tab" data-subtab="upcoming-earnings">Earnings &amp; Events</button>
+      <button type="button" role="tab" data-subtab="news-catalysts">News &amp; Catalysts</button>
+    </nav>
+    <p class="small">External market/event context layered over the existing research platform &mdash; every figure below is either a real fetched indicator or a disclosed rule-based read over already-computed analytics, never a new calculation engine.</p>
+
+    <div class="subsection" data-subtab="macro-intelligence" role="tabpanel">
+      <p class="small">Watchlist-independent: macro indicators are fetched from Yahoo Finance's public chart feed on their own schedule, not tied to any watchlist's refresh. Indicators with no free public data source render an explicit "Future Integration" status rather than an estimate &mdash; see <span id="macro-methodology-info"></span>.</p>
+      <article class="card">
+        <div class="section-head">
+          <h3>Market regime</h3>
+        </div>
+        <div id="macro-regime"></div>
+      </article>
+      <article class="card">
+        <h3>Data Quality</h3>
+        <div class="grid four" id="macro-data-quality"></div>
+      </article>
+      <article class="card">
+        <h3>Macro indicators</h3>
+        <div class="scroll">
+          <table id="macro-indicators-table" class="tech-table">
+            <thead><tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th class="num">Change</th><th class="num">1Y change</th><th>Direction</th><th>Status</th><th>As of</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Not available (Future Integration)</h3>
+        <p class="small">No free, unauthenticated, machine-readable public source exists for these today &mdash; never estimated or fabricated.</p>
+        <div class="scroll">
+          <table id="macro-unavailable-table" class="tech-table">
+            <thead><tr><th>Indicator</th><th>Category</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="sector-intelligence" role="tabpanel">
+      <p class="small">Cross-watchlist: the only view in this app that reads every saved watchlist at once (cache-only, no new fetch) and groups your own companies by sector &mdash; see <span id="sector-intel-methodology-info"></span>. Coverage is limited to companies you've actually added somewhere; there is no market-wide sector database.</p>
+      <div class="grid four" id="sector-intel-kpis"></div>
+      <article class="card">
+        <h3>Sector rollups</h3>
+        <div class="scroll">
+          <table id="sector-intel-table" class="tech-table">
+            <thead><tr><th>Sector</th><th class="num">Companies</th><th class="num">Composite</th><th class="num">Valuation</th><th class="num">Technical</th><th class="num">Risk</th><th class="num">Rel. strength</th><th class="num">EPS CAGR 5Y</th><th class="num">Regulatory sens.</th><th class="num">Commodity sens.</th><th>Ratings</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Priority sectors with no coverage</h3>
+        <p class="small">Named in the Phase 6 brief but matched by no company's sector label in any of your saved watchlists today (matched via the same keyword patterns as the Risks tab's Sector risk lookup) &mdash; either genuinely absent, or present under a differently-worded sector label this app's classification doesn't distinguish (e.g. defence companies are labeled "Capital Goods," not "Defence" &mdash; a known limitation, see roadmap TD-1). Never fabricated.</p>
+        <div id="sector-intel-gaps" class="small"></div>
+      </article>
+    </div>
+
+    <div class="subsection" data-subtab="upcoming-earnings" role="tabpanel">
+      <p class="small">Earnings &amp; Events &mdash; see <span id="earnings-methodology-info"></span>. Quarterly revenue/profit/margin deltas below are real, computed from Screener's own scraped quarterly results. Calendar-dependent fields (next earnings date, expected impact, historical reaction, guidance, estimate revisions) have no data source in this app and render an explicit status rather than an invented date.</p>
+      <article class="card">
+        <h3>Earnings Intelligence</h3>
+        <div class="scroll">
+          <table id="earnings-intel-table" class="tech-table">
+            <thead><tr><th>Company</th><th>Latest quarter</th><th class="num">Revenue QoQ</th><th class="num">Revenue YoY</th><th class="num">Net profit QoQ</th><th class="num">Net profit YoY</th><th class="num">Op. margin QoQ</th><th class="num">Op. margin YoY</th><th class="num">Vs. trailing avg</th><th>Next earnings date</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="card">
+        <h3>Portfolio Event Calendar</h3>
+        <p class="small">Real, dated company news items only &mdash; sorted newest-first. Not a forward-looking earnings/dividend/buyback/regulatory calendar (no data source exists for those in this app).</p>
+        <div id="event-calendar-list" class="news-list"></div>
+      </article>
+
+      <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. "N/A" means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
+        <ul id="data-limitations"></ul>
+      </div>
+    </div>
+
+    <div class="subsection" data-subtab="news-catalysts" role="tabpanel">
+      <article class="card">
+        <h3>Recent news &amp; catalysts</h3>
+        <div id="dashboard-news" class="news-list"></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="tab" id="compare">
+    <p class="small">First-class home for Compare Mode &mdash; reuses the exact same comparison rendering already used on Valuation/Technicals/Risks when Compare Mode is on; no separate comparison engine exists. Pick 2-4 companies below (or from the header Compare toggle).</p>
+    <article class="card">
+      <div class="section-head">
+        <h3>Companies to compare</h3>
+        <button type="button" id="compare-enable-btn">Turn on Compare Mode</button>
+      </div>
+      <div class="pill-row" id="compare-selector"></div>
+    </article>
+    <nav class="subtabs" role="tablist" aria-label="Compare sections">
+      <button type="button" role="tab" data-subtab="compare-valuation">Valuation</button>
+      <button type="button" role="tab" data-subtab="compare-technical">Technicals</button>
+      <button type="button" role="tab" data-subtab="compare-risk">Risks</button>
+    </nav>
+    <p class="small">For a Profitability comparison, use Research &rarr; Profitability &mdash; that table already filters to your compare selection automatically while Compare Mode is on.</p>
+    <div class="subsection" data-subtab="compare-valuation" role="tabpanel" id="compare-valuation"></div>
+    <div class="subsection" data-subtab="compare-technical" role="tabpanel" id="compare-technical"></div>
+    <div class="subsection" data-subtab="compare-risk" role="tabpanel" id="compare-risk"></div>
+  </section>
 </main>
+  </div>
+</div>
 <script src="script.js"></script>
 </body>
 </html>

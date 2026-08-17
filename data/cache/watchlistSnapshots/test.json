@@ -1,0 +1,54 @@
+{
+  "watchlistId": "test",
+  "savedAt": "2026-08-15T15:59:13.564Z",
+  "companies": {
+    "MTARTECH.NS": {
+      "fetchedAt": "2026-08-14T11:10:43.917Z",
+      "rating": "Reduce",
+      "confidence": "High",
+      "fairValue": 5958.72,
+      "targetPrice": 6872.19,
+      "compositeRiskScore": 59,
+      "riskCategories": {
+        "financial": 81,
+        "business": 21,
+        "market": 86,
+        "sector": 38,
+        "governance": 71
+      },
+      "debtTrendPct": 163.64,
+      "technicalRegime": "Uptrend",
+      "watchlistRank": 1,
+      "sectorRank": 1,
+      "premiumDiscountScore": 0,
+      "primaryDriver": "weak relative positioning vs. peers",
+      "priceAboveFifty": true,
+      "priceAboveTwoHundred": true,
+      "rsiZone": "neutral",
+      "macdSign": 1,
+      "relativeStrengthPercentile": null
+    }
+  },
+  "portfolio": {
+    "beta": 1.24,
+    "diversificationScore": 0,
+    "compositeRiskScoreAvg": 59,
+    "topSectorSharePct": 100,
+    "recentAvgCorrelation": null,
+    "healthScore": 30,
+    "healthHistory": [
+      {
+        "fetchedAt": "2026-08-15T15:59:13.564Z",
+        "healthScore": 30
+      }
+    ]
+  },
+  "alertLifecycle": {
+    "firing": {
+      "MTARTECH.NS|marginOfSafetyHigh": "2026-08-15T15:59:13.564Z",
+      "MTARTECH.NS|pePercentileExtremeHigh": "2026-08-15T15:59:13.564Z",
+      "PORTFOLIO|sectorConcentration": "2026-08-15T15:59:13.564Z",
+      "PORTFOLIO|positionConcentration": "2026-08-15T15:59:13.564Z"
+    }
+  }
+}
