@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    name: Syntax check and test suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Syntax check (node --check)
+        run: |
+          set -e
+          status=0
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file" || status=1
+          done < <(find . -type f \( -name "*.mjs" -o -name "*.js" \) \
+            -not -path "./.git/*" \
+            -not -path "./data/cache/*" \
+            -not -path "./data/watchlists/*" \
+            -print0)
+          exit $status
+
+      - name: Run test suite (node --test)
+        run: node --test

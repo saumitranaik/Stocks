@@ -788,6 +788,14 @@ providers, or any I/O-touching module — those remain validated by the
 live-check/interactive-walkthrough discipline in `docs/governance/
 roadmap.md` §1 until a later roadmap item extends coverage to them.
 
+This test layer is now wired into CI (`docs/governance/roadmap.md` 07.2,
+completed 2026-08-17): `.github/workflows/ci.yml` runs on every push and pull
+request, first `node --check` over every tracked `.mjs`/`.js` file, then
+`node --test`. Either gate failing fails the job — no `continue-on-error`,
+no suppressed exit code. GitHub-hosted, `ubuntu-latest`, Node 22.x (matching
+this project's local dev Node version; no `package.json`/dependency install
+step needed, same zero-dependency constraint as the test layer itself).
+
 ---
 
 ## 5. Data flow
@@ -880,6 +888,7 @@ estimated to fill a gap.
 Stocks/
 ├── CLAUDE.md                    — repository entry point for Claude Code (load order, working rules)
 ├── README.md                    — human quick-start
+├── .github/workflows/ci.yml     — CI: node --check over every .mjs/.js file, then node --test (§4.7, §07.2)
 ├── server.mjs                   — HTTP server + full API route table
 ├── index.html / script.js / styles.css   — main dashboard SPA
 ├── report.html / report.js      — standalone printable per-company research report page (§3.6)

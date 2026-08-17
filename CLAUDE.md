@@ -91,6 +91,10 @@ rule, read on demand only.
   interactive walkthrough. Do not mark work done on `node --check` (or the
   unit-test layer alone) — a change outside `test/`'s current coverage still
   needs the live/UI checks above.
+- **CI**: `.github/workflows/ci.yml` (`docs/governance/roadmap.md` 07.2,
+  completed 2026-08-17) runs `node --check` over every tracked `.mjs`/`.js`
+  file, then `node --test`, on every push/PR — a mandatory gate, not a
+  substitute for the manual validation above.
 - **No proliferation**: prefer extending an existing module/tab/section over
   creating a new file. Check `system.md` §7 ("where new things belong")
   before creating anything new.
@@ -132,6 +136,7 @@ data/watchlist/                  — store, research orchestration, disk cache, 
 data/watchlists/                   — on-disk watchlist JSON (user data, not code)
 data/cache/                          — on-disk research cache (regenerable, not source)
 test/                                   — automated unit tests for pure-math modules (node:test, zero dependencies)
+.github/workflows/ci.yml                — CI: node --check + node --test on every push/PR
 ```
 
 For what belongs in each folder and why, see `system.md` §7 — don't
