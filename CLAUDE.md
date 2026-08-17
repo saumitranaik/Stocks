@@ -78,12 +78,19 @@ rule, read on demand only.
   `docs/governance/roadmap.md` in the same change. When you discover new
   technical debt, add it to §4 there rather than leaving it undocumented in
   a commit message.
-- **Validation requirements**: this project has no automated test suite yet
-  (`docs/governance/roadmap.md` TD-4/02.11, priority P0). Until it exists,
-  validate every change with `node --check` on every touched `.mjs`/`.js`
-  file, a live check against real cached data (not just `node --check`), and
-  — for anything UI-facing — an actual interactive walkthrough. Do not mark
-  work done on `node --check` alone.
+- **Validation requirements**: an automated unit-test layer now exists for
+  the pure-math analytics modules (`test/`, run via `node --test` or
+  `test.bat` — `docs/governance/roadmap.md` TD-4/02.11, completed
+  2026-08-17). Run it whenever a change touches `data/analytics/*.mjs`,
+  `data/util.mjs`, or another pure-math module it covers, and add/update
+  cases for any new pure function in scope. It does not yet cover
+  `data/scoring/`, `data/decision/`, `data/quant/`, providers, or any I/O —
+  for those (and for everything else), keep validating with `node --check`
+  on every touched `.mjs`/`.js` file, a live check against real cached data
+  (not just `node --check`), and — for anything UI-facing — an actual
+  interactive walkthrough. Do not mark work done on `node --check` (or the
+  unit-test layer alone) — a change outside `test/`'s current coverage still
+  needs the live/UI checks above.
 - **No proliferation**: prefer extending an existing module/tab/section over
   creating a new file. Check `system.md` §7 ("where new things belong")
   before creating anything new.
@@ -124,6 +131,7 @@ data/universe/                — static NSE ticker reference (search seed)
 data/watchlist/                  — store, research orchestration, disk cache, symbol search
 data/watchlists/                   — on-disk watchlist JSON (user data, not code)
 data/cache/                          — on-disk research cache (regenerable, not source)
+test/                                   — automated unit tests for pure-math modules (node:test, zero dependencies)
 ```
 
 For what belongs in each folder and why, see `system.md` §7 — don't

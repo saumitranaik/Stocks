@@ -762,6 +762,32 @@ sections (Company Quality vs. Stock Attractiveness; Thesis breakers extending
 Thesis tracking; a combined Segment, Capacity & Forward Estimates section)
 without altering any existing section.
 
+### 4.7 Automated test coverage (`test/`)
+
+An automated unit-test layer (`docs/governance/roadmap.md` TD-4/02.11,
+completed 2026-08-17) now exercises the pure-math modules named in that
+item's own scope: `data/analytics/dcf.mjs` (beta, WACC, the full DCF
+valuation and its disclosed-unavailable-reason paths), `data/analytics/
+priceSeries.mjs` (correlation, volatility, downside deviation, drawdown,
+percentile rank), `data/analytics/institutionalRisk.mjs` (all 5 risk
+categories, renormalization over partial input, the risk-trend direction
+read), `data/analytics/portfolio.mjs`'s `resolveWeights()` and several
+neighboring pure functions (`weightedAverage`, `sectorAllocation`,
+`positionConcentration`, `portfolioVolatilityPct`), and their small pure
+dependencies (`data/analytics/series.mjs`, `cagr.mjs`, `shares.mjs`,
+`data/util.mjs`). Built on Node's built-in `node:test`/`node:assert` runner
+— zero new dependency, no `package.json`, same constraint as the rest of
+this app (§1.2) — run via `node --test` or `test.bat`. Test cases favor
+hand-computed expected values reconciled against the module's own documented
+formula (the same discipline this project's own phase validation notes use,
+e.g. Phase 7's CAGR spot-checks) over snapshot-style assertions, and check
+disclosed-unavailable-reason paths explicitly so a future change can't
+silently start fabricating a value where one is genuinely missing. Does
+**not** yet cover `data/scoring/`, `data/decision/`, `data/quant/`,
+providers, or any I/O-touching module — those remain validated by the
+live-check/interactive-walkthrough discipline in `docs/governance/
+roadmap.md` §1 until a later roadmap item extends coverage to them.
+
 ---
 
 ## 5. Data flow
@@ -876,6 +902,7 @@ Stocks/
 │   ├── cache/                     — on-disk research cache (companies/, benchmarks/, watchlistSnapshots/ — §3.7; macro/ — Phase 6, §3.8)
 │   ├── cache.mjs                  — in-memory TTL cache
 │   └── util.mjs                   — shared low-level helpers (atomic JSON writes, fetch wrapper)
+├── test/                          — automated unit tests for pure-math modules (§4a), run via `node --test`/`test.bat`
 ├── docs/
 │   ├── authoritative/system.md    — this document
 │   └── governance/
@@ -903,6 +930,9 @@ Stocks/
   `script.js`/`index.html`, reading `currentData` — never a new computation.
 - A new document about *why* something changed → an entry in
   `docs/governance/roadmap.md`, not a new standalone file (§8).
+- A test for a pure-math module → `test/`, one `*.test.mjs` file per source
+  module, using `node:test`/`node:assert` (§4.7) — never a new test
+  framework or a `package.json` dependency.
 
 ---
 

@@ -29,6 +29,10 @@ normal outbound internet access at runtime. No API key is required, but
 public endpoints can be rate-limited or temporarily unavailable;
 unavailable values are shown as `N/A` rather than estimated.
 
+Run the automated unit tests for the pure-math analytics modules with
+`node --test` (or `test.bat`) — no install step, built on Node's own test
+runner.
+
 See [`docs/authoritative/system.md`](docs/authoritative/system.md) for how
 the app is built and [`docs/governance/roadmap.md`](docs/governance/roadmap.md)
 for what changed and why, including which figures (Fair Value, Target Price,
