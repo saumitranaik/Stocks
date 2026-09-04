@@ -1,0 +1,164 @@
+{
+  "id": "power-2",
+  "name": "Power",
+  "createdAt": "2026-08-21T15:43:15.640Z",
+  "updatedAt": "2026-08-22T03:52:12.942Z",
+  "companies": [
+    {
+      "symbol": "NTPC.NS",
+      "name": "NTPC Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Generation",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:44:32.469Z"
+    },
+    {
+      "symbol": "TATAPOWER.NS",
+      "name": "The Tata Power Company Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:44:39.456Z"
+    },
+    {
+      "symbol": "JSWENERGY.NS",
+      "name": "JSW Energy Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Generation",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:44:46.595Z"
+    },
+    {
+      "symbol": "ADANIPOWER.NS",
+      "name": "Adani Power Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:44:58.494Z"
+    },
+    {
+      "symbol": "TORNTPOWER.NS",
+      "name": "Torrent Power Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:45:04.404Z"
+    },
+    {
+      "symbol": "POWERGRID.NS",
+      "name": "Power Grid Corporation of India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power - Transmission",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:45:11.251Z"
+    },
+    {
+      "symbol": "ADANIENSOL.NS",
+      "name": "Adani Energy Solutions Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Distribution",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:45:21.570Z"
+    },
+    {
+      "symbol": "NHPC.NS",
+      "name": "NHPC Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Generation",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:45:32.560Z"
+    },
+    {
+      "symbol": "SJVN.NS",
+      "name": "SJVN Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Power Generation",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:45:38.135Z"
+    },
+    {
+      "symbol": "PFC.NS",
+      "name": "Power Finance Corporation Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Financial Institution",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:45:42.568Z"
+    },
+    {
+      "symbol": "RECLTD.NS",
+      "name": "REC Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Financial Institution",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:45:46.207Z"
+    },
+    {
+      "symbol": "WAAREEENER.BO",
+      "name": "Waaree Energies Limited",
+      "exchange": "Bombay",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:46:06.338Z"
+    },
+    {
+      "symbol": "BHEL.NS",
+      "name": "Bharat Heavy Electricals Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Heavy Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:46:32.214Z"
+    },
+    {
+      "symbol": "GVT&D.NS",
+      "name": "GE Vernova T&D India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Heavy Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-21T15:46:40.303Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

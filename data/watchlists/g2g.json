@@ -1,0 +1,175 @@
+{
+  "id": "g2g",
+  "name": "G2G",
+  "createdAt": "2026-08-30T06:51:43.455Z",
+  "updatedAt": "2026-08-30T06:54:20.559Z",
+  "companies": [
+    {
+      "symbol": "DIXON.NS",
+      "name": "Dixon Technologies (India) Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Durables",
+      "industry": "Consumer Electronics",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:51:59.276Z"
+    },
+    {
+      "symbol": "POLYCAB.NS",
+      "name": "Polycab India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Cables - Electricals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:52:06.944Z"
+    },
+    {
+      "symbol": "KEI.NS",
+      "name": "KEI Industries Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Cables - Electricals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:52:20.807Z"
+    },
+    {
+      "symbol": "TRENT.NS",
+      "name": "Trent Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Services",
+      "industry": "Speciality Retail",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:52:28.319Z"
+    },
+    {
+      "symbol": "KAYNES.NS",
+      "name": "Kaynes Technology India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Industrial Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:52:35.133Z"
+    },
+    {
+      "symbol": "CGPOWER.NS",
+      "name": "CG Power and Industrial Solutions Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Heavy Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:52:47.148Z"
+    },
+    {
+      "symbol": "CUMMINSIND.NS",
+      "name": "Cummins India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Compressors, Pumps & Diesel Engines",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:52:52.138Z"
+    },
+    {
+      "symbol": "BSE.NS",
+      "name": "BSE Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Exchange and Data Platform",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:52:58.227Z"
+    },
+    {
+      "symbol": "MCX.NS",
+      "name": "Multi Commodity Exchange of India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Exchange and Data Platform",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:53:27.988Z"
+    },
+    {
+      "symbol": "KFINTECH.NS",
+      "name": "KFin Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Depositories, Clearing Houses and Other Intermediaries",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:53:34.387Z"
+    },
+    {
+      "symbol": "CAMS.NS",
+      "name": "Computer Age Management Services Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Depositories, Clearing Houses and Other Intermediaries",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:53:41.379Z"
+    },
+    {
+      "symbol": "CHOLAFIN.NS",
+      "name": "Cholamandalam Investment and Finance Company Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Non Banking Financial Company (NBFC)",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:53:47.238Z"
+    },
+    {
+      "symbol": "BAJFINANCE.NS",
+      "name": "Bajaj Finance Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Non Banking Financial Company (NBFC)",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:53:55.931Z"
+    },
+    {
+      "symbol": "HBLENGINE.NS",
+      "name": "HBL Engineering Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Industrial Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:54:07.248Z"
+    },
+    {
+      "symbol": "WAAREERTL.NS",
+      "name": "Waaree Renewable Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-30T06:54:19.880Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

@@ -1,0 +1,65 @@
+{
+  "id": "15-in1y",
+  "name": "15%in1Y",
+  "createdAt": "2026-09-01T15:38:51.701Z",
+  "updatedAt": "2026-09-01T15:39:45.261Z",
+  "companies": [
+    {
+      "symbol": "MANALIPETC.NS",
+      "name": "Manali Petrochemicals Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Chemicals",
+      "industry": "Petrochemicals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-01T15:39:01.776Z"
+    },
+    {
+      "symbol": "ANDHRSUGAR.NS",
+      "name": "The Andhra Sugars Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Chemicals",
+      "industry": "Commodity Chemicals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-01T15:39:12.401Z"
+    },
+    {
+      "symbol": "GMRAIRPORT.NS",
+      "name": "GMR Airports Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Services",
+      "industry": "Airport & Airport services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-01T15:39:22.315Z"
+    },
+    {
+      "symbol": "JINDWORLD.NS",
+      "name": "Jindal Worldwide Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Textiles",
+      "industry": "Other Textile Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-01T15:39:31.731Z"
+    },
+    {
+      "symbol": "JINDALPOLY.NS",
+      "name": "Jindal Poly Films Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Packaging",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-01T15:39:44.747Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

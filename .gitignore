@@ -1,0 +1,3 @@
+# Generated market and analytics cache — regenerable from providers on
+# demand; the app degrades gracefully when these files are missing.
+data/cache/

@@ -2,19 +2,86 @@
   "id": "test",
   "name": "Test",
   "createdAt": "2026-08-14T07:55:35.256Z",
-  "updatedAt": "2026-08-14T11:10:54.084Z",
+  "updatedAt": "2026-08-26T07:43:26.933Z",
   "companies": [
     {
-      "symbol": "MTARTECH.NS",
-      "name": "MTAR Technologies Limited",
+      "symbol": "BHEL.NS",
+      "name": "Bharat Heavy Electricals Limited",
       "exchange": "NSE",
       "market": "India",
       "sector": "Capital Goods",
-      "industry": "Other Electrical Equipment",
+      "industry": "Heavy Electrical Equipment",
       "notes": null,
       "targetWeightPct": null,
-      "addedAt": "2026-08-14T11:10:42.734Z"
+      "addedAt": "2026-08-21T16:16:58.188Z"
+    },
+    {
+      "symbol": "TCS.NS",
+      "name": "Tata Consultancy Services Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Information Technology",
+      "industry": "Computers - Software & Consulting",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-26T07:42:27.943Z"
+    },
+    {
+      "symbol": "BEL.NS",
+      "name": "Bharat Electronics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-26T07:42:35.475Z"
+    },
+    {
+      "symbol": "ADANIPOWER.NS",
+      "name": "Adani Power Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Power",
+      "industry": "Integrated Power Utilities",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-26T07:42:43.461Z"
+    },
+    {
+      "symbol": "RELIANCE.NS",
+      "name": "Reliance Industries Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Oil, Gas & Consumable Fuels",
+      "industry": "Refineries & Marketing",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-26T07:42:47.229Z"
+    },
+    {
+      "symbol": "HDFCBANK.NS",
+      "name": "HDFC Bank Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Private Sector Bank",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-26T07:42:50.537Z"
+    },
+    {
+      "symbol": "HAL.NS",
+      "name": "Hindustan Aeronautics Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-26T07:43:21.385Z"
     }
   ],
-  "cashTargetPct": 0
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
 }

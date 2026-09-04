@@ -2,7 +2,7 @@
   "id": "defence",
   "name": "Defence",
   "createdAt": "2026-08-13T13:06:38.735Z",
-  "updatedAt": "2026-08-15T10:33:30.156Z",
+  "updatedAt": "2026-09-03T16:08:50.575Z",
   "companies": [
     {
       "symbol": "HAL.NS",
@@ -80,6 +80,83 @@
       "notes": null,
       "targetWeightPct": null,
       "addedAt": "2026-08-13T13:06:38.735Z"
+    },
+    {
+      "symbol": "BHARATFORG.NS",
+      "name": "Bharat Forge Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Automobile and Auto Components",
+      "industry": "Auto Components & Equipments",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-22T03:55:15.400Z"
+    },
+    {
+      "symbol": "DATAPATTNS.NS",
+      "name": "Data Patterns (India) Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-22T03:55:20.755Z"
+    },
+    {
+      "symbol": "MTARTECH.NS",
+      "name": "MTAR Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-22T03:55:27.847Z"
+    },
+    {
+      "symbol": "IDEAFORGE.NS",
+      "name": "ideaForge Technology Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-22T03:56:08.393Z"
+    },
+    {
+      "symbol": "ASTRAMICRO.NS",
+      "name": "Astra Microwave Products Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-22T03:56:18.327Z"
+    },
+    {
+      "symbol": "PARAS.BO",
+      "name": "Paras Defence and Space Technologies Limited",
+      "exchange": "Bombay",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-22T03:56:28.719Z"
+    },
+    {
+      "symbol": "DCXINDIA.NS",
+      "name": "DCX Systems Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-08-22T03:57:20.389Z"
     }
   ],
   "cashTargetPct": 0,

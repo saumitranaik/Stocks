@@ -1,5 +1,5 @@
 {
-  "activeWatchlist": "asmita",
+  "activeWatchlist": "defence",
   "watchlists": [
     {
       "id": "core-portfolio",
@@ -26,15 +26,15 @@
       "id": "defence",
       "name": "Defence",
       "file": "defence.json",
-      "companyCount": 7,
-      "updatedAt": "2026-08-15T10:33:30.156Z"
+      "companyCount": 14,
+      "updatedAt": "2026-09-03T16:08:50.575Z"
     },
     {
       "id": "test",
       "name": "Test",
       "file": "test.json",
-      "companyCount": 1,
-      "updatedAt": "2026-08-14T11:10:54.084Z"
+      "companyCount": 7,
+      "updatedAt": "2026-08-26T07:43:26.933Z"
     },
     {
       "id": "sagar",
@@ -55,8 +55,29 @@
       "name": "Asmita",
       "file": "asmita.json",
       "companyCount": 30,
-      "updatedAt": "2026-08-15T13:40:15.972Z"
+      "updatedAt": "2026-08-17T16:13:10.375Z"
+    },
+    {
+      "id": "power-2",
+      "name": "Power",
+      "file": "power-2.json",
+      "companyCount": 14,
+      "updatedAt": "2026-08-22T03:52:12.942Z"
+    },
+    {
+      "id": "g2g",
+      "name": "G2G",
+      "file": "g2g.json",
+      "companyCount": 15,
+      "updatedAt": "2026-08-30T06:54:20.559Z"
+    },
+    {
+      "id": "15-in1y",
+      "name": "15%in1Y",
+      "file": "15-in1y.json",
+      "companyCount": 5,
+      "updatedAt": "2026-09-01T15:39:45.261Z"
     }
   ],
-  "updatedAt": "2026-08-16T18:08:11.933Z"
+  "updatedAt": "2026-09-04T08:39:11.196Z"
 }
