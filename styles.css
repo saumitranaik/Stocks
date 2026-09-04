@@ -43,10 +43,22 @@
 .wl-search-bar #wl-notice{margin-top:8px}
 .wl-scroll{max-height:none}
 #wl-table th,#wl-table td{white-space:nowrap}
-#wl-table th[data-sort]{cursor:pointer;user-select:none}
-#wl-table th[data-sort]:hover{color:var(--text)}
-#wl-table th.sorted-asc:after{content:' \25B2';font-size:9px}
-#wl-table th.sorted-desc:after{content:' \25BC';font-size:9px}
+/* Generalized sortable-column styling (Part 3 of the Watchlist/Company
+   Research audit): originally #wl-table-only, now shared by every
+   comparison table's th[data-sort] -- one visual language for "sortable"
+   across the whole app instead of a second copy of these 4 rules. */
+th[data-sort]{cursor:pointer;user-select:none}
+th[data-sort]:hover{color:var(--text)}
+/* A sortable header must look sortable *before* it's ever clicked -- the
+   previous rules only drew a glyph once a column was actively sorted, so a
+   column that claimed to be sortable gave the user no visible cue that
+   clicking it did anything (audit finding, Part 4). Every th[data-sort] now
+   carries a dim neutral up/down glyph at rest, replaced by the existing
+   opaque ascending/descending arrow once that column is the active sort. */
+th[data-sort]:after{content:' \21C5';font-size:9px;opacity:.45}
+th[data-sort]:hover:after{opacity:.85}
+th.sorted-asc:after{content:' \25B2';font-size:9px;opacity:1}
+th.sorted-desc:after{content:' \25BC';font-size:9px;opacity:1}
 .wl-filters{display:flex;gap:8px;flex-wrap:wrap}
 .wl-filters input,.wl-filters select{padding:8px 10px;font-size:12px}
 .wl-filters input{min-width:200px;flex:1}
@@ -73,6 +85,21 @@
 .subtabs button.active{color:#08111f;background:var(--blue);border-color:var(--blue)}
 .subtabs button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .subsection[hidden]{display:none}
+/* Sticky-hierarchy fix (scrolling/table-usability audit): a nested
+   .subtab-root's own .subtabs bar (e.g. Watchlist Research -> Fundamentals ->
+   Quality, or Company Research -> Valuation's DCF/Reverse DCF/... nav) used
+   to stick at the exact same `top` as the outer nav above it, so once
+   scrolled into view it painted directly on top of (hid) that outer nav
+   instead of docking below it. --subtabs-h (measured in script.js, same
+   pattern as --header-h) is one nav bar's real height; each extra level of
+   .subtab-root nesting adds one more bar's worth of offset so stacked sticky
+   navs dock in a clean vertical stack with zero overlap. Two levels covers
+   every case in this app today (Watchlist Research's Fundamentals->Quality
+   is the deepest); a third level would simply have no rule and fall back to
+   the 2-level offset, which is still correct-enough (no overlap) rather than
+   broken. */
+.subtab-root .subtabs{top:calc(var(--header-h,0px) + var(--subtabs-h,0px))}
+.subtab-root .subtab-root .subtabs{top:calc(var(--header-h,0px) + var(--subtabs-h,0px)*2)}
 /* Phase 3f: unified company context. The Name cell in every table (via
    prefixCells) becomes a plain-looking button so click-to-select works
    everywhere without changing how the tables read; .active-company-row
@@ -94,11 +121,6 @@ tr.active-company-row td:first-child,.allocation-row.active-company-row{box-shad
 .company-selector-row{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:8px 10px;border-radius:6px;background:none;border:none;color:var(--text);text-align:left;cursor:pointer;font:inherit}
 .company-selector-row:hover{background:var(--panel2)}
 .company-selector-row.active{background:#4da3ff22}
-.quick-jump{display:flex;gap:6px;flex-wrap:wrap}
-.quick-jump button{padding:8px 12px;font-size:12px;border-radius:999px;background:var(--panel);color:var(--text);border:1px solid var(--border);cursor:pointer}
-.quick-jump button:hover{background:var(--panel2)}
-.compare-chip-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex-basis:100%}
-.compare-chip button{background:none;border:none;color:inherit;font:inherit;cursor:pointer;margin-left:4px;padding:0}
 .compare-grid h4{margin:0 0 8px;font-size:13px}
 @media(max-width:900px){.company-context-bar{flex-wrap:nowrap;overflow-x:auto}.company-selector-btn{min-width:180px}}
 /* Phase 6.5: sidebar shell. Desktop -- persistent left sidebar (expanded
@@ -139,3 +161,76 @@ body.sidebar-collapsed .sidebar-item,body.sidebar-collapsed .sidebar-collapse-to
   .sidebar-mobile-open{display:inline-flex;align-items:center;justify-content:center;font-size:18px;background:none;border:1px solid var(--border);border-radius:8px;width:38px;height:38px;padding:0;flex:none}
   .sidebar-collapse-toggle{display:none}
 }
+/* IA redesign: Company Research / Watchlist Research split. A disabled
+   sidebar entry (Sector Research placeholder, deferred per docs/governance/
+   roadmap.md TD-10/03.8) reuses .sidebar-item's own layout, just dimmed. */
+.sidebar-item-disabled{opacity:.45;cursor:not-allowed}
+.sidebar-item-disabled:hover{background:none}
+.sidebar-soon{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:#0e1627;border:1px solid var(--border);border-radius:999px;padding:2px 6px;margin-left:6px;vertical-align:middle}
+/* Header hierarchy: a small uppercase label above each context row so
+   "which watchlist" and "which company" never have to be inferred from the
+   controls alone. */
+.context-row-label{text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-top:14px;color:var(--muted)}
+.context-row-label:first-of-type{margin-top:18px}
+/* Company Context scoping: this header row only names/analyzes ONE company,
+   so it must only appear on Company Research (system.md §2.3) — everywhere
+   else it falsely implied the page was about the last-selected company. */
+#company-context-bar[hidden],#company-context-label[hidden]{display:none}
+/* UI audit (2026-09-03): the top-of-page "Company" pill-row switcher this
+   comment used to describe was removed as a duplicate of the header's own
+   company-selector dropdown (#company-selector-toggle) -- one company
+   switcher instead of two doing the same job. That header dropdown is now
+   the only company switcher for Company Research; .company-switcher-wrap/
+   .company-switcher-label/.company-switcher no longer exist in the markup.
+   The three redundant per-dimension pill-selectors (#fundamentals-selector/
+   #technical-selector/#risk-selector) still get their innerHTML rebuilt by
+   their own render functions unchanged (renderPillSelector/
+   renderCompareAwarePillSelector) -- kept hidden (dead weight, not dead
+   code) rather than touching those render function bodies; the header's
+   company-selector dropdown is the one real company switcher now. */
+.hidden-switcher{display:none}
+.workspace-title{margin:0 0 4px;font-size:20px}
+/* Company Research one-page redesign: replaces click-to-switch .subtabs with
+   a sticky in-page anchor nav (plain scroll-links, not tab-switching -- every
+   .cr-section stays in the DOM and visible at once) plus lightweight section
+   headings. Reuses the exact same sticky/pill visual language as .subtabs
+   (--header-h offset, .pill.active blue) so it reads as the same navigation
+   idiom, not a new one. */
+.cr-page-nav{display:flex;gap:8px;overflow-x:auto;position:sticky;top:var(--header-h,0px);z-index:2;background:var(--bg);padding:10px 0;margin:0 0 14px;border-bottom:1px solid var(--border)}
+.cr-page-nav a{flex:none;font-size:12px;padding:8px 14px;border-radius:999px;white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--border);text-decoration:none;cursor:pointer}
+.cr-page-nav a:hover{background:var(--panel2)}
+.cr-page-nav a.active{color:#08111f;background:var(--blue);border-color:var(--blue)}
+.cr-section{padding-top:6px;margin-bottom:8px;scroll-margin-top:calc(var(--header-h,0px) + 54px)}
+.cr-section-title{margin:0 0 10px;font-size:17px;color:var(--text);border-top:1px solid var(--border);padding-top:18px}
+.cr-section:first-of-type .cr-section-title{border-top:none;padding-top:0}
+.cr-subsection-title{margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+/* Sticky table headers (Watchlist Research comparison tables) -- floating
+   header clone, not a bounded per-table scrollbox.
+   A follow-up UX/architecture review rejected the previous fix below (making
+   .scroll itself a bounded overflow-y:auto container per table, so its
+   sticky thead had a real scrolling ancestor to clamp against) even though
+   it worked: it traded one real bug (sticky non-functional) for 14 nested
+   vertical scrollboxes, each capped to a fraction of the viewport, contrary
+   to the single-page-scroll UX this app otherwise holds to everywhere else.
+   That review re-verified, live, that plain position:sticky genuinely
+   cannot satisfy "sticky header + native horizontal scroll + single page-
+   level vertical scroll" together on this markup: the csswg-drafts #865 gap
+   (position:sticky on a table cell is defeated by ANY ancestor with
+   overflow other than visible) holds even with overflow-x/overflow-y split
+   onto separate values, even with zero overflow ancestors elsewhere
+   reachable from the same table, and even with border-collapse:separate --
+   confirmed with a minimal from-scratch repro before concluding a CSS-only
+   fix isn't possible for this exact "single <table>, .scroll needs
+   horizontal-only overflow" combination. position:fixed is not subject to
+   that gap (it isn't a sticky/scroll-relative positioning scheme at all),
+   so the fix here keeps .scroll purely horizontal-scrolling again (no
+   vertical clipping, no second scrollbar -- the real <thead> stays in
+   normal page flow, fully accessible, never sticky) and shows a purely-
+   visual position:fixed clone of just the header row, built and positioned
+   by script.js's floating-header code, only while the real header has
+   scrolled above the sticky nav stack and the table's own rows still
+   extend below it. See script.js's own comment at that code for the
+   show/hide, width-sync and sort-delegation detail. */
+.floating-thead{position:fixed;overflow:hidden;z-index:5;display:none;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.floating-thead.visible{display:block}
+.floating-thead table{margin:0}

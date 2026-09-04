@@ -63,6 +63,194 @@ function renderTable(selector, stocks, rowFn, opts) {
     : `<tr><td colspan="20" class="small">This watchlist is empty.</td></tr>`;
 }
 
+// ---- Comparison-table column sorting (Watchlist Research): click a
+// `th[data-sort]` header to sort ascending, click again for descending, a
+// third click returns to the watchlist's own natural order. N/A always
+// sorts to the bottom regardless of direction, matching the Watchlists tab's
+// own `wlFilteredSortedStocks` convention (never mutates the canonical
+// `data.stocks` array -- always sorts a copy). One shared implementation
+// instead of a per-table copy; each table just supplies its own column ->
+// value-accessor map (`keyFns`), keyed by the same string as that column's
+// `data-sort` attribute in index.html. ----
+let cmpSortState = {}; // { [tableId]: { column, dir } }
+function isSortNA(value) {
+  return value == null || (typeof value === 'number' && !Number.isFinite(value)) || value === 'N/A';
+}
+function sortForTable(tableId, stocks, keyFns) {
+  const state = cmpSortState[tableId];
+  if (!state?.column || !keyFns[state.column]) return stocks;
+  const keyFn = keyFns[state.column];
+  const dir = state.dir === 'desc' ? -1 : 1;
+  return [...stocks].sort((a, b) => {
+    const va = keyFn(a), vb = keyFn(b);
+    const aNA = isSortNA(va), bNA = isSortNA(vb);
+    if (aNA && bNA) return 0;
+    if (aNA) return 1;
+    if (bNA) return -1;
+    return typeof va === 'string' || typeof vb === 'string' ? dir * String(va).localeCompare(String(vb)) : dir * (va - vb);
+  });
+}
+function applySortIndicators(tableId) {
+  const state = cmpSortState[tableId];
+  $$(`#${tableId} thead th[data-sort]`).forEach(th => {
+    th.classList.remove('sorted-asc', 'sorted-desc');
+    if (state?.column && th.dataset.sort === state.column) th.classList.add(state.dir === 'desc' ? 'sorted-desc' : 'sorted-asc');
+  });
+}
+// Binds the click handler once per table (guarded by a dataset flag, since
+// render*() functions re-run on every data refresh but the <thead> itself is
+// static markup, never replaced). Clicking re-renders the whole page off
+// currentData, same pattern every other mutation in this app already uses
+// (e.g. setOpportunitiesSort) -- simpler than threading a per-table redraw
+// callback through, and cheap: this is pure DOM formatting over already-
+// fetched data, no network round-trip.
+function initTableSort(tableId) {
+  const thead = $(`#${tableId} thead`);
+  if (!thead || thead.dataset.sortBound) { applySortIndicators(tableId); return; }
+  thead.dataset.sortBound = '1';
+  thead.addEventListener('click', (event) => {
+    const th = event.target.closest('th[data-sort]');
+    if (!th) return;
+    const state = cmpSortState[tableId] || (cmpSortState[tableId] = { column: null, dir: 'asc' });
+    if (state.column === th.dataset.sort) {
+      if (state.dir === 'asc') state.dir = 'desc';
+      else { state.column = null; state.dir = 'asc'; }
+    } else { state.column = th.dataset.sort; state.dir = 'asc'; }
+    if (currentData) render(currentData);
+  });
+  applySortIndicators(tableId);
+}
+// Convenience wrapper for the common case: sort stocks for tableId, render
+// through the given rowFn (same signature as renderTable), then wire/refresh
+// the header's sort affordance. keyFns should include the standard
+// Company/Sector/CMP/P/E leading columns (data-sort="company"/"sector"/
+// "cmp"/"pe") plus one entry per table-specific column.
+function renderSortableTable(tableId, stocks, keyFns, rowFn, opts) {
+  renderTable(`#${tableId}`, sortForTable(tableId, stocks, keyFns), rowFn, opts);
+  initTableSort(tableId);
+}
+const STANDARD_SORT_KEYS = { company: s => s.name, sector: s => s.sector || null, cmp: s => s.price, pe: s => s.pe };
+
+// ---- Floating sticky table headers (Watchlist Research comparison tables).
+// Why not CSS `position:sticky` on `thead th` (styles.css carries the full
+// evaluation): proven broken in real Chromium whenever the table sits inside
+// `.scroll`'s `overflow-x:auto` ancestor (csswg-drafts #865 -- any ancestor
+// with overflow other than visible defeats sticky on a table cell), and a
+// follow-up review confirmed no CSS-only variant of this markup escapes it,
+// while also rejecting the bounded-per-table-scrollbox workaround that *did*
+// technically work, on UX grounds (14 nested vertical scroll contexts instead
+// of one page scroll). `.scroll` here goes back to being purely horizontal-
+// scrolling; the real `<thead>` stays exactly where it is in normal page
+// flow -- fully accessible, semantically a real table header, never sticky.
+// A purely visual `position:fixed` clone of just the header row is shown
+// only while the real header has scrolled above the sticky nav stack and the
+// table's own rows still extend below it -- `position:fixed` isn't subject
+// to the ancestor-overflow bug at all, since it's not a sticky/scroll-
+// relative positioning scheme, just a viewport coordinate this code sets
+// directly (confirmed live before committing to this approach).
+//
+// The clone is rebuilt from the real header's current markup + rendered
+// column widths every time it's (re)shown, never hand-maintained, so it can
+// never drift out of sync with a sort/re-render the way a second persistent
+// copy could -- satisfies the "no duplicate or drifting headers" constraint
+// this replaces. Column widths are copied pixel-for-pixel from the real
+// `<th>` cells (table-layout:fixed on the clone) rather than left to auto-
+// layout, so alignment holds regardless of content differences between the
+// clone (header only) and the real table (header + rows). Horizontal scroll
+// syncs via `transform: translateX()` mirroring the real `.scroll`
+// container's own `scrollLeft` -- no second horizontal scrollbar.
+//
+// Accessibility: the clone lives in a wrapper marked `aria-hidden="true"`
+// (screen readers never see it -- the one real, fully-labeled table is the
+// only thing AT encounters) with every cell `tabIndex=-1` (defensive: never
+// keyboard-reachable, even though the source `<th>` cells aren't natively
+// focusable either). A click on a clone header cell replays as a real click
+// on the corresponding real `<th>` at the same column index, so
+// `initTableSort`'s existing delegated listener -- and everything that
+// follows from it (sort state, the full render(currentData) re-render) --
+// is the only place sort state actually lives; the clone never carries its
+// own sort state or its own click semantics. ----
+const FLOATING_HEADER_DEPTH = { 'thead-sticky-1': 1, 'thead-sticky-2': 2, 'thead-sticky-3': 3 };
+let floatingHeaders = []; // [{ table, wrapper, cloneTable, depth }]
+function floatingHeaderOffset(depth) {
+  const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 0;
+  const subtabsH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtabs-h')) || 0;
+  return headerH + subtabsH * depth;
+}
+function rebuildFloatingHeaderContent(entry) {
+  const { table, cloneTable } = entry;
+  if (table.offsetParent === null) return; // hidden (inactive subtab) -- rebuilt fresh once shown again
+  const realThead = table.querySelector('thead');
+  if (!realThead) return;
+  cloneTable.innerHTML = '';
+  cloneTable.className = table.className;
+  const theadClone = realThead.cloneNode(true);
+  cloneTable.appendChild(theadClone);
+  cloneTable.style.tableLayout = 'fixed';
+  cloneTable.style.width = `${table.scrollWidth}px`;
+  const realThs = $$('th', realThead);
+  const cloneThs = $$('th', theadClone);
+  realThs.forEach((th, i) => {
+    if (!cloneThs[i]) return;
+    cloneThs[i].style.width = `${th.getBoundingClientRect().width}px`;
+    cloneThs[i].style.boxSizing = 'border-box';
+    cloneThs[i].tabIndex = -1;
+  });
+}
+function updateFloatingHeaderPosition(entry) {
+  const { table, wrapper, cloneTable, depth } = entry;
+  const scrollAncestor = table.closest('.scroll');
+  if (!scrollAncestor || table.offsetParent === null) { wrapper.classList.remove('visible'); return; }
+  const realThead = table.querySelector('thead');
+  const offset = floatingHeaderOffset(depth);
+  const theadRect = realThead.getBoundingClientRect();
+  const tableRect = table.getBoundingClientRect();
+  const shouldShow = theadRect.top < offset && tableRect.bottom > offset + theadRect.height;
+  wrapper.classList.toggle('visible', shouldShow);
+  if (!shouldShow) return;
+  const clipRect = scrollAncestor.getBoundingClientRect();
+  wrapper.style.top = `${offset}px`;
+  wrapper.style.left = `${clipRect.left}px`;
+  wrapper.style.width = `${clipRect.width}px`;
+  cloneTable.style.transform = `translateX(${-scrollAncestor.scrollLeft}px)`;
+}
+// Rebuilds every registered table's clone header content + position -- called
+// wherever page layout/data can have changed underneath a floating header
+// (see syncHeaderHeight()'s and applySubtabState()'s own calls into this).
+function refreshFloatingHeaders() {
+  floatingHeaders.forEach(entry => { rebuildFloatingHeaderContent(entry); updateFloatingHeaderPosition(entry); });
+}
+function initFloatingHeaders() {
+  $$('table[class*="thead-sticky-"]').forEach(table => {
+    const depthClass = Object.keys(FLOATING_HEADER_DEPTH).find(cls => table.classList.contains(cls));
+    if (!depthClass) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'floating-thead';
+    wrapper.setAttribute('aria-hidden', 'true');
+    const cloneTable = document.createElement('table');
+    wrapper.appendChild(cloneTable);
+    document.body.appendChild(wrapper);
+    wrapper.addEventListener('click', (event) => {
+      const th = event.target.closest('th');
+      if (!th) return;
+      const index = $$('th', th.parentElement).indexOf(th);
+      $$('thead th', table)[index]?.click();
+    });
+    const entry = { table, wrapper, cloneTable, depth: FLOATING_HEADER_DEPTH[depthClass] };
+    floatingHeaders.push(entry);
+    table.closest('.scroll')?.addEventListener('scroll', () => updateFloatingHeaderPosition(entry), { passive: true });
+  });
+}
+initFloatingHeaders();
+let floatingHeaderTicking = false;
+function scheduleFloatingHeaderUpdate() {
+  if (floatingHeaderTicking) return;
+  floatingHeaderTicking = true;
+  requestAnimationFrame(() => { floatingHeaderTicking = false; floatingHeaders.forEach(updateFloatingHeaderPosition); });
+}
+window.addEventListener('scroll', scheduleFloatingHeaderUpdate, { passive: true });
+window.addEventListener('resize', scheduleFloatingHeaderUpdate);
+
 let watchlistIndex = null;
 let currentData = null;
 let opportunitiesSort = 'recommendation';
@@ -94,38 +282,36 @@ let wlSearchActiveIndex = -1;
 let wlSelectionFrequency = {};
 try { wlSelectionFrequency = JSON.parse(localStorage.getItem('wl-search-frequency') || '{}'); } catch { /* ignore malformed/unavailable storage */ }
 
-// ---- Phase 6.5: sidebar primary navigation. Research (Fundamentals/
-// Valuation/Profitability/Balance Sheet/Growth/Ownership) is a *virtual
-// group* in the sidebar -- those 6 sections stay independent `.tab`
-// elements exactly as before (own subtabs, own content, untouched); a
-// slim pill-bar (#research-category-bar) picks which one is visible while
-// the sidebar's single "Research" item stays highlighted. Every other
-// sidebar item maps 1:1 to a `.tab` section, same mechanism the old flat
-// `.tabs` nav used. ----
-const RESEARCH_TABS = ['fundamentals', 'valuation', 'profitability', 'balance-sheet', 'growth', 'ownership'];
-const RESEARCH_CATEGORY_STORAGE_KEY = 'researchCategory';
-let activeResearchTab = null;
-try { activeResearchTab = localStorage.getItem(RESEARCH_CATEGORY_STORAGE_KEY); } catch { /* storage unavailable */ }
-if (!RESEARCH_TABS.includes(activeResearchTab)) activeResearchTab = RESEARCH_TABS[0];
-
+// ---- Sidebar primary navigation. Every sidebar item maps 1:1 to a `.tab`
+// section. "Company Research" and "Watchlist Research" are each one real
+// `.tab` with their own internal `.subtabs` nav (same two-level mechanism
+// every other tab already uses) rather than a virtual group over several
+// independent tabs -- the former "Research" virtual-group/pill-bar
+// mechanism (Phase 6.5) is retired because its 6 members were split by
+// analytical scope (single-company deep-dive vs. watchlist-wide comparison)
+// into those two real destinations instead. ----
 function activateWorkspaceTab(tabId) {
-  const isResearch = RESEARCH_TABS.includes(tabId);
   $$('#app-sidebar .sidebar-item,.tab').forEach(element => element.classList.remove('active'));
   $(`#${tabId}`)?.classList.add('active');
-  $(`#app-sidebar .sidebar-item[data-${isResearch ? 'group' : 'tab'}="${isResearch ? 'research' : tabId}"]`)?.classList.add('active');
-  $('#research-category-bar').hidden = !isResearch;
-  if (isResearch) {
-    activeResearchTab = tabId;
-    try { localStorage.setItem(RESEARCH_CATEGORY_STORAGE_KEY, tabId); } catch { /* storage unavailable */ }
-    $$('#research-category-bar button').forEach(button => button.classList.toggle('active', button.dataset.tab === tabId));
-  }
+  $(`#app-sidebar .sidebar-item[data-tab="${tabId}"]`)?.classList.add('active');
   $('#main').classList.toggle('full-bleed', tabId === 'watchlists');
   if (currentData) $('#empty').hidden = currentData.stocks.length > 0 || tabId === 'watchlists';
+  // Company Context (header) names/analyzes exactly one company, so it is only
+  // ever shown on Company Research — every other workspace analyzes a
+  // watchlist, the market, or the portfolio as a whole, and showing it there
+  // falsely implied the page was about the last-selected company.
+  const showCompanyContext = tabId === 'company-research';
+  $('#company-context-bar').hidden = !showCompanyContext;
+  $('#company-context-label').hidden = !showCompanyContext;
   closeMobileSidebar();
+  // Showing/hiding #company-context-bar changes the header's own height (it's
+  // only visible on Company Research) -- re-measure --header-h/--subtabs-h
+  // now, or every sticky nav bar on the newly-active tab would dock at the
+  // previous tab's (wrong) header height and overlap it. syncHeaderHeight is
+  // defined further down in this file (hoisted function declaration).
+  syncHeaderHeight();
 }
-$$('#app-sidebar .sidebar-item').forEach(button => button.addEventListener('click', () =>
-  activateWorkspaceTab(button.dataset.group === 'research' ? activeResearchTab : button.dataset.tab)));
-$$('#research-category-bar button').forEach(button => button.addEventListener('click', () => activateWorkspaceTab(button.dataset.tab)));
+$$('#app-sidebar .sidebar-item[data-tab]').forEach(button => button.addEventListener('click', () => activateWorkspaceTab(button.dataset.tab)));
 
 // ---- Sidebar collapse (desktop, persisted) + mobile drawer (no dependency,
 // same show/hide-a-backdrop pattern as every other overlay in this app). ----
@@ -177,7 +363,15 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape') cl
 // (e.g. a card shared across several sub-tabs, kept out of just one). ----
 const SUBTAB_STORAGE_PREFIX = 'subtab:';
 const activeSubtabs = {};
+// A `.tab`/`.subtab-root` may itself contain a nested `.subtab-root` (e.g.
+// Company Research nests a Valuation deep-dive sub-nav inside its own
+// Overview/Fundamentals/Valuation/... nav) -- `.subsection` matching is
+// scoped to the *nearest* owning root via `closest`, so an outer root's
+// pass never toggles a nested root's own panels (and vice versa), letting
+// two levels of sub-navigation coexist without a new state mechanism.
 function applySubtabState(root) {
+  // Unscoped: safe because every root's own `.subtabs` bar is always one of
+  // its first children, ahead of any nested root's bar in document order.
   const bar = root?.querySelector('.subtabs');
   if (!bar) return;
   const active = activeSubtabs[root.id];
@@ -187,7 +381,13 @@ function applySubtabState(root) {
     button.setAttribute('aria-selected', String(on));
     button.tabIndex = on ? 0 : -1;
   });
-  $$('.subsection', root).forEach(panel => { panel.hidden = !panel.dataset.subtab.split(/\s+/).includes(active); });
+  $$('.subsection', root).filter(panel => panel.closest('.tab,.subtab-root') === root)
+    .forEach(panel => { panel.hidden = !panel.dataset.subtab.split(/\s+/).includes(active); });
+  // Switching subtabs can show/hide a Watchlist Research comparison table
+  // without firing scroll/resize -- refresh floating headers immediately so
+  // a newly-visible table's header shows/hides correctly right away instead
+  // of waiting for the next scroll tick.
+  refreshFloatingHeaders();
 }
 function setActiveSubtab(root, subtabId, opts = {}) {
   activeSubtabs[root.id] = subtabId;
@@ -215,7 +415,13 @@ function initSubtabs(root) {
   activeSubtabs[root.id] = buttons.some(button => button.dataset.subtab === restored) ? restored : buttons[0]?.dataset.subtab;
   applySubtabState(root);
 }
-$$('.tab').forEach(initSubtabs);
+// `.subtab-root` = a nested second-level sub-nav living inside a `.tab`
+// (e.g. Company Research's Valuation/Technicals/Risks deep-dive sub-nav,
+// or Fundamentals' own sub-nav now nested inside Company Research) --
+// initialized the same way as a top-level `.tab`, since applySubtabState/
+// setActiveSubtab only ever need `root.id` + `root`'s own `.subtabs`/
+// `.subsection` descendants (scoped via `closest`, see applySubtabState).
+$$('.tab,.subtab-root').forEach(initSubtabs);
 
 // ---- Phase 3f: unified company context. One shared `activeCompanySymbol`
 // replaces what used to be four independent per-tab selections (Fundamentals/
@@ -282,11 +488,21 @@ function setActiveCompany(symbol, opts = {}) {
   renderValuationDetail(currentData);
   renderTechnicalDetail(currentData);
   renderRiskDetail(currentData);
+  renderOwnershipDetail(currentData);
+  renderCompanyResearchOverview(currentData);
+  renderCompanyResearchQuality(currentData);
+  renderCompanyResearchGrowth(currentData);
+  renderCompanyResearchIntelligence(currentData);
   renderPortfolioAnalytics(currentData);
   renderHeaderCompanySelector();
   refreshActiveCompanyHighlights();
   renderReportsWorkspace();
   if (opts.jumpTo) activateWorkspaceTab(opts.jumpTo);
+  // renderHeaderCompanySelector() above just changed #company-selector-name/
+  // -meta text (company name/sector/price length varies a lot company to
+  // company), which changes the header's own rendered height -- re-measure
+  // for the same reason render() does (see its own comment).
+  syncHeaderHeight();
 }
 
 // Compare mode: toggling a pill in Valuation/Technicals/Risks adds/removes a
@@ -299,8 +515,12 @@ function toggleCompareSymbol(symbol) {
   renderValuationDetail(currentData);
   renderTechnicalDetail(currentData);
   renderRiskDetail(currentData);
+  renderOwnershipDetail(currentData);
+  renderCompanyResearchOverview(currentData);
+  renderCompanyResearchQuality(currentData);
+  renderCompanyResearchGrowth(currentData);
+  renderCompanyResearchIntelligence(currentData);
   if (currentData) renderProfitability(compareSymbols.length >= 2 ? currentData.stocks.filter(s => compareSymbols.includes(s.symbol)) : currentData.stocks);
-  renderCompareBar();
   renderCompareWorkspace(currentData);
 }
 function setCompareMode(on) {
@@ -308,8 +528,12 @@ function setCompareMode(on) {
   renderValuationDetail(currentData);
   renderTechnicalDetail(currentData);
   renderRiskDetail(currentData);
+  renderOwnershipDetail(currentData);
+  renderCompanyResearchOverview(currentData);
+  renderCompanyResearchQuality(currentData);
+  renderCompanyResearchGrowth(currentData);
+  renderCompanyResearchIntelligence(currentData);
   if (currentData) renderProfitability(compareMode && compareSymbols.length >= 2 ? currentData.stocks.filter(s => compareSymbols.includes(s.symbol)) : currentData.stocks);
-  renderCompareBar();
   renderCompareWorkspace(currentData);
 }
 
@@ -351,21 +575,6 @@ async function selectFromHeaderDropdown(symbol, watchlistId) {
   }
   setActiveCompany(symbol);
 }
-function renderCompareBar() {
-  const toggle = $('#compare-toggle');
-  const chips = $('#compare-chip-row');
-  if (!toggle || !chips) return;
-  toggle.classList.toggle('active', compareMode);
-  toggle.setAttribute('aria-pressed', String(compareMode));
-  chips.hidden = !compareMode;
-  const names = compareSymbols.map(symbol => currentData?.stocks.find(s => s.symbol === symbol)?.name || symbol);
-  chips.innerHTML = compareMode
-    ? (names.length
-        ? names.map((name, i) => `<span class="tag compare-chip">${escape(name)} <button type="button" data-remove-compare="${escape(compareSymbols[i])}" aria-label="Remove ${escape(name)}">&times;</button></span>`).join('')
-        : '<span class="small">Pick 2-4 companies from a pill row on Valuation, Technicals or Risks.</span>')
-    : '';
-}
-
 // ---- Phase 6.5 Compare workspace: a dedicated screen for Compare Mode.
 // Reuses renderCompareAwarePillSelector (already shared by Valuation/
 // Technicals/Risks) for the picker and compareGrid()+the same *DetailContent
@@ -374,8 +583,13 @@ function renderCompareBar() {
 function renderCompareWorkspace(data) {
   const stocks = (data?.stocks || []).filter(s => !s.unresolved);
   renderCompareAwarePillSelector('#compare-selector', stocks);
+  // Company Research UI audit: the header's Quick Jump/Compare cluster was
+  // removed as redundant (Compare Mode already has a first-class home here).
+  // That removed the header's only Compare-Mode *off* switch too, so this
+  // button -- previously "turn on" only, hidden once on -- is now the sole
+  // on/off toggle, same functionality, one entry point instead of two.
   const enableBtn = $('#compare-enable-btn');
-  if (enableBtn) enableBtn.hidden = compareMode;
+  if (enableBtn) { enableBtn.textContent = compareMode ? 'Turn off Compare Mode' : 'Turn on Compare Mode'; enableBtn.setAttribute('aria-pressed', String(compareMode)); }
   const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
   const prompt = compareMode
     ? '<p class="small">Pick 2-4 companies above to compare.</p>'
@@ -390,7 +604,7 @@ function renderCompareWorkspace(data) {
     $('#compare-risk').innerHTML = prompt;
   }
 }
-$('#compare-enable-btn')?.addEventListener('click', () => setCompareMode(true));
+$('#compare-enable-btn')?.addEventListener('click', () => setCompareMode(!compareMode));
 
 function initCompanyContextBar() {
   const toggleBtn = $('#company-selector-toggle');
@@ -409,21 +623,69 @@ function initCompanyContextBar() {
       if (!dropdown.hidden && !event.target.closest('.company-selector')) { dropdown.hidden = true; toggleBtn.setAttribute('aria-expanded', 'false'); }
     });
   }
-  $$('#quick-jump button[data-jump]').forEach(button => button.addEventListener('click', () => {
-    const target = button.dataset.jump;
-    if (target === 'report') {
-      openCompanyReport(activeCompanySymbol);
-    } else {
-      activateWorkspaceTab(target);
-    }
-  }));
-  $('#compare-toggle')?.addEventListener('click', () => setCompareMode(!compareMode));
-  $('#compare-chip-row')?.addEventListener('click', (event) => {
-    const removeSymbol = event.target.closest('[data-remove-compare]')?.dataset.removeCompare;
-    if (removeSymbol) toggleCompareSymbol(removeSymbol);
-  });
 }
 initCompanyContextBar();
+
+// ---- Company Research one-page IA (redesign): the 7 former click-to-switch
+// tabs (Overview/Fundamentals/Valuation/Quality/Ownership/Technicals/Risks)
+// are now `.cr-section` elements that are all always visible in one scroll --
+// `.cr-page-nav` is plain anchor-link navigation (scroll, not tab-switching),
+// with a lightweight IntersectionObserver highlighting whichever section is
+// currently in view, purely a visual convenience with no effect on what's
+// rendered (every section renders regardless of which nav item is active).
+//
+// Root cause of the "selected nav item doesn't match the visible section"
+// audit finding, fixed here: this used to watch a hardcoded `-120px` band,
+// unrelated to the *real* sticky offset (--header-h + this nav's own height)
+// -- which routinely exceeds 120px once the company-context bar is showing,
+// so a section counted as "active" while still partly hidden behind the
+// sticky header/nav. It also derived "the visible section" purely from each
+// callback's own `entries` array, but IntersectionObserver only reports
+// targets whose ratio just crossed a threshold, not every target still
+// intersecting -- so a section that had already crossed into view earlier
+// silently dropped out of consideration on the next callback, flipping the
+// active link to a stale or wrong section. Fixed by (a) tracking currently-
+// intersecting sections in a persistent map instead of trusting one
+// callback's entries alone, and (b) computing the band from the live,
+// measured offset and rebuilding the observer whenever that offset can have
+// changed (wired from syncHeaderHeight(), the one place --header-h/
+// --subtabs-h are (re)computed) instead of guessing once at page load. ----
+let rebuildCompanyResearchNav = () => {};
+function initCompanyResearchPageNav() {
+  const nav = $('.cr-page-nav');
+  if (!nav) return;
+  const links = $$('a', nav);
+  links.forEach(link => link.addEventListener('click', (event) => {
+    event.preventDefault();
+    $(link.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  const sections = links.map(link => $(link.getAttribute('href'))).filter(Boolean);
+  if (!sections.length || typeof IntersectionObserver === 'undefined') return;
+  const setActiveLink = (id) => links.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${id}`));
+  const intersecting = new Map(); // section id -> boundingClientRect.top, persists across callbacks
+  let observer = null;
+  rebuildCompanyResearchNav = () => {
+    if (observer) observer.disconnect();
+    intersecting.clear();
+    const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 0;
+    const offset = Math.round(headerH + nav.offsetHeight);
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) intersecting.set(entry.target.id, entry.boundingClientRect.top);
+        else intersecting.delete(entry.target.id);
+      });
+      if (intersecting.size) setActiveLink([...intersecting].sort((a, b) => a[1] - b[1])[0][0]);
+    }, { rootMargin: `-${offset}px 0px -60% 0px` });
+    // Default to the first section immediately, before the observer's first
+    // callback lands -- without this, the very top of the page (scrollY 0,
+    // Snapshot visible) briefly showed no nav item active at all, which is
+    // its own version of "selected nav doesn't match visible content."
+    setActiveLink(sections[0].id);
+    sections.forEach(section => observer.observe(section));
+  };
+  rebuildCompanyResearchNav();
+}
+initCompanyResearchPageNav();
 
 // One delegated listener covers every `.row-company-link` on the page --
 // every `renderTable`-built table via `prefixCells`, plus the Watchlists and
@@ -465,61 +727,364 @@ function riskCard(name, value, key) {
 // ---- Tab renderers (Valuation / Profitability / Balance sheet / Growth /
 // Ownership / Technicals / Portfolio) -- each consumes the same `stocks`
 // array in the same order; none of them sort or slice it. ----
+const VALUATION_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS,
+  forwardPe: s => s.metrics?.forwardPe, pb: s => s.metrics?.pb, evEbitda: s => s.metrics?.evEbitda, peg: s => s.metrics?.peg,
+  fairValue: s => s.valuation?.fairValue, targetPrice: s => s.valuation?.targetPrice, upside: s => s.valuation?.upsidePct,
+  marginOfSafety: s => s.valuation?.marginOfSafetyPct, confidence: s => CONVICTION_RANK[s.valuation?.confidenceBand] || null,
+  sectorPremium: s => s.sectorPremiumDiscountPe, earningsYield: s => s.earningsYield, fcfYield: s => s.fcfYield,
+  sectorRank: s => s.relativeValuation?.sectorRank, relativeAttractiveness: s => s.relativeValuation?.relativeAttractivenessScore,
+  peerCompleteness: s => PEER_COMPLETENESS_RANK[s.relativeValuation?.peerCompleteness] || null
+};
 function renderValuationTab(stocks) {
-  renderTable('#valuation-table', stocks, stock => {
-    const m = stock.metrics || {}, v = stock.valuation || {};
-    return `<td>${fmt(m.forwardPe)}</td><td>${fmt(m.pb)}</td><td>${fmt(m.evEbitda)}</td><td>${fmt(m.peg)}</td><td>${fmt(v.fairValue)}</td><td>${fmt(v.targetPrice)}</td><td>${pct(v.upsidePct)}</td><td>${pct(v.marginOfSafetyPct)}</td><td>${pct(stock.sectorPremiumDiscountPe)}</td><td>${pct(stock.earningsYield)}</td><td>${pct(stock.fcfYield)}</td>`;
+  const sorted = sortForTable('valuation-table', stocks, VALUATION_TABLE_SORT);
+  renderTable('#valuation-table', sorted, stock => {
+    const m = stock.metrics || {}, v = stock.valuation || {}, rv = stock.relativeValuation;
+    return `<td>${fmt(m.forwardPe)}</td><td>${fmt(m.pb)}</td><td>${fmt(m.evEbitda)}</td><td>${fmt(m.peg)}</td><td>${fmt(v.fairValue)}</td><td>${fmt(v.targetPrice)}</td><td>${pct(v.upsidePct)}</td><td>${pct(v.marginOfSafetyPct)}</td><td>${escape(v.confidenceBand || 'N/A')}</td><td>${pct(stock.sectorPremiumDiscountPe)}</td><td>${pct(stock.earningsYield)}</td><td>${pct(stock.fcfYield)}</td>` +
+      `<td>${rv ? `${rv.sectorRank}/${rv.sectorPeerCount}` : 'N/A'}</td><td class="num">${rv?.relativeAttractivenessScore == null ? 'N/A' : `${rv.relativeAttractivenessScore}/100`}</td><td>${escape(rv?.peerCompleteness || 'N/A')}</td>`;
   });
+  initTableSort('valuation-table');
+}
+// Watchlist Research -> Overview: the primary screening table. Every field
+// below is already computed elsewhere in this payload (recommendation,
+// valuation, technical scorecard, institutional risk, decision-layer action
+// score) -- this reads, never recomputes, matching the single-computation-
+// site rule the rest of this app follows.
+function renderWrOverviewTable(data) {
+  const actionScores = data.intelligence?.actionScores || {};
+  const rows = rankAllStocks(data.stocks, opportunitiesSort);
+  const keyFns = {
+    ...STANDARD_SORT_KEYS, change: s => s.change, recommendation: s => RATING_RANK[s.signal] || null,
+    driver: s => keyCatalystFor(s) === 'N/A' ? null : keyCatalystFor(s), confidence: s => CONVICTION_RANK[s.recommendation?.confidence] || null,
+    composite: s => s.score, upside: s => s.valuation?.upsidePct, regime: s => s.technicalScorecard?.regime || null,
+    riskScore: s => s.institutionalRisk?.compositeRiskScore,
+    action: s => ({ 'Add aggressively': 5, Add: 4, Hold: 3, Reduce: 2, Exit: 1 }[actionScores[s.symbol]?.label] || null),
+    companyQuality: s => s.recommendation?.companyQuality?.score, stockAttractiveness: s => s.recommendation?.stockAttractiveness?.score,
+    factorScore: s => s.quantFactors?.factorScore
+  };
+  const sorted = sortForTable('wr-overview-table', rows, keyFns);
+  renderTable('#wr-overview-table', sorted, stock => {
+    const risk = stock.institutionalRisk || {};
+    const r = stock.recommendation || {}, qf = stock.quantFactors;
+    return `<td class="num">${pct(stock.change)}</td><td>${signalTag(stock)}</td><td>${escape(keyCatalystFor(stock))}</td><td>${escape(r.confidence || 'N/A')}</td>` +
+      `<td class="num">${stock.score == null ? 'N/A' : `${fmt(stock.score)}/100`}</td><td class="num">${pct(stock.valuation?.upsidePct)}</td>` +
+      `<td>${escape(stock.technicalScorecard?.regime || 'N/A')}</td><td class="num">${risk.compositeRiskScore == null ? 'N/A' : `${fmt(risk.compositeRiskScore)}/100`}</td>` +
+      `<td>${actionScoreBadge(actionScores[stock.symbol])}</td>` +
+      `<td class="num">${r.companyQuality?.score == null ? 'N/A' : `${r.companyQuality.score}/100`}</td>` +
+      `<td class="num">${r.stockAttractiveness?.score == null ? 'N/A' : `${r.stockAttractiveness.score}/100`}</td>` +
+      `<td class="num" title="${escape(qf?.capNote || '')}">${qf?.factorScore == null ? 'N/A' : `${qf.factorScore}/100`}</td>`;
+  }, { num: true });
+  initTableSort('wr-overview-table');
 }
 // Each of these four tabs previously drove one wide, horizontally-scrolling
 // table off `stock.metrics`; they now drive several narrower ones (one per
 // sub-tab) via the same renderTable()/prefixCells() helper -- same fields,
 // same stocks array, just a smaller column subset per call.
+const PROFITABILITY_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, ebitdaMargin: s => s.metrics?.ebitdaMargin, netMargin: s => s.metrics?.netMargin,
+  roe: s => s.metrics?.roe, roce: s => s.metrics?.roce, roa: s => s.metrics?.roa, earningsQuality: s => s.metrics?.earningsQualityScore
+};
 function renderProfitability(stocks) {
   const m = (stock) => stock.metrics || {};
-  renderTable('#profitability-table-margins', stocks, stock => `<td>N/A</td><td>${pct(m(stock).ebitdaMargin)}</td><td>${pct(m(stock).ebitdaMargin)}</td><td>${pct(m(stock).netMargin)}</td>`);
-  renderTable('#profitability-table-returns', stocks, stock => `<td>${pct(m(stock).roe)}</td><td>${pct(m(stock).roce)}</td><td>${pct(m(stock).roa)}</td>`);
-  renderTable('#profitability-table-dupont', stocks, stock => `<td>${pct(m(stock).roe)}</td><td>${pct(m(stock).netMargin)}</td>`);
-  renderTable('#profitability-table-efficiency', stocks, stock => `<td>${pct(m(stock).roce)}</td><td>${pct(m(stock).roa)}</td>`);
-  renderTable('#profitability-table-quality', stocks, stock => `<td>${fmt(m(stock).earningsQualityScore)}</td>`);
+  const sorted = sortForTable('profitability-table', stocks, PROFITABILITY_TABLE_SORT);
+  renderTable('#profitability-table', sorted, stock => `<td class="num">N/A</td><td class="num">${pct(m(stock).ebitdaMargin)}</td><td class="num">${pct(m(stock).ebitdaMargin)}</td><td class="num">${pct(m(stock).netMargin)}</td><td class="num">${pct(m(stock).roe)}</td><td class="num">${pct(m(stock).roce)}</td><td class="num">${pct(m(stock).roa)}</td><td class="num">${fmt(m(stock).earningsQualityScore)}</td>`, { num: true });
+  initTableSort('profitability-table');
 }
+const BALANCE_SHEET_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, debt: s => s.metrics?.debt, cash: s => s.metrics?.cash, netDebt: s => s.metrics?.netDebt,
+  debtToEquity: s => s.metrics?.debtToEquity, currentRatio: s => s.metrics?.currentRatio, quickRatio: s => s.metrics?.quickRatio,
+  wcDays: s => s.fundamentalsAnalytics?.workingCapital?.workingCapitalDays, capitalStructure: s => s.metrics?.capitalStructure || null
+};
 function renderBalanceSheetTab(stocks) {
   const m = (stock) => stock.metrics || {};
   const wcDays = (stock) => stock.fundamentalsAnalytics?.workingCapital?.workingCapitalDays;
-  renderTable('#balance-sheet-table-capital-structure', stocks, stock => `<td>${fmt(m(stock).debt)}</td><td>${fmt(m(stock).cash)}</td><td>${fmt(m(stock).netDebt)}</td><td>${escape(m(stock).capitalStructure || 'N/A')}</td>`);
-  renderTable('#balance-sheet-table-liquidity', stocks, stock => `<td>${fmt(m(stock).cash)}</td><td>${fmt(m(stock).currentRatio)}</td><td>${fmt(m(stock).quickRatio)}</td>`);
-  renderTable('#balance-sheet-table-leverage', stocks, stock => `<td>${fmt(m(stock).debt)}</td><td>${fmt(m(stock).netDebt)}</td><td>${pct(m(stock).debtToEquity)}</td>`);
-  renderTable('#balance-sheet-table-working-capital', stocks, stock => `<td>${fmt(wcDays(stock))}</td>`);
-  renderTable('#balance-sheet-table-financial-resilience', stocks, stock => `<td>${pct(m(stock).debtToEquity)}</td><td>${fmt(m(stock).currentRatio)}</td><td>${fmt(m(stock).netDebt)}</td>`);
+  const sorted = sortForTable('balance-sheet-table', stocks, BALANCE_SHEET_TABLE_SORT);
+  renderTable('#balance-sheet-table', sorted, stock => `<td class="num">${fmt(m(stock).debt)}</td><td class="num">${fmt(m(stock).cash)}</td><td class="num">${fmt(m(stock).netDebt)}</td><td class="num">${pct(m(stock).debtToEquity)}</td><td class="num">${fmt(m(stock).currentRatio)}</td><td class="num">${fmt(m(stock).quickRatio)}</td><td class="num">${fmt(wcDays(stock))}</td><td>${escape(m(stock).capitalStructure || 'N/A')}</td>`, { num: true });
+  initTableSort('balance-sheet-table');
 }
+const GROWTH_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, revenue3y: s => s.metrics?.revenueCagr3y, revenue5y: s => s.metrics?.revenueCagr5y,
+  ebitda3y: s => s.metrics?.ebitdaCagr3y, ebitda5y: s => s.metrics?.ebitdaCagr5y, profit3y: s => s.metrics?.profitCagr3y,
+  profit5y: s => s.metrics?.profitCagr5y, eps5y: s => s.metrics?.epsCagr5y, bookValue: s => s.metrics?.bookValueCagr, fcf: s => s.metrics?.fcfCagr
+};
 function renderGrowthTab(stocks) {
   const m = (stock) => stock.metrics || {};
-  renderTable('#growth-table-revenue', stocks, stock => `<td>${pct(m(stock).revenueCagr3y)}</td><td>${pct(m(stock).revenueCagr5y)}</td>`);
-  renderTable('#growth-table-ebitda', stocks, stock => `<td>${pct(m(stock).ebitdaCagr3y)}</td><td>${pct(m(stock).ebitdaCagr5y)}</td>`);
-  renderTable('#growth-table-earnings', stocks, stock => `<td>${pct(m(stock).profitCagr3y)}</td><td>${pct(m(stock).profitCagr5y)}</td><td>${pct(m(stock).epsCagr5y)}</td>`);
-  renderTable('#growth-table-cash-flow', stocks, stock => `<td>${pct(m(stock).fcfCagr)}</td>`);
-  renderTable('#growth-table-long-term', stocks, stock => `<td>${pct(m(stock).revenueCagr5y)}</td><td>${pct(m(stock).ebitdaCagr5y)}</td><td>${pct(m(stock).profitCagr5y)}</td><td>${pct(m(stock).epsCagr5y)}</td><td>${fmt(m(stock).bookValueCagr)}</td><td>${pct(m(stock).fcfCagr)}</td>`);
+  const sorted = sortForTable('growth-table', stocks, GROWTH_TABLE_SORT);
+  renderTable('#growth-table', sorted, stock => `<td class="num">${pct(m(stock).revenueCagr3y)}</td><td class="num">${pct(m(stock).revenueCagr5y)}</td><td class="num">${pct(m(stock).ebitdaCagr3y)}</td><td class="num">${pct(m(stock).ebitdaCagr5y)}</td><td class="num">${pct(m(stock).profitCagr3y)}</td><td class="num">${pct(m(stock).profitCagr5y)}</td><td class="num">${pct(m(stock).epsCagr5y)}</td><td class="num">${fmt(m(stock).bookValueCagr)}</td><td class="num">${pct(m(stock).fcfCagr)}</td>`, { num: true });
+  initTableSort('growth-table');
 }
+const OWNERSHIP_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, promoter: s => s.metrics?.promoterHolding, promoterTrend: s => s.metrics?.promoterHoldingTrend,
+  fii: s => s.metrics?.fiiHolding, dii: s => s.metrics?.diiHolding, mf: s => s.metrics?.mutualFundHolding,
+  institutional: s => s.metrics?.institutionalHolding,
+  concentration: s => s.metrics?.promoterHolding != null && s.metrics?.institutionalHolding != null ? s.metrics.promoterHolding + s.metrics.institutionalHolding : null
+};
 function renderOwnershipTab(stocks) {
   const m = (stock) => stock.metrics || {};
   const concentration = (stock) => m(stock).promoterHolding != null && m(stock).institutionalHolding != null ? m(stock).promoterHolding + m(stock).institutionalHolding : null;
-  renderTable('#ownership-table-shareholding', stocks, stock => `<td>${pct(m(stock).promoterHolding)}</td><td>${pct(m(stock).fiiHolding)}</td><td>${pct(m(stock).diiHolding)}</td><td>${fmt(m(stock).mutualFundHolding)}</td>`);
-  renderTable('#ownership-table-promoter', stocks, stock => `<td>${pct(m(stock).promoterHolding)}</td><td>${pct(m(stock).promoterHoldingTrend)}</td>`);
-  renderTable('#ownership-table-institutional', stocks, stock => `<td>${pct(m(stock).fiiHolding)}</td><td>${pct(m(stock).diiHolding)}</td><td>${fmt(m(stock).mutualFundHolding)}</td><td>${pct(m(stock).institutionalHolding)}</td>`);
-  renderTable('#ownership-table-trends', stocks, stock => `<td>${pct(m(stock).promoterHoldingTrend)}</td><td>${pct(concentration(stock))}</td>`);
+  const sorted = sortForTable('ownership-table', stocks, OWNERSHIP_TABLE_SORT);
+  renderTable('#ownership-table', sorted, stock => `<td class="num">${pct(m(stock).promoterHolding)}</td><td>${pct(m(stock).promoterHoldingTrend)}</td><td class="num">${pct(m(stock).fiiHolding)}</td><td class="num">${pct(m(stock).diiHolding)}</td><td class="num">${fmt(m(stock).mutualFundHolding)}</td><td class="num">${pct(m(stock).institutionalHolding)}</td><td class="num">${pct(concentration(stock))}</td>`, { num: true });
+  initTableSort('ownership-table');
+}
+// Company Research -> Ownership: no per-company deep-dive existed before
+// this redesign, only the 4 comparison tables above (now on Watchlist
+// Research). This reads the exact same already-computed `stock.metrics`
+// ownership fields those tables use and formats them as a single-company
+// card -- the same reuse pattern as fundamentalsContent/valuationDetailContent/
+// technicalDetailContent/riskDetailContent, zero new calculation.
+function ownershipDetailContent(stock) {
+  if (!stock) return '<p class="small">No data yet.</p>';
+  const m = stock.metrics || {};
+  const concentration = m.promoterHolding != null && m.institutionalHolding != null ? m.promoterHolding + m.institutionalHolding : null;
+  return `<article class="card">
+      <h3>${escape(stock.name)} &mdash; ownership</h3>
+      <div class="grid four">
+        ${card('Promoter holding', pct(m.promoterHolding), `Trend ${pct(m.promoterHoldingTrend)}`, '')}
+        ${card('FII holding', pct(m.fiiHolding), '', '')}
+        ${card('DII holding', pct(m.diiHolding), '', '')}
+        ${card('Mutual fund holding', fmt(m.mutualFundHolding), '', '')}
+      </div>
+      <div class="grid two">
+        ${card('Institutional ownership', pct(m.institutionalHolding), 'FII + DII + mutual fund', '')}
+        ${card('Ownership concentration', pct(concentration), 'Promoter + institutional holding', '')}
+      </div>
+    </article>`;
+}
+function renderOwnershipDetail(data) {
+  const stocks = data.stocks.filter(s => !s.unresolved);
+  const target = $('#cr-ownership-content');
+  if (!target) return;
+  const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
+  target.innerHTML = compareStocks.length >= 2
+    ? compareGrid(compareStocks, (s) => ({ ownership: ownershipDetailContent(s) }), 'ownership')
+    : ownershipDetailContent(stocks.find(s => s.symbol === activeCompanySymbol));
+}
+// Company Research -> Quality & Financial Health: Company Quality vs. Stock
+// Attractiveness, Fundamental View/Market View, Action Guidance -- all
+// already computed server-side (data/scoring/qualityAttractiveness.mjs,
+// scoringEngine.mjs's buildFundamentalView/buildMarketView, attached at
+// stock.recommendation.*) and, until this redesign, surfaced nowhere in the
+// live dashboard (only in the standalone report). Zero new calculation --
+// pure reformat of fields the payload already carries.
+function companyQualityContent(stock) {
+  if (!stock) return '<p class="small">No data yet.</p>';
+  const r = stock.recommendation || {};
+  const cq = r.companyQuality || {}, sa = r.stockAttractiveness || {}, fv = r.fundamentalView || {}, mv = r.marketView || {};
+  const bandClass = (label) => label === 'Strong' || label === 'Above average' || label === 'Positive' || label === 'Favorable' ? 'positive' : label === 'Weak' || label === 'Below average' || label === 'Negative' || label === 'Unfavorable' ? 'amber' : '';
+  return `<article class="card">
+      <h3>Company Quality vs. Stock Attractiveness ${infoIcon('companyQualityScore')}</h3>
+      <p class="small">Is this a good business, independent of price (Company Quality), vs. is the current price/setup attractive, independent of business quality (Stock Attractiveness)? Additive alongside the primary Recommendation above -- neither replaces it.</p>
+      <div class="grid four">
+        ${card('Company Quality', cq.score == null ? 'N/A' : `${cq.score}/100`, cq.label || '', bandClass(cq.label))}
+        ${card('Stock Attractiveness', sa.score == null ? 'N/A' : `${sa.score}/100`, sa.label || '', bandClass(sa.label))}
+        ${card(`Fundamental View ${infoIcon('fundamentalView')}`, escape(fv.label || 'N/A'), fv.score == null ? '' : `${fv.score}/100`, bandClass(fv.label))}
+        ${card(`Market View ${infoIcon('marketView')}`, escape(mv.label || 'N/A'), escape(mv.regime || ''), bandClass(mv.label))}
+      </div>
+      <div class="small"><b>Action guidance ${infoIcon('actionGuidance')}:</b> ${escape(r.actionGuidance || 'N/A')}</div>
+    </article>`;
+}
+function renderCompanyResearchQuality(data) {
+  const stocks = data.stocks.filter(s => !s.unresolved);
+  const target = $('#cr-quality-content');
+  if (!target) return;
+  const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
+  target.innerHTML = compareStocks.length >= 2
+    ? compareGrid(compareStocks, (s) => ({ quality: companyQualityContent(s) }), 'quality')
+    : companyQualityContent(stocks.find(s => s.symbol === activeCompanySymbol));
+}
+// Company Research -> Growth: no per-company growth view existed before this
+// redesign, only the Watchlist Research comparison table (renderGrowthTab) --
+// reads the exact same already-computed stock.metrics growth fields, zero
+// new calculation, same reuse pattern as ownershipDetailContent above.
+function companyGrowthContent(stock) {
+  if (!stock) return '<p class="small">No data yet.</p>';
+  const m = stock.metrics || {};
+  return `<article class="card">
+      <h3>${escape(stock.name)} &mdash; growth</h3>
+      <div class="grid four">
+        ${card('Revenue growth 3Y', pct(m.revenueCagr3y), '', '')}
+        ${card('Revenue growth 5Y', pct(m.revenueCagr5y), '', '')}
+        ${card('EBITDA growth 3Y', pct(m.ebitdaCagr3y), '', '')}
+        ${card('EBITDA growth 5Y', pct(m.ebitdaCagr5y), '', '')}
+      </div>
+      <div class="grid four">
+        ${card('Profit growth 3Y', pct(m.profitCagr3y), '', '')}
+        ${card('Profit growth 5Y', pct(m.profitCagr5y), '', '')}
+        ${card('EPS CAGR 5Y', pct(m.epsCagr5y), '', '')}
+        ${card('FCF CAGR', pct(m.fcfCagr), '', '')}
+      </div>
+      <div class="grid two">
+        ${card('Book value CAGR', fmt(m.bookValueCagr), '', '')}
+      </div>
+    </article>`;
+}
+function renderCompanyResearchGrowth(data) {
+  const stocks = data.stocks.filter(s => !s.unresolved);
+  const target = $('#cr-growth-content');
+  if (!target) return;
+  const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
+  target.innerHTML = compareStocks.length >= 2
+    ? compareGrid(compareStocks, (s) => ({ growth: companyGrowthContent(s) }), 'growth')
+    : companyGrowthContent(stocks.find(s => s.symbol === activeCompanySymbol));
+}
+// Company Research -> Intelligence: the explainability layer. Thesis
+// tracking (data/decision/thesisTracking.mjs, attached at
+// data.intelligence.thesis[symbol]), the quantitative Factor Score
+// (data/quant/factorEngine.mjs, stock.quantFactors) and Research Quality
+// Gates (stock.researchQuality) are all already computed server-side and
+// were surfaced nowhere in the live dashboard before this redesign -- the
+// Factor Score wasn't even in the standalone report. Per system.md's product
+// rule (Phase 7 Stage 2), the Factor Score is explicitly disclosed as a
+// distinct signal that never overrides the primary Recommendation.
+function companyIntelligenceContent(stock, thesis) {
+  if (!stock) return '<p class="small">No data yet.</p>';
+  const qf = stock.quantFactors;
+  const rq = stock.researchQuality || {};
+  const factorRows = qf ? Object.entries(qf.factors || {}).map(([key, f]) => `<div class="allocation-row"><span>${escape(f.label)}</span><div class="bar"><i style="width:${f.score ?? 0}%"></i></div><span>${f.score == null ? 'N/A' : `${f.score}/100`}</span></div>`).join('') : '';
+  const thesisCard = thesis ? `<article class="card">
+      <h3>Thesis tracking ${infoIcon('thesisStatus')}</h3>
+      <div class="rec-badges"><span class="tag ${thesis.status === 'Broken' ? 'sell' : thesis.status === 'Weakening' ? 'reduce' : thesis.status === 'Improving' ? 'buy' : 'hold'}">${escape(thesis.status)}</span></div>
+      <ul>${(thesis.reasons || []).map(reason => `<li>${escape(reason)}</li>`).join('') || '<li>No reasons recorded.</li>'}</ul>
+      <div class="small" style="margin-top:8px"><b>Thesis breakers ${infoIcon('thesisBreakers')}</b></div>
+      ${(thesis.breakers || []).map(b => `<div class="allocation-row"><span>${escape(b.condition)}</span><span class="tag ${b.status === 'Active' ? 'sell' : b.status === 'Watch' ? 'hold' : 'neutral'}">${escape(b.status)}</span></div><div class="small">${escape(b.currentReading || '')}</div>`).join('')}
+    </article>` : '<article class="card"><h3>Thesis tracking</h3><p class="small">Baseline -- no prior snapshot yet to compare the thesis against.</p></article>';
+  const factorCard = `<article class="card">
+      <h3>Quantitative Factor Score ${infoIcon('quantFactorScore')}</h3>
+      <p class="small">Institutional 6-factor framework (Value/Quality/Growth/Momentum/Risk/Size), sector-relative percentile blend. A distinct signal from the primary Recommendation above -- never blended into it.</p>
+      ${qf?.factorScore == null ? `<p class="small">${escape(qf?.capNote || 'Not available for this company.')}</p>` : `<div class="kpi">${qf.factorScore}/100</div><div class="small">Confidence: ${escape(qf.confidence || 'N/A')} &middot; Normalization scope: ${escape(qf.normalizationScope || 'N/A')} (${qf.peerCount ?? 0} peers)</div>`}
+      ${factorRows}
+    </article>`;
+  const researchQualityCard = `<article class="card">
+      <h3>Research Quality Gates ${infoIcon('researchQuality')}</h3>
+      <div class="grid four">
+        ${card('Data completeness', escape(rq.dataCompleteness || 'N/A'), rq.dataCompletenessPct == null ? '' : `${rq.dataCompletenessPct}%`, '')}
+        ${card('Valuation completeness', escape(rq.valuationCompleteness || 'N/A'), '', '')}
+        ${card('Peer completeness', escape(rq.peerCompleteness || 'N/A'), '', '')}
+        ${card('Evidence quality', escape(rq.evidenceQuality || 'N/A'), '', '')}
+      </div>
+      <div class="small">Forecast confidence: ${escape(rq.forecastConfidence || 'N/A')}</div>
+    </article>`;
+  const forwardCard = `<article class="card"><h3>Forward estimates ${infoIcon('forwardFramework')}</h3><p class="small">${escape(stock.forwardFramework?.forwardEstimates?.reason || 'Not available.')}</p></article>`;
+  return { thesis: thesisCard, factor: factorCard, researchQuality: researchQualityCard, forward: forwardCard };
+}
+function renderCompanyResearchIntelligence(data) {
+  const stocks = data.stocks.filter(s => !s.unresolved);
+  const target = $('#cr-intelligence-content');
+  if (!target) return;
+  const thesisBySymbol = data.intelligence?.thesis || {};
+  const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
+  if (compareStocks.length >= 2) {
+    target.innerHTML = ['thesis', 'factor', 'researchQuality', 'forward']
+      .map(key => compareGrid(compareStocks, (s) => companyIntelligenceContent(s, thesisBySymbol[s.symbol]), key)).join('');
+  } else {
+    const stock = stocks.find(s => s.symbol === activeCompanySymbol);
+    const c = stock ? companyIntelligenceContent(stock, thesisBySymbol[stock.symbol]) : null;
+    target.innerHTML = c ? [c.thesis, c.factor, c.researchQuality, c.forward].join('') : '<p class="small">This watchlist is empty.</p>';
+  }
+}
+// DMA cell shows the raw moving average plus the derived CMP-vs-DMA gap %
+// (Phase 2 N/A/derivation audit: CMP and each DMA are both already on the
+// stock object, so the gap is a trivial arithmetic derivation, not a new
+// data source) -- same inline-derivation precedent as the risk table's own
+// "downside to 200-DMA/52W low" cells just below in this file.
+function dmaCell(price, dma) {
+  if (!Number.isFinite(dma)) return 'N/A';
+  const gapPct = Number.isFinite(price) ? pct(((price - dma) / dma) * 100) : null;
+  return `${fmt(dma)}${gapPct ? ` <span class="small">(${gapPct})</span>` : ''}`;
+}
+// DMA alignment: how many of the 4 DMAs price currently sits above -- a
+// compact derived summary rather than 4 extra table columns, so the Trend
+// table stays a single-glance width.
+function dmaAlignmentLabel(stock) {
+  const dmas = [stock.twenty, stock.fifty, stock.hundred, stock.twoHundred];
+  const known = dmas.filter(Number.isFinite);
+  if (!known.length || !Number.isFinite(stock.price)) return 'N/A';
+  const above = dmas.filter(d => Number.isFinite(d) && stock.price > d).length;
+  return `${above}/${known.length} above`;
 }
 // The one wide technical scorecard table splits into six narrower ones (one
 // per sub-tab) via the same renderTable()/prefixCells() helper -- same
 // fields off `stock`/`technicalScorecard.scores`, just a smaller column
-// subset per call.
+// subset per call. Several columns here (RSI state, current/avg volume,
+// relative-strength components + benchmark identity, real volatility %,
+// signal confidence, ADX interpretation) are already-computed fields that
+// existed on the payload but had no Watchlist Research column before this
+// redesign -- see the Watchlist Research IA audit's N/A/derivation section.
+const TREND_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, trend: s => s.trend || null, dma20: s => s.twenty, dma50: s => s.fifty, dma100: s => s.hundred, dma200: s => s.twoHundred,
+  dmaAlignment: s => { const dmas = [s.twenty, s.fifty, s.hundred, s.twoHundred]; return Number.isFinite(s.price) ? dmas.filter(d => Number.isFinite(d) && s.price > d).length : null; },
+  trendScore: s => s.technicalScorecard?.scores?.trendStrengthScore,
+  adx: s => s.technicalScorecard?.adx, diPlus: s => s.technicalScorecard?.diPlus, diMinus: s => s.technicalScorecard?.diMinus,
+  support: s => s.support, resistance: s => s.resistance
+};
+const MOMENTUM_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, rsi: s => s.rsi, momentum: s => s.momentum || null, momentumScore: s => s.technicalScorecard?.scores?.momentumScore,
+  macdLine: s => s.macd?.macdLine, signalLine: s => s.macd?.signalLine, histogram: s => s.macd?.histogram
+};
+const VOLUME_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, volumeTrend: s => s.volumeTrend || null, volume: s => s.volume, avgVolume20: s => s.avgVolume20,
+  obv: s => s.technicalScorecard?.obv?.value, obvTrend: s => s.technicalScorecard?.obv?.trend || null,
+  accDist: s => s.technicalScorecard?.accDist?.value, accDistTrend: s => s.technicalScorecard?.accDist?.trend || null
+};
+const RELATIVE_STRENGTH_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, stock1y: s => s.performance?.periods?.['1Y']?.stockReturnPct, benchmark1y: s => s.performance?.periods?.['1Y']?.benchmarkReturnPct,
+  relativeStrength: s => s.relativeStrengthPct, benchmark: s => s.performance?.benchmark?.name || s.performance?.benchmark?.symbol || null,
+  cagr3y: s => s.performance?.cagr?.['3Y']?.stockCagrPct, cagr5y: s => s.performance?.cagr?.['5Y']?.stockCagrPct
+};
+const VOLATILITY_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, volatilityPct: s => s.volatilityPct, volatilityScore: s => s.technicalScorecard?.scores?.volatilityScore,
+  atr: s => s.technicalScorecard?.atr, atrPct: s => s.technicalScorecard?.atrPct
+};
+const SIGNALS_TABLE_SORT = {
+  ...STANDARD_SORT_KEYS, breakoutScore: s => s.technicalScorecard?.scores?.breakoutProbability, regime: s => s.technicalScorecard?.regime || null,
+  signalConfidence: s => CONVICTION_RANK[s.technicalScorecard?.signalConfidence] || null, adxInterpretation: s => s.technicalScorecard?.adxInterpretation || null
+};
+// Technicals parity pass: ADX/DI+/DI-/Support/Resistance (Trend), MACD line/
+// Signal line/Histogram (Momentum), OBV/OBV trend/Accumulation-Distribution/
+// its trend (Volume), ATR/ATR% (Volatility) were already computed
+// server-side and shown on Company Research's per-company indicators card
+// (technicalDetailContent) but had no Watchlist Research column -- every
+// field below is read off the same `stock.technicalScorecard`/`stock.macd`/
+// `stock.support`/`stock.resistance` that card already uses, zero new
+// calculation. Placement follows the brief's own grouping (ADX = trend
+// strength, so it sits in Trend rather than duplicating the Signals tab's
+// existing ADX *interpretation* label -- a different, complementary read of
+// the same underlying indicator, not a repeated column).
 function renderTechnicalTab(stocks) {
   const scores = (stock) => stock.technicalScorecard?.scores || {};
-  renderTable('#technical-table-trend', stocks, stock => `<td>${escape(stock.trend || 'N/A')}</td><td class="num">${fmt(stock.twenty)}</td><td class="num">${fmt(stock.fifty)}</td><td class="num">${fmt(stock.hundred)}</td><td class="num">${fmt(stock.twoHundred)}</td><td class="num">${scoreText(scores(stock).trendStrengthScore)}</td>`, { num: true });
-  renderTable('#technical-table-momentum', stocks, stock => `<td class="num">${fmt(stock.rsi)}</td><td class="num">${scoreText(scores(stock).momentumScore)}</td>`, { num: true });
-  renderTable('#technical-table-volume', stocks, stock => `<td>${escape(stock.volumeTrend || 'N/A')}</td>`, { num: true });
-  renderTable('#technical-table-relative-strength', stocks, stock => `<td class="num">${pct(stock.relativeStrengthPct)}</td>`, { num: true });
-  renderTable('#technical-table-volatility', stocks, stock => `<td class="num">${scoreText(scores(stock).volatilityScore, true)}</td>`, { num: true });
-  renderTable('#technical-table-signals', stocks, stock => `<td class="num">${scoreText(scores(stock).breakoutProbability)}</td><td>${escape(stock.technicalScorecard?.regime || 'N/A')}</td>`, { num: true });
+  renderTable('#technical-table-trend', sortForTable('technical-table-trend', stocks, TREND_TABLE_SORT), stock => {
+    const t = stock.technicalScorecard || {};
+    return `<td>${escape(stock.trend || 'N/A')}</td><td class="num">${dmaCell(stock.price, stock.twenty)}</td><td class="num">${dmaCell(stock.price, stock.fifty)}</td><td class="num">${dmaCell(stock.price, stock.hundred)}</td><td class="num">${dmaCell(stock.price, stock.twoHundred)}</td><td>${dmaAlignmentLabel(stock)}</td><td class="num">${scoreText(scores(stock).trendStrengthScore)}</td>` +
+      `<td class="num" title="${escape(t.adxInterpretation || '')}">${fmt(t.adx)}</td><td class="num">${fmt(t.diPlus)}</td><td class="num">${fmt(t.diMinus)}</td>` +
+      `<td class="num">${fmt(stock.support)}</td><td class="num">${stock.atHigh ? 'At high' : fmt(stock.resistance)}</td>`;
+  }, { num: true });
+  initTableSort('technical-table-trend');
+  renderTable('#technical-table-momentum', sortForTable('technical-table-momentum', stocks, MOMENTUM_TABLE_SORT), stock => {
+    const macd = stock.macd || {};
+    return `<td class="num">${fmt(stock.rsi)}</td><td>${escape(stock.momentum || 'N/A')}</td><td class="num">${scoreText(scores(stock).momentumScore)}</td><td class="num">${fmt(macd.macdLine)}</td><td class="num">${fmt(macd.signalLine)}</td><td class="num">${fmt(macd.histogram)}</td>`;
+  }, { num: true });
+  initTableSort('technical-table-momentum');
+  renderTable('#technical-table-volume', sortForTable('technical-table-volume', stocks, VOLUME_TABLE_SORT), stock => {
+    const t = stock.technicalScorecard || {};
+    return `<td>${escape(stock.volumeTrend || 'N/A')}</td><td class="num">${stock.volume == null ? 'N/A' : compact(stock.volume)}</td><td class="num">${stock.avgVolume20 == null ? 'N/A' : compact(stock.avgVolume20)}</td>` +
+      `<td class="num">${t.obv?.value == null ? 'N/A' : compact(t.obv.value)}</td><td>${escape(t.obv?.trend || 'N/A')}</td>` +
+      `<td class="num">${t.accDist?.value == null ? 'N/A' : compact(t.accDist.value)}</td><td>${escape(t.accDist?.trend || 'N/A')}</td>`;
+  }, { num: true });
+  initTableSort('technical-table-volume');
+  renderTable('#technical-table-relative-strength', sortForTable('technical-table-relative-strength', stocks, RELATIVE_STRENGTH_TABLE_SORT), stock => {
+    const p1y = stock.performance?.periods?.['1Y'];
+    const benchmark = stock.performance?.benchmark;
+    const cagr3y = stock.performance?.cagr?.['3Y'], cagr5y = stock.performance?.cagr?.['5Y'];
+    return `<td class="num">${p1y?.stockReturnPct == null ? 'N/A' : pct(p1y.stockReturnPct)}</td><td class="num">${p1y?.benchmarkReturnPct == null ? 'N/A' : pct(p1y.benchmarkReturnPct)}</td><td class="num">${pct(stock.relativeStrengthPct)}</td><td>${escape(benchmark?.name || benchmark?.symbol || 'N/A')}</td><td class="num">${cagr3y?.stockCagrPct == null ? 'N/A' : pct(cagr3y.stockCagrPct)}</td><td class="num">${cagr5y?.stockCagrPct == null ? 'N/A' : pct(cagr5y.stockCagrPct)}</td>`;
+  }, { num: true });
+  initTableSort('technical-table-relative-strength');
+  renderTable('#technical-table-volatility', sortForTable('technical-table-volatility', stocks, VOLATILITY_TABLE_SORT), stock => {
+    const t = stock.technicalScorecard || {};
+    return `<td class="num">${stock.volatilityPct == null ? 'N/A' : pct(stock.volatilityPct)}</td><td class="num">${scoreText(scores(stock).volatilityScore, true)}</td><td class="num">${fmt(t.atr)}</td><td class="num">${t.atrPct == null ? 'N/A' : pct(t.atrPct)}</td>`;
+  }, { num: true });
+  initTableSort('technical-table-volatility');
+  renderTable('#technical-table-signals', sortForTable('technical-table-signals', stocks, SIGNALS_TABLE_SORT), stock => `<td class="num">${scoreText(scores(stock).breakoutProbability)}</td><td>${escape(stock.technicalScorecard?.regime || 'N/A')}</td><td>${escape(stock.technicalScorecard?.signalConfidence || 'N/A')}</td><td>${escape(stock.technicalScorecard?.adxInterpretation || 'N/A')}</td>`, { num: true });
+  initTableSort('technical-table-signals');
 }
 function renderPortfolioTab(stocks) {
   const bucketFor = (score) => score >= 70 ? 'Core' : score >= 55 ? 'Growth' : 'Satellite';
@@ -687,6 +1252,10 @@ function valuationDetailContent(stock) {
         ${card('Watchlist rank', rv ? `${rv.watchlistRank}/${rv.watchlistCount}` : 'N/A', 'By ROCE/ROE within the full watchlist', '')}
       </div>
       <div class="grid four">
+        ${card(`Peer tier ${infoIcon('peerTier')}`, rv?.peerTier || 'N/A', `${rv?.peerCount ?? 0} real peer(s) in this watchlist`, '')}
+        ${card(`Peer completeness ${infoIcon('peerCompleteness')}`, rv?.peerCompleteness || 'N/A', rv?.peerInsufficiencyReason || '', rv?.peerCompleteness === 'Strong' ? 'positive' : rv?.peerCompleteness === 'Weak' || rv?.peerCompleteness === 'Unavailable' ? 'amber' : '')}
+      </div>
+      <div class="grid four">
         ${card(`Sector-adjusted valuation rank ${infoIcon('sectorValuationRank')}`, rv ? `${rv.sectorValuationRank}/${rv.sectorPeerCount}` : 'N/A', 'Cheapest-vs-sector-median first', '')}
         ${card(`Multi-factor peer rank ${infoIcon('multiFactorPeerScore')}`, rv ? `${rv.multiFactorPeerRank}/${rv.sectorPeerCount}` : 'N/A', rv?.multiFactorPeerScore == null ? 'N/A' : `Score ${rv.multiFactorPeerScore}/100 (Value 40% / Quality 35% / Growth 25%)`, '')}
         ${card(`Sector-normalized score ${infoIcon('sectorNormalizedValuationScore')}`, rv?.sectorNormalizedValuationScore == null ? 'N/A' : `${rv.sectorNormalizedValuationScore}/100`, 'Continuous z-score vs. sector peers', '')}
@@ -710,7 +1279,11 @@ function renderValuationDispersion(data) {
 function renderValuationDetail(data) {
   const stocks = data.stocks.filter(s => !s.unresolved);
   ensureActiveCompany(stocks);
-  renderCompareAwarePillSelector('#valuation-selector', stocks);
+  // Company Research UI audit: the top-of-page "Company" pill-row switcher
+  // (#valuation-selector) was removed as a duplicate of the header's own
+  // company-selector dropdown (#company-selector-toggle) -- same function,
+  // two widgets. That header dropdown remains the one company switcher for
+  // this workspace; nothing here renders into #valuation-selector anymore.
   $('#valuation-info').innerHTML = infoIcon('dcfFairValue');
   const empty = '<p class="small">This watchlist is empty.</p>';
   const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
@@ -730,8 +1303,72 @@ function renderValuationDetail(data) {
     $('#valuation-detail-relative').innerHTML = c ? c.relative : empty;
     $('#valuation-detail-historical').innerHTML = c ? c.percentile : empty;
   }
-  applySubtabState($('#valuation'));
   renderValuationDispersion(data);
+}
+
+// Company Research -> Overview: a small single-company summary card off
+// fields already computed elsewhere in the payload (price/signal/
+// confidence/sector/key metrics) -- pure presentation, same reuse pattern
+// as recommendationSummaryCard above, not a second calculation.
+// Extended (IA redesign) to cover the full "Investment Snapshot" field list --
+// Recommendation/Confidence/Composite/Upside/Primary Driver/Regime/Risk
+// score/Action -- all already computed elsewhere in this payload
+// (`data.intelligence.actionScores`, `stock.technicalScorecard.regime`,
+// `stock.institutionalRisk.compositeRiskScore` -- the same fields
+// renderWrOverviewTable already reads), so this stays a pure reformat.
+function companyOverviewContent(stock, actionScores = {}) {
+  if (!stock) return '<p class="small">This watchlist is empty.</p>';
+  const r = stock.recommendation || {};
+  return `<article class="card">
+      <h3>${escape(stock.name)} <span class="small">(${escape(stock.symbol)})</span></h3>
+      <div class="rec-badges">${signalTag(stock)} <span class="tag ${r.confidence === 'High' ? 'buy' : r.confidence === 'Medium' ? 'hold' : 'neutral'}">${escape(r.confidence || 'N/A')} confidence</span></div>
+      <div class="grid four">
+        ${card('CMP', `${fmt(stock.price)} ${escape(stock.currency || '')}`, escape(stock.sector || 'N/A'), '')}
+        ${card('Composite score', r.compositeScore == null ? 'N/A' : `${r.compositeScore}/100`, '', '')}
+        ${card('Upside to target', pct(stock.valuation?.upsidePct), '', '')}
+        ${card('Primary driver', escape(r.primaryDriver || 'N/A'), '', '')}
+      </div>
+      <div class="grid four">
+        ${card('Regime', escape(stock.technicalScorecard?.regime || 'N/A'), '', '')}
+        ${card('Risk score', stock.institutionalRisk?.compositeRiskScore == null ? 'N/A' : `${stock.institutionalRisk.compositeRiskScore}/100`, '', '')}
+        ${card('Action', actionScoreBadge(actionScores[stock.symbol]), '', '')}
+      </div>
+      ${r.capNote ? `<div class="notice amber">${escape(r.capNote)}</div>` : ''}
+    </article>`;
+}
+// "Key Investment Metrics" -- one flagship metric per Valuation/Quality/
+// Growth/Technical/Risk domain, answering "why research this company"
+// without duplicating the decision-oriented Snapshot card above (different
+// analytical purpose: a fundamentals-style scan vs. the model's own read).
+function companyKeyMetricsContent(stock) {
+  if (!stock) return '';
+  const m = stock.metrics || {};
+  return `<article class="card">
+      <h3>Key investment metrics</h3>
+      <div class="grid five">
+        ${card('P/E', fmt(stock.pe), 'Valuation', '')}
+        ${card('ROE', pct(m.roe), 'Quality', '')}
+        ${card('Revenue growth 5Y', pct(m.revenueCagr5y), 'Growth', '')}
+        ${card('Trend', escape(stock.trend || 'N/A'), 'Technical', '')}
+        ${card('Risk trend', escape(stock.institutionalRisk?.riskTrend || 'N/A'), 'Risk', '')}
+      </div>
+    </article>`;
+}
+function renderCompanyResearchOverview(data) {
+  const stocks = data.stocks.filter(s => !s.unresolved);
+  const target = $('#cr-overview-content');
+  const keyMetricsTarget = $('#cr-key-metrics-content');
+  if (!target) return;
+  const actionScores = data.intelligence?.actionScores || {};
+  const compareStocks = compareMode ? compareSymbols.map(sym => stocks.find(s => s.symbol === sym)).filter(Boolean) : [];
+  if (compareStocks.length >= 2) {
+    target.innerHTML = compareGrid(compareStocks, (s) => ({ overview: companyOverviewContent(s, actionScores) }), 'overview');
+    if (keyMetricsTarget) keyMetricsTarget.innerHTML = compareGrid(compareStocks, (s) => ({ metrics: companyKeyMetricsContent(s) }), 'metrics');
+  } else {
+    const stock = stocks.find(s => s.symbol === activeCompanySymbol);
+    target.innerHTML = companyOverviewContent(stock, actionScores);
+    if (keyMetricsTarget) keyMetricsTarget.innerHTML = companyKeyMetricsContent(stock);
+  }
 }
 
 // ---- Technical deep-dive: ADX/ATR/OBV/A-D, MACD, support/resistance,
@@ -742,7 +1379,7 @@ function renderValuationDetail(data) {
 // none of their internals are split apart.
 function technicalDetailContent(stock) {
   const empty = '<p class="small">No data yet.</p>';
-  if (!stock) return { indicators: empty, multiTimeframe: empty, advancedScores: empty, volumeProfile: empty };
+  if (!stock) return { indicators: empty, multiTimeframe: empty, advancedScores: empty, volumeProfile: empty, relativePerformance: empty };
   const t = stock.technicalScorecard || {}, tf = t.timeframes || {}, vp = t.volumeProfile || {}, macd = stock.macd || {}, adv = t.advancedScores || {};
   const indicators = `
     <article class="card">
@@ -791,7 +1428,26 @@ function technicalDetailContent(stock) {
       <p class="small">Point of control: ${vp.pointOfControl ? `${fmt(vp.pointOfControl.priceLow)}&ndash;${fmt(vp.pointOfControl.priceHigh)} (${fmt(vp.pointOfControl.sharePct)}% of volume)` : 'N/A'}</p>
       <div class="scroll">${(vp.buckets || []).slice().reverse().map(b => `<div class="allocation-row"><span>${fmt(b.priceLow)}&ndash;${fmt(b.priceHigh)}</span><div class="bar"><i style="width:${b.sharePct}%"></i></div><span>${fmt(b.sharePct)}%</span></div>`).join('') || '<p class="small">Not available.</p>'}</div>
     </article>`;
-  return { indicators, multiTimeframe, advancedScores, volumeProfile };
+  // Full benchmark & performance detail (Phase 7 Stage 2, data/quant/
+  // performanceEngine.mjs) -- shipped backend-only until now beyond the
+  // trailing-1Y figure already on the Watchlist Research Relative-strength
+  // table. Everything below is already computed; this is the first UI
+  // consumer of the 3Y/5Y CAGR, drawdown detail and Sharpe-like/Sortino-like
+  // proxy ratios.
+  const perf = stock.performance || {};
+  const cagr3y = perf.cagr?.['3Y'], cagr5y = perf.cagr?.['5Y'], dd = perf.risk?.maxDrawdown, sharpe = perf.riskAdjusted?.sharpeLike, sortino = perf.riskAdjusted?.sortinoLike;
+  const relativePerformance = `
+    <article class="card">
+      <h3>Relative performance ${infoIcon('benchmarkPerformance')}</h3>
+      <div class="grid four">
+        ${card('3Y CAGR', cagr3y?.stockCagrPct == null ? 'N/A' : pct(cagr3y.stockCagrPct), cagr3y?.benchmarkCagrPct == null ? '' : `Benchmark ${pct(cagr3y.benchmarkCagrPct)}`, '')}
+        ${card('5Y CAGR', cagr5y?.stockCagrPct == null ? 'N/A' : pct(cagr5y.stockCagrPct), cagr5y?.benchmarkCagrPct == null ? '' : `Benchmark ${pct(cagr5y.benchmarkCagrPct)}`, '')}
+        ${card('Max drawdown', dd?.stockPct == null ? 'N/A' : pct(dd.stockPct), dd?.stockRecovered == null ? '' : dd.stockRecovered ? 'Recovered' : 'Not yet recovered', '')}
+        ${card('Sortino-like', sortino?.value == null ? 'N/A' : fmt(sortino.value), 'Proxy -- not a conventional-methodology ratio', '')}
+      </div>
+      <div class="small">Sharpe-like: ${sharpe?.value == null ? 'N/A' : fmt(sharpe.value)} (this app's existing proxy risk-adjusted return, reused as-is). Returns are price returns -- dividends not included, not a total-shareholder-return figure.</div>
+    </article>`;
+  return { indicators, multiTimeframe, advancedScores, volumeProfile, relativePerformance };
 }
 function renderTechnicalDetail(data) {
   const stocks = data.stocks.filter(s => !s.unresolved);
@@ -802,16 +1458,17 @@ function renderTechnicalDetail(data) {
   if (compareStocks.length >= 2) {
     $('#technical-detail-multi-timeframe').innerHTML = compareGrid(compareStocks, technicalDetailContent, 'multiTimeframe');
     $('#technical-detail-indicators').innerHTML = compareGrid(compareStocks, technicalDetailContent, 'indicators');
+    $('#technical-detail-relative-performance').innerHTML = compareGrid(compareStocks, technicalDetailContent, 'relativePerformance');
     $('#technical-detail-volume-profile').innerHTML = compareGrid(compareStocks, technicalDetailContent, 'volumeProfile');
     $('#technical-detail-advanced-scores').innerHTML = compareGrid(compareStocks, technicalDetailContent, 'advancedScores');
   } else {
     const c = stocks.length ? technicalDetailContent(stocks.find(s => s.symbol === activeCompanySymbol)) : null;
     $('#technical-detail-multi-timeframe').innerHTML = c ? c.multiTimeframe : empty;
     $('#technical-detail-indicators').innerHTML = c ? c.indicators : empty;
+    $('#technical-detail-relative-performance').innerHTML = c ? c.relativePerformance : empty;
     $('#technical-detail-volume-profile').innerHTML = c ? c.volumeProfile : empty;
     $('#technical-detail-advanced-scores').innerHTML = c ? c.advancedScores : empty;
   }
-  applySubtabState($('#technical'));
 }
 
 // ---- Risk deep-dive: full 5-category sub-item breakdown per stock. ----
@@ -895,7 +1552,6 @@ function renderRiskDetail(data) {
     $('#risk-detail-sector').innerHTML = c ? c.sector : empty;
     $('#risk-detail-governance').innerHTML = c ? c.governance : empty;
   }
-  applySubtabState($('#risks'));
 }
 
 // ---- Portfolio analytics: dashboard KPIs, diversification, correlation
@@ -1021,6 +1677,7 @@ function renderPortfolioIntelligence(data) {
     $('#pi-opportunities').innerHTML = '<p class="small">Not available.</p>';
     $('#pi-risks').innerHTML = '<p class="small">Not available.</p>';
     $('#pi-changes').innerHTML = '<p class="small">Not available.</p>';
+    if ($('#wr-opportunities-content')) $('#wr-opportunities-content').innerHTML = '<p class="small">Not available.</p>';
     return;
   }
   const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
@@ -1058,7 +1715,11 @@ function renderPortfolioIntelligence(data) {
   const improvingTechnicals = intel.opportunities.filter(o => alertsFor(o.symbol).some(al => ['breakoutConfirmation', 'crossedAbove50DMA', 'crossedAbove200DMA', 'macdCrossedBullish', 'relativeStrengthAcceleration'].includes(al.type)));
   const fallingRisk = intel.opportunities.filter(o => changesFor(o.symbol).some(c => c.field === 'compositeRiskScore' && c.to < c.from));
   const catalystMomentum = intel.opportunities.filter(o => (bySymbol.get(o.symbol)?.news || []).some(n => n.impact === 'High'));
-  $('#pi-opportunities').innerHTML = [group('Undervalued', undervalued), group('Improving quality', improvingQuality), group('Improving technicals', improvingTechnicals), group('Falling risk', fallingRisk), group('Positive catalyst momentum', catalystMomentum)].join('') || '<p class="small">No opportunities currently flagged.</p>';
+  const opportunitiesHtml = [group('Undervalued', undervalued), group('Improving quality', improvingQuality), group('Improving technicals', improvingTechnicals), group('Falling risk', fallingRisk), group('Positive catalyst momentum', catalystMomentum)].join('') || '<p class="small">No opportunities currently flagged.</p>';
+  $('#pi-opportunities').innerHTML = opportunitiesHtml;
+  // Watchlist Research -> Opportunities reuses this same already-computed
+  // Action-Score-driven opportunity list (second display location).
+  if ($('#wr-opportunities-content')) $('#wr-opportunities-content').innerHTML = opportunitiesHtml;
 
   const risingRisk = intel.riskMonitor.filter(r => changesFor(r.symbol).some(c => c.field === 'compositeRiskScore' && c.to > c.from) || /Deteriorating/.test(r.reason));
   const deterioratingTechnicals = intel.riskMonitor.filter(r => alertsFor(r.symbol).some(al => ['breakdownConfirmation', 'crossedBelow50DMA', 'crossedBelow200DMA', 'macdCrossedBearish'].includes(al.type)));
@@ -1197,13 +1858,21 @@ function renderExposureMatrix(data) {
 // re-renders from the fresh payload, so an acknowledged alert disappearing is
 // just the normal render() cascade, not special-cased here.
 let alertsSeverityFilter = '';
+const ALERT_CONFIDENCE_RANK = { High: 3, Medium: 2, Low: 1 };
+const ALERTS_TABLE_SORT = {
+  severity: a => ({ Critical: 4, High: 3, Medium: 2, Low: 1 }[a.severity]) || null,
+  company: a => a.symbol === 'PORTFOLIO' ? 'Portfolio' : a.symbol, category: a => a.category || null,
+  alert: a => a.message || null, confidence: a => ALERT_CONFIDENCE_RANK[a.confidence] || null,
+  time: a => a.detectedAt ? new Date(a.detectedAt).getTime() : null
+};
 function renderAlerts(data) {
   $('#alerts-methodology-info').innerHTML = infoIcon('alertSeverity');
   const bySymbol = new Map(data.stocks.map(s => [s.symbol, s]));
   const severityRank = { Critical: 4, High: 3, Medium: 2, Low: 1 };
-  const alerts = (data.intelligence?.alerts || [])
+  let alerts = (data.intelligence?.alerts || [])
     .filter(a => !alertsSeverityFilter || a.severity === alertsSeverityFilter)
     .sort((a, b) => (severityRank[b.severity] || 0) - (severityRank[a.severity] || 0) || new Date(b.detectedAt) - new Date(a.detectedAt));
+  alerts = sortForTable('alerts-table', alerts, ALERTS_TABLE_SORT);
   $('#alerts-table tbody').innerHTML = alerts.length ? alerts.map(a => {
     const stock = bySymbol.get(a.symbol);
     const companyCell = stock ? companyLink(a.symbol, stock.name) : escape(a.symbol === 'PORTFOLIO' ? 'Portfolio' : a.symbol);
@@ -1217,6 +1886,7 @@ function renderAlerts(data) {
       <td><button type="button" class="icon-btn" data-ack-alert="${escape(a.id)}">Acknowledge</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="7" class="small">No unacknowledged alerts.</td></tr>';
+  initTableSort('alerts-table');
 }
 async function acknowledgeAlert(alertId) {
   const id = watchlistIndex.activeWatchlist;
@@ -1327,7 +1997,6 @@ function renderFundamentals(data) {
   $('#fundamentals-capital-allocation').innerHTML = c ? c.capitalAllocation : empty;
   $('#fundamentals-historical-financials').innerHTML = c ? c.historicalFinancials : empty;
   $('#fundamentals-key-metrics').innerHTML = c ? c.keyMetrics : empty;
-  applySubtabState($('#fundamentals'));
 }
 
 // ---- Dashboard: Executive Summary, KPI Ribbon, Top Opportunities, Recent
@@ -1336,11 +2005,15 @@ function renderFundamentals(data) {
 // independently sorted/sliced for display, never mutating data.stocks. ----
 function renderDashboardKpis(data) {
   const avg = data.averages || {};
-  $('#dashboard-kpis').innerHTML =
+  const html =
     card('Watchlist recommendation', data.recommendation, 'Screen-derived signal across saved companies', data.recommendation === 'OVERWEIGHT' ? 'positive' : 'amber') +
     `<article class="card"><h3>Investment score</h3><div class="score"><div class="score-circle">${data.score}</div><div class="small">Composite/technical blend across the watchlist<br><br><div class="progress"><i style="width:${data.score}%"></i></div></div></div></article>` +
     card('Average P/E', fmt(avg.pe), 'Across companies with reported data', 'blue') +
     card('Market trend', data.trend, `Average daily move ${pct(avg.change)}`, (avg.change ?? 0) >= 0 ? 'positive' : 'amber');
+  $('#dashboard-kpis').innerHTML = html;
+  // Watchlist Research -> Overview reuses the same already-computed watchlist
+  // KPIs (second display location, not a second computation).
+  if ($('#wr-kpis')) $('#wr-kpis').innerHTML = html;
 }
 
 // Primary driver is computed once, server-side, by the same unified
@@ -1353,9 +2026,14 @@ function keyCatalystFor(stock) {
 }
 const RATING_RANK = { 'Strong Buy': 6, Buy: 5, Accumulate: 4, Hold: 3, Reduce: 2, Sell: 1 };
 const CONVICTION_RANK = { High: 3, Medium: 2, Low: 1 };
-function sortOpportunities(stocks, mode) {
-  const eligible = stocks.filter(s => !s.unresolved);
-  const sorted = [...eligible];
+// Peer completeness is a real categorical answer (not missing data), so it
+// gets a rank like any other label column rather than being pinned to the
+// bottom via isSortNA's N/A handling -- "Unavailable" sorts as the lowest
+// rank, but sorts, it isn't treated as absent.
+const PEER_COMPLETENESS_RANK = { Strong: 4, Adequate: 3, Weak: 2, Unavailable: 1 };
+const THESIS_STATUS_RANK = { Broken: 1, Weakening: 2, Intact: 3, Improving: 4 };
+function rankStocks(stocks, mode) {
+  const sorted = [...stocks];
   if (mode === 'upside') sorted.sort((a, b) => (b.valuation?.upsidePct ?? -Infinity) - (a.valuation?.upsidePct ?? -Infinity));
   else if (mode === 'conviction') sorted.sort((a, b) => (CONVICTION_RANK[b.valuation?.convictionLevel] || 0) - (CONVICTION_RANK[a.valuation?.convictionLevel] || 0));
   else if (mode === 'valuation') sorted.sort((a, b) => (b.recommendation?.factors?.valuation?.value ?? -1) - (a.recommendation?.factors?.valuation?.value ?? -1));
@@ -1363,14 +2041,29 @@ function sortOpportunities(stocks, mode) {
   else if (mode === 'quality') sorted.sort((a, b) => (b.recommendation?.compositeScore ?? -1) - (a.recommendation?.compositeScore ?? -1));
   else if (mode === 'technical') sorted.sort((a, b) => (b.recommendation?.technicalScore ?? -1) - (a.recommendation?.technicalScore ?? -1));
   else sorted.sort((a, b) => (RATING_RANK[b.signal] || 0) - (RATING_RANK[a.signal] || 0) || (b.score || 0) - (a.score || 0));
-  return sorted.slice(0, 5);
+  return sorted;
+}
+function sortOpportunities(stocks, mode) {
+  return rankStocks(stocks.filter(s => !s.unresolved), mode).slice(0, 5);
+}
+// Watchlist Research -> Overview's screening matrix: same ranking logic as
+// Dashboard's Top Opportunities (rankStocks), but reordering the FULL
+// roster in place -- table behavior, not a second Top-5 table -- rather
+// than filtering to 5. Unresolved companies have nothing to rank by, so
+// they're kept (never dropped) and appended after the ranked ones, in
+// their original watchlist order.
+function rankAllStocks(stocks, mode) {
+  const resolved = stocks.filter(s => !s.unresolved);
+  const unresolved = stocks.filter(s => s.unresolved);
+  return [...rankStocks(resolved, mode), ...unresolved];
 }
 function renderTopOpportunities(data) {
   const top = sortOpportunities(data.stocks, opportunitiesSort);
-  $('#opportunities-table tbody').innerHTML = top.length ? top.map(stock => `<tr data-symbol="${escape(stock.symbol)}">
+  const rowsHtml = top.length ? top.map(stock => `<tr data-symbol="${escape(stock.symbol)}">
       <td><button type="button" class="row-company-link" data-symbol="${escape(stock.symbol)}">${escape(stock.name)}</button></td><td>${escape(stock.sector || 'N/A')}</td><td>${fmt(stock.price)} ${escape(stock.currency || '')}</td>
       <td>${signalTag(stock)}</td><td>${pct(stock.valuation?.upsidePct)}</td><td>${escape(stock.valuation?.convictionLevel || 'N/A')}</td><td>${escape(keyCatalystFor(stock))}</td>
     </tr>`).join('') : '<tr><td colspan="7" class="small">No data yet.</td></tr>';
+  $('#opportunities-table tbody').innerHTML = rowsHtml;
 }
 
 const IMPACT_CLASS = { High: 'sell', Medium: 'hold', Low: 'neutral' };
@@ -1663,6 +2356,7 @@ function render(data) {
   // to restore a persisted company, falling back to the first company.
   if (data.watchlistId !== lastRenderedWatchlistId) {
     lastRenderedWatchlistId = data.watchlistId;
+    cmpSortState = {}; // per-table sort only makes sense against the watchlist it was set on
     const persisted = loadPersistedActiveCompany();
     activeCompanySymbol = (persisted && persisted.watchlistId === data.watchlistId && data.stocks.some(s => s.symbol === persisted.symbol))
       ? persisted.symbol
@@ -1671,6 +2365,11 @@ function render(data) {
     activeCompanySymbol = data.stocks[0]?.symbol ?? null;
   }
   $('#status').textContent = `${data.watchlistName} — Updated ${new Date(data.generatedAt).toLocaleString()}`;
+  // Portfolio Analysis's own context line -- Watchlist Research shows no
+  // equivalent line since the global "Watchlist context" header bar already
+  // names the active watchlist on every workspace; repeating it in-page here
+  // too was a duplicate heading (see the Watchlist Research IA audit).
+  if ($('#portfolio-watchlist-context')) $('#portfolio-watchlist-context').innerHTML = `<b>${escape(data.watchlistName)}</b> &middot; ${data.stocks.length} compan${data.stocks.length === 1 ? 'y' : 'ies'}`;
   $('#summary').textContent = data.summary;
   $('#data-limitations').innerHTML = (data.dataLimitations || []).map(item => `<li>${escape(item)}</li>`).join('');
 
@@ -1689,8 +2388,14 @@ function render(data) {
   renderBalanceSheetTab(data.stocks);
   renderGrowthTab(data.stocks);
   renderOwnershipTab(data.stocks);
+  renderOwnershipDetail(data);
+  renderCompanyResearchOverview(data);
+  renderCompanyResearchQuality(data);
+  renderCompanyResearchGrowth(data);
+  renderCompanyResearchIntelligence(data);
   renderTechnicalTab(data.stocks);
   renderTechnicalDetail(data);
+  renderWrOverviewTable(data);
   renderPortfolioTab(data.stocks);
   renderPortfolioAnalytics(data);
   renderExposureMatrix(data);
@@ -1707,12 +2412,28 @@ function render(data) {
     riskCard('Market risk', avgCategory('market'), 'marketRisk'), riskCard('Sector risk', avgCategory('sector'), 'sectorRisk'),
     riskCard('Governance risk', avgCategory('governance'), 'governanceRisk')
   ].join('');
-  $('#risk-table tbody').innerHTML = eligible.length ? eligible.map(stock => {
+  const thesisBySymbol = data.intelligence?.thesis || {};
+  const downside200Of = (stock) => stock.price && stock.twoHundred ? (stock.twoHundred / stock.price - 1) * 100 : null;
+  const downsideLowOf = (stock) => stock.price && stock.low52 ? (stock.low52 / stock.price - 1) * 100 : null;
+  const riskTableSort = {
+    ...STANDARD_SORT_KEYS, interestCoverage: s => s.metrics?.interestCoverage, financial: s => s.institutionalRisk?.categories?.financial,
+    business: s => s.institutionalRisk?.categories?.business, market: s => s.institutionalRisk?.categories?.market,
+    // "sectorRisk", not "sector" -- this table has two different "Sector"
+    // columns (the company's sector, and the Sector-risk-category score);
+    // "sector" stays the standard company-sector column from STANDARD_SORT_KEYS.
+    sectorRisk: s => s.institutionalRisk?.categories?.sector, governance: s => s.institutionalRisk?.categories?.governance,
+    downside200: s => downside200Of(s), downsideLow: s => downsideLowOf(s), composite: s => s.institutionalRisk?.compositeRiskScore,
+    trend: s => s.institutionalRisk?.riskTrend || null, thesisStatus: s => THESIS_STATUS_RANK[thesisBySymbol[s.symbol]?.status] || null
+  };
+  const sortedRiskRows = sortForTable('risk-table', eligible, riskTableSort);
+  $('#risk-table tbody').innerHTML = sortedRiskRows.length ? sortedRiskRows.map(stock => {
     const m = stock.metrics || {}, r = stock.institutionalRisk, c = r.categories || {};
-    const downside200 = stock.price && stock.twoHundred ? (stock.twoHundred / stock.price - 1) * 100 : null;
-    const downsideLow = stock.price && stock.low52 ? (stock.low52 / stock.price - 1) * 100 : null;
-    return `<tr data-symbol="${escape(stock.symbol)}">${prefixCells(stock)}<td>${suffixed(m.interestCoverage, 'x')}</td><td>${scoreText(c.financial, true)}</td><td>${scoreText(c.business, true)}</td><td>${scoreText(c.market, true)}</td><td>${scoreText(c.sector, true)}</td><td>${scoreText(c.governance, true)}</td><td>${pct(downside200)}</td><td>${pct(downsideLow)}</td><td><span class="tag ${r.compositeRiskScore > 65 ? 'hold' : 'buy'}">${fmt(r.compositeRiskScore)}/100</span></td><td>${escape(r.riskTrend || 'N/A')}</td></tr>`;
-  }).join('') : '<tr><td colspan="14" class="small">This watchlist is empty.</td></tr>';
+    const downside200 = downside200Of(stock);
+    const downsideLow = downsideLowOf(stock);
+    const thesis = thesisBySymbol[stock.symbol];
+    return `<tr data-symbol="${escape(stock.symbol)}">${prefixCells(stock)}<td>${suffixed(m.interestCoverage, 'x')}</td><td>${scoreText(c.financial, true)}</td><td>${scoreText(c.business, true)}</td><td>${scoreText(c.market, true)}</td><td>${scoreText(c.sector, true)}</td><td>${scoreText(c.governance, true)}</td><td>${pct(downside200)}</td><td>${pct(downsideLow)}</td><td><span class="tag ${r.compositeRiskScore > 65 ? 'hold' : 'buy'}">${fmt(r.compositeRiskScore)}/100</span></td><td>${escape(r.riskTrend || 'N/A')}</td><td>${thesis ? `<span class="tag ${thesis.status === 'Broken' ? 'sell' : thesis.status === 'Weakening' ? 'reduce' : thesis.status === 'Improving' ? 'buy' : 'hold'}">${escape(thesis.status)}</span>` : 'N/A'}</td></tr>`;
+  }).join('') : '<tr><td colspan="15" class="small">This watchlist is empty.</td></tr>';
+  initTableSort('risk-table');
   renderRiskDetail(data);
   $('#risk-summary').textContent = eligible.length ? `The composite risk score for ${data.watchlistName} blends Financial, Business, Market, Sector and Governance risk for each company, shown above alongside two price-based downside scenarios (reversion to the 200-day average and to the 52-week low). Sector risk is a static, disclosed qualitative lookup, not a live feed; several Business/Governance sub-items have no data source and are not estimated -- see the deep-dive panel below. These are comparative screening indicators, not predictions.` : 'Risk analysis will appear once the watchlist has companies.';
   renderAlerts(data);
@@ -1731,14 +2452,32 @@ function render(data) {
 
   renderWatchlistsTab(data);
   renderHeaderCompanySelector();
-  renderCompareBar();
   refreshActiveCompanyHighlights();
+  // Root cause of the sticky-offset drift audit found: render() routinely
+  // changes the header's own rendered height (#status badge text length,
+  // #company-context-bar content) without a resize event or workspace-tab
+  // switch ever firing, so --header-h/--subtabs-h (and everything sticky
+  // that reads them -- .subtabs/.cr-page-nav bars, every Watchlist Research
+  // thead-sticky-N table) silently drifted stale after the very first data
+  // load. Re-measuring here, the one place every data-driven repaint funnels
+  // through, keeps them correct without depending on the caller to remember.
+  syncHeaderHeight();
 }
 
-$('#opportunities-sort').addEventListener('change', () => {
-  opportunitiesSort = $('#opportunities-sort').value;
-  if (currentData) renderTopOpportunities(currentData);
-});
+// Watchlist Research -> Ranking's sort select shares the same
+// `opportunitiesSort` state as Dashboard's Top Opportunities -- one ranking,
+// two display locations, kept in sync both ways.
+function setOpportunitiesSort(value) {
+  opportunitiesSort = value;
+  $('#opportunities-sort').value = value;
+  if ($('#wr-ranking-sort')) $('#wr-ranking-sort').value = value;
+  if (currentData) {
+    renderTopOpportunities(currentData);
+    renderWrOverviewTable(currentData);
+  }
+}
+$('#opportunities-sort').addEventListener('change', () => setOpportunitiesSort($('#opportunities-sort').value));
+$('#wr-ranking-sort')?.addEventListener('change', () => setOpportunitiesSort($('#wr-ranking-sort').value));
 
 // ---- Watchlist management: switch / create / rename / duplicate / delete /
 // export / import watchlists; add (autocomplete) / remove / reorder / weight
@@ -2398,9 +3137,28 @@ document.addEventListener('click', (event) => {
 // Keeps the sticky Watchlists search bar (position:sticky, top:var(--header-h))
 // pinned directly under the real header instead of a guessed pixel value --
 // the header's own height changes with viewport width (title/toolbar wrap).
+// Also measures one .subtabs/.cr-page-nav bar's real height into --subtabs-h
+// so nested sub-nav bars and sticky table headers (styles.css) can stack N
+// bars deep without a hardcoded pixel guess -- same rationale, one more var.
 function syncHeaderHeight() {
   const header = document.querySelector('header');
   if (header) document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`);
+  // Every `.tab` stays in the DOM even when inactive (display:none), so the
+  // first `.subtabs`/`.cr-page-nav` in document order may sit inside a
+  // currently-hidden tab and report offsetHeight 0 -- pick the first one
+  // that's actually rendered instead, so --subtabs-h never collapses to 0
+  // (which would re-introduce the sticky-nav overlap this var exists to fix).
+  const nav = $$('.subtabs, .cr-page-nav').find(el => el.offsetHeight > 0);
+  if (nav) document.documentElement.style.setProperty('--subtabs-h', `${nav.offsetHeight}px`);
+  // The Company Research scrollspy's "visible" band has to track the same
+  // --header-h this just (re)measured, or it drifts stale the same way the
+  // sticky CSS offsets used to -- see initCompanyResearchPageNav()'s own note.
+  rebuildCompanyResearchNav();
+  // Watchlist Research's floating table headers read the same --header-h/
+  // --subtabs-h vars for their own sticky offset -- refresh them here too,
+  // the single choke point every data load/company switch/workspace switch/
+  // resize already funnels through.
+  refreshFloatingHeaders();
 }
 window.addEventListener('resize', syncHeaderHeight);
 window.addEventListener('load', syncHeaderHeight);

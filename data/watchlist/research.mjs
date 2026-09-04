@@ -326,7 +326,7 @@ export async function buildResearch(watchlist, { networkPass = 'none', forceSymb
       roce: number(snapshot.roce), roe: number(snapshot.roe),
       twenty: number(quote.twentyDayAverage), fifty: number(quote.fiftyDayAverage), hundred: number(quote.hundredDayAverage), twoHundred: number(quote.twoHundredDayAverage),
       high52: number(quote.fiftyTwoWeekHigh), low52: number(quote.fiftyTwoWeekLow),
-      volume: quote.regularMarketVolume || null, source: fundamentals.source,
+      volume: quote.regularMarketVolume || null, avgVolume20: number(quote.avgVolume20), source: fundamentals.source,
       rsi: number(quote.rsi14), macd: quote.macd || { macdLine: null, signalLine: null, histogram: null },
       trend, momentum: momentumLabel(quote.rsi14), volumeTrend: volumeTrendLabel(quote.regularMarketVolume, quote.avgVolume20),
       relativeStrengthPct: relStrength, support: levels.support, resistance: levels.resistance, atHigh: levels.atHigh,

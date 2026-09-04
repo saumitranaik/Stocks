@@ -100,51 +100,435 @@ no reactivity system and no virtual DOM diffing.
 
 ### 2.3 Sidebar workspaces and sub-tabs
 
-**Phase 6.5** replaced the original flat top-tab nav with a persistent left
-sidebar (`#app-sidebar`, `.sidebar-item` buttons, collapsible to icon-only
-with text monograms, off-canvas drawer below 900px) holding 9 primary
-workspaces: Dashboard, Watchlists, Research, Technicals, Portfolio, Risks,
-Reports, Market Intelligence, Compare. The header lost its old `<nav
-class="tabs">` row and is now a slim global context bar only (title/status,
-watchlist select + Refresh, company selector + Quick Jump + Compare
-toggle/chips) — it does not duplicate the sidebar's navigation. This was a
-pure navigation/DOM-restructuring change: no API route, data flow, or
-analytics module was touched (`activateWorkspaceTab()` in `script.js` is the
-one function that replaced the old `$$('.tabs button')` click handler; every
-`render*()` data function is unchanged and keyed off the same element ids
-regardless of where those ids now live in the DOM).
+**Phase 6.5** (2026-08-16) replaced the original flat top-tab nav with a
+persistent left sidebar (`#app-sidebar`, `.sidebar-item` buttons, collapsible
+to icon-only with text monograms, off-canvas drawer below 900px). The header
+lost its old `<nav class="tabs">` row and is now a slim global context bar
+only — no longer flat, see below — it does not duplicate the sidebar's
+navigation.
 
-Each of Dashboard/Technicals/Portfolio/Risks/Reports/Market Intelligence/
-Compare maps 1:1 to one `.tab` section, same mechanism the old flat nav used.
-**Research is a virtual group**, not a merged section: Fundamentals,
-Valuation, Profitability, Balance Sheet, Growth and Ownership remain 6
-independent `.tab` sections with their own content and their own existing
-sub-tabs, completely untouched; a slim category pill-bar
-(`#research-category-bar`, reuses `.pill-row`/`.pill`) appears only while one
-of the 6 is active and switches among them, while the sidebar's single
-"Research" item stays highlighted. This keeps primary navigation at 2 levels
-(sidebar → workspace) without a 3rd level — each of the 6 sections' own
-sub-tab bar is unchanged content-internal navigation, exactly as before.
-**Market Intelligence** is a real single section that now hosts the Macro
-Intelligence, Sector Intelligence, Earnings & Events and News & Catalysts
-sub-tabs relocated from Dashboard (same element ids, same render functions —
-only their DOM parent changed). **Compare** is a new dedicated workspace that
-reuses `renderCompareAwarePillSelector()` and the existing `compareGrid()` +
-`valuationDetailContent()`/`technicalDetailContent()`/`riskDetailContent()`
-builder functions (already used this way on Valuation/Technicals/Risks) to
-populate 3 new containers — no new comparison logic. **Reports** is a new
-workspace consolidating the 3 standalone-report launch points
-(`report.html`/`portfolio-review.html`/`committee-pack.html`) behind 3 shared
-helpers (`openCompanyReport()`, `openPortfolioReview()`,
-`openCommitteePack()`); the pre-existing launch points (Quick Jump, Watchlists
-manage row, Committee View, the per-row report action) still work, now
-calling the same 3 helpers instead of each constructing its own URL.
+**The IA redesign** (2026-08-28, this entry) replaced Phase 6.5's 9-item
+sidebar (which included a "Research" *virtual group* over 6 independent
+`.tab` sections, plus standalone Technicals/Risks tabs that each silently
+mixed two different analytical scopes — a watchlist-wide comparison table
+and a single-company deep-dive panel, in the same screen) with a sidebar
+built around 4 genuine analytical scopes, per the target information
+architecture:
+
+```
+Dashboard | Watchlists | Company Research | Watchlist Research |
+Portfolio (Analysis) | Reports | Market Intelligence | Compare |
+Sector Research (disabled placeholder — deferred, see below)
+```
+
+**Company Research** (`#company-research`) is one real `.tab` holding
+everything that analyzes **one company at a time**: a single company-switcher
+pill row pinned at the top (reuses `renderCompareAwarePillSelector()`, styled
+distinctly — dashed pills, its own label — from the sub-analysis subtabs
+below it, so the two are never visually confused), and a top-level subtabs
+bar (Overview/Fundamentals/Valuation/Quality/Ownership/Technicals/Risks).
+Fundamentals moved in wholesale (it was already 100% single-company content —
+no split needed). Valuation/Technicals/Risks each split: their deep-dive
+panels (`#valuation-detail-*`, `#technical-detail-*`, `#risk-detail-*`) moved
+here as a **nested** second-level sub-nav (a `.subtab-root` — same
+`.subtabs`/`.subsection` mechanism as a top-level `.tab`, just one level
+deeper); their watchlist-wide comparison tables moved to Watchlist Research
+instead (see below). Two small additions, both pure presentation reuse of
+already-computed fields (zero new calculation, per the single-computation-
+site rule in §8): `companyOverviewContent()` (Overview) and
+`ownershipDetailContent()` (Ownership — no per-company deep-dive existed
+there before; the 4 Ownership comparison tables' own `stock.metrics` fields
+are reformatted as a single-company card). Quality reuses
+`recommendationSummaryCard()`'s already-computed output a second time (same
+string, second display location).
+
+**Watchlist Research** (`#watchlist-research`) is one real `.tab` holding
+everything that compares **every company in the active watchlist**.
+
+**Watchlist Research IA consolidation** (2026-08-29, follow-on to the split
+above): a data/IA audit of this workspace (every view, field, calculation and
+N/A cause, cross-referenced against `data/analytics`/`data/quant`/
+`data/decision` source) found the original 8-item sub-nav (Overview/
+Performance/Ranking/Valuation/Quality/Growth/Risk/Opportunities) repeated the
+same Company/Sector/CMP/P/E identity columns across many separately-clicked
+tables and left several already-computed fields with no comparison-table
+column at all. Collapsed to the target IA's 4-item top-level sub-nav —
+**Overview / Fundamentals / Technicals / Risk & Opportunity** — by nesting
+the previous 8 as one level of inner `.subtab-root` navigation each (the
+same nested-subtab mechanism Company Research already established, `.tab` →
+`.subtab-root` → `.subtab-root`, exercised 2 levels deep for the first time
+here — Fundamentals → Quality → Profitability/Balance sheet/Ownership —
+verified via a live jsdom click-through, no change needed to
+`applySubtabState()`/`initSubtabs()`'s existing `closest('.tab,.subtab-root')`
+scoping). Every comparison table kept its exact element id and `render*()`
+function — only DOM parent/nav position moved, same technique as every prior
+IA relocation in this app. Ranking's separate sub-tab folded into Overview as
+a "Rank by" control + its existing top-5 table (unchanged, same
+`opportunitiesSort` state Dashboard's Top Opportunities already shares);
+Opportunities folded into Risk & Opportunity as a third sibling next to the
+pre-existing Risk Overview/Alerts nested pair, dissolving no functionality.
+
+Two genuinely new things were added, both zero-new-calculation reads of data
+this payload already computed elsewhere and simply had no Watchlist Research
+column before: **Overview** gained a `#wr-overview-table` screening matrix
+(Recommendation/Confidence/Composite score/Upside %/Regime/Risk score/Action,
+one row per company — every figure already sourced from `stock.recommendation`
+/`.valuation`/`.technicalScorecard`/`.institutionalRisk`/`data.intelligence
+.actionScores`, nothing recomputed); **Technicals** gained several columns
+consolidated from the prior Performance tables' underlying data that existed
+on the payload but had no cell: DMA cells now show the derived CMP-vs-DMA gap
+% inline plus a new "DMA alignment" column (client-side arithmetic on
+already-fetched CMP/DMA values, same precedent as the Risk table's existing
+inline "downside to 200-DMA" cells); RSI state (`stock.momentum`), current +
+average(20D) volume (`avgVolume20` — computed since Phase 1 but never
+attached to the stock object until this change, one new field in
+`research.mjs`'s per-stock return + one `metricRegistry.mjs` entry), 1Y
+stock/benchmark return + benchmark identity in Relative Strength (read from
+`stock.performance.periods['1Y']`/`.benchmark`, Phase 7 Stage 2 output that
+had shipped backend-only with no UI consumer until now), real annualized
+Volatility % alongside the existing Volatility Score (`stock.volatilityPct`,
+already computed for beta/DCF, not previously surfaced), and Signal
+Confidence + ADX interpretation in Signals. "Breakout probability" is
+relabeled **"Breakout Score"** in this workspace (display label only, the
+underlying `breakoutProbability` field/formula is unchanged) — the metric
+registry's own `technicalScores` entry already discloses it as "screening
+scores, not statistical probabilities," so the UI label now matches the
+already-disclosed methodology instead of contradicting it. The duplicate
+in-page "Watchlist Research / <name> · N companies" heading this workspace
+picked up from the 2026-08-28 Company Context fix was removed — the global
+header's "Watchlist context" bar already names the active watchlist on every
+workspace, so repeating it here was exactly the kind of duplicated context
+heading that fix's own Phase 7 audit calls out.
+
+**Company Research one-page redesign + Watchlist Research data-parity pass**
+(2026-09-03): a field-level audit of every metric displayed in Company
+Research and Watchlist Research (the two workspaces covered by this task,
+per its own explicit brief) found six backend-computed analytical domains
+that existed on every research payload but were rendered nowhere in the live
+dashboard — Company Quality/Stock Attractiveness/Fundamental View/Market
+View/Action Guidance (`stock.recommendation.*`), Thesis Tracking + Thesis
+Breakers (`intelligence.thesis[symbol]`), Research Quality Gates
+(`stock.researchQuality`), the Phase 7 Stage 1 Quantitative Factor Engine
+(`stock.quantFactors` — not even surfaced in the standalone report), and
+most of the Phase 7 Stage 2 Benchmark & Performance engine
+(`stock.performance` — only the trailing-1Y figure had a UI consumer before
+this change). Every field was already tagged in `metricRegistry.mjs`; this
+change is pure UI wiring, zero new calculations, zero new registry entries.
+
+Company Research's 7 click-to-switch top-level tabs (Overview/Fundamentals/
+Valuation/Quality/Ownership/Technicals/Risks, several with their own nested
+tab-switching sub-nav) are replaced with **one scrolling page per company**:
+a sticky in-page anchor nav (`.cr-page-nav`, plain scroll-links with a
+lightweight `IntersectionObserver` highlighting the section in view — not
+tab-switching, every `.cr-section` stays in the DOM and visible at once)
+over 7 sections — Snapshot, Valuation, Quality & Financial Health, Growth,
+Technical Position, Risk, Intelligence. Every existing content-builder
+function (`fundamentalsContent()`, `valuationDetailContent()`,
+`technicalDetailContent()`, `riskDetailContent()`, `ownershipDetailContent()`)
+is reused verbatim, just inserted into the new stacked layout instead of a
+tab-switched panel — no information loss, same technique as every prior IA
+relocation in this app. Two content gaps are filled: **Growth**
+(`companyGrowthContent()` — no per-company growth view existed before, only
+the Watchlist Research comparison table; reads the same `stock.metrics`
+growth fields `renderGrowthTab()` already uses) and **Quality & Financial
+Health**'s new `companyQualityContent()` (replaces the former "Quality" tab,
+which had reused the Valuation recommendation card verbatim with no distinct
+content of its own). **Intelligence** is a wholly new section
+(`companyIntelligenceContent()`) surfacing Thesis Tracking/Breakers, the
+Quantitative Factor Score (explicitly disclosed, per the Phase 7 product
+rule, as a signal that never overrides the primary Recommendation), and
+Research Quality Gates. `technicalDetailContent()` gained a fifth fragment,
+Relative Performance (3Y/5Y CAGR, max-drawdown detail, Sharpe-like/
+Sortino-like proxy ratios — the first UI consumer of most of
+`stock.performance` beyond the existing 1Y figure). The Valuation section's
+Relative Valuation card gained Peer Tier/Peer Completeness
+(`stock.relativeValuation.peerTier/.peerCompleteness`, previously report-only).
+
+Watchlist Research gained columns on 4 existing tables — no new table, per
+the locked one-table-per-tab architecture (`Company | Sector | CMP | P/E`
+prefix unchanged everywhere): the Overview screening matrix
+(`#wr-overview-table`) gained Company Quality, Stock Attractiveness and
+Factor Score; the Valuation table gained Sector rank, Relative
+attractiveness score and Peer completeness; the Technicals → Relative
+strength table gained 3Y/5Y CAGR; the Risk & Opportunity stock-by-stock risk
+matrix gained Thesis status. Research Quality Gates and the Forward
+Framework (always-unavailable schema) stayed Company-Research-only —
+neither is a comparable screening metric. Files changed: `index.html`,
+`script.js`, `styles.css` — no analytics/scoring/decision/quant/provider/API
+change; every field read here was already computed and already registered.
+
+**Scrolling/table-usability audit + Technicals raw-indicator parity +
+Company Research UI redundancy removal** (2026-09-03, follow-on to the pass
+above): fixed a sticky-hierarchy bug where a nested `.subtab-root`'s own
+`.subtabs` bar shared the exact same `top:var(--header-h)` offset as the
+outer nav above it, painting over it instead of docking below — a new
+JS-measured `--subtabs-h` var (same pattern as `--header-h`, `script.js`'s
+`syncHeaderHeight()`, now also re-run on every `activateWorkspaceTab()` call
+since showing/hiding Company Research's `#company-context-bar` changes the
+header's own height) plus depth-aware `top` offsets on `.subtab-root
+.subtabs`/`.subtab-root .subtab-root .subtabs` make nested sticky bars stack
+instead of overlap. Every Watchlist Research comparison table's `<thead>` is
+now sticky too (`.thead-sticky-1/2/3`, depth-aware the same way), docking
+under whichever nav bars are stacked above that specific table, without a
+second inner scrollbar — the wrapping `.scroll` div still only ever produces
+a horizontal one. A new generic column-sort mechanism (`sortForTable`/
+`initTableSort`/`applySortIndicators`) is wired onto all 14 Watchlist
+Research comparison tables: click a `th[data-sort]` header to sort
+ascending/descending/back to natural order, N/A always last, re-rendering
+through the existing full `render(currentData)` cascade so it composes with
+Compare Mode and active-company highlighting for free. Watchlist Research's
+Technicals tables gained the raw indicator columns Company Research's
+per-company card already showed but had no comparison-table column: ADX/
+DI+/DI-/Support/Resistance (Trend), MACD line/Signal line/Histogram
+(Momentum), OBV/OBV trend/Accumulation-Distribution/its trend (Volume), ATR/
+ATR % of price (Volatility) — zero new calculation, zero new
+`metricRegistry.mjs` entries. Company Research's header Quick Jump row +
+Compare toggle were removed (per the user's own screenshot): `
+#company-context-bar` is only ever shown while already on Company Research,
+so Quick Jump could never be used to jump *to* it from elsewhere, and its
+destinations already exist, more completely, on the page's own
+`.cr-page-nav`; Compare Mode's on/off toggle moved onto the dedicated
+Compare workspace's own button (now a real toggle, not "turn on" only),
+consolidating one function into one place instead of two. The top-of-page
+"Company" pill-row switcher (`#valuation-selector`) and its intro paragraph
+were also removed as a duplicate of the header's own `#company-selector-toggle`
+dropdown, which remains the one company switcher for this workspace. Files
+changed: `index.html`, `script.js`, `styles.css` — no analytics/scoring/
+decision/quant/provider/API change.
+
+**UI regression audit — Company Research nav sync, Watchlist Research sticky
+headers, sort affordance** (2026-09-03, follow-on correction to the pass
+above): the prior entry's sticky-header/thead claims did not hold up under
+real-browser testing (its own validation note already disclosed why: no
+headless-Chromium tooling was available for that pass, so pixel-level sticky
+correctness was checked by "static reasoning over the CSS," not observed). A
+live Puppeteer-driven-Chrome audit against a scratch server (never the user's
+own dev server) found three real defects and fixed each:
+
+1. **Header/nav desync** (`script.js`): `render(data)` (every data load,
+   watchlist switch, refresh, mutation) and `setActiveCompany()` (every
+   company switch) both change the header's own rendered height (`#status`
+   badge text length, `#company-context-bar` content) but neither called
+   `syncHeaderHeight()` — so `--header-h`/`--subtabs-h` routinely went stale
+   the moment either fired, throwing off every sticky offset that depends on
+   them. Both now call it. Company Research's scrollspy
+   (`initCompanyResearchPageNav()`) had two further, independent bugs on top
+   of that: its `IntersectionObserver` used a hardcoded `-120px` band with no
+   relation to the real (150-300px+) sticky offset, so a section could read
+   as "active" while still hidden behind the sticky bars; and it derived
+   "the visible section" solely from each callback's own `entries`, which
+   only ever contains targets whose ratio just crossed a threshold (not
+   every target still intersecting per the IntersectionObserver spec) — a
+   section already in view could silently drop out of consideration,
+   flipping the highlight to a stale section. Fixed by tracking intersecting
+   sections in a persistent map and rebuilding the observer, with a
+   dynamically-measured offset, from inside `syncHeaderHeight()` itself (one
+   function now keeps the CSS vars and the nav highlight in sync together)
+   plus a same-tick default to the first section so scrollY 0 is never
+   unhighlighted.
+2. **Sticky `<thead>` provably non-functional, not just mis-offset**
+   (`styles.css`): confirmed live (a controlled long-scroll test against the
+   real page, not reasoning) that `position: sticky` on `thead th` inside
+   `.scroll`'s `overflow-x: auto` wrapper never actually engages in real
+   Chromium — the cell just tracks page scroll 1:1 forever, which is why
+   headers appeared to "float" wherever the table's natural scroll position
+   put them (matching the reported screenshot of a header rendering after
+   several data rows). This is a known, still-open CSS spec gap
+   (csswg-drafts#865): a `position: sticky` table cell is defeated by *any*
+   ancestor with non-visible overflow, and `.scroll`'s horizontal-scroll
+   overflow is exactly that — no combination of `border-collapse`,
+   `.card`'s `overflow: hidden`, or splitting `overflow-x`/`overflow-y`
+   avoided it. The one configuration confirmed (live) to work in both axes
+   at once is the pattern most production data grids use for this exact
+   combination: `.scroll` itself becomes the sticky cell's real, bounded
+   scroll container (`max-height` reserving the tallest possible sticky-nav
+   stack, `overflow-y: auto`, `overflow-x: auto` unchanged), with the header
+   sticking to `top: 0` of that container instead of a page-relative offset.
+   Scoped via `:has()` so every non-sticky `.scroll` table (Macro/Sector
+   Intelligence, correlation matrix, etc.) is untouched. This does introduce
+   one bounded internal scrollbar per Watchlist Research comparison table
+   where its content exceeds the reserved height — a deliberate, verified-
+   necessary exception to the prior "no second scrollbar" design note, not
+   an oversight; the page itself still scrolls normally around/between
+   tables, and horizontal scroll remains column-aligned with the header
+   (confirmed live).
+3. **Sort affordance invisible until clicked** (`styles.css`): `th[data-sort]`
+   had a hover-color change and `cursor: pointer` but no glyph until a column
+   was actively sorted — every sortable header now carries a dim neutral ↕ at
+   rest, opaque ▲/▼ once sorted (unchanged).
+
+No analytics/scoring/decision/quant/provider/API change; `data/watchlists/`
+and `data/cache/` untouched (the scratch server used for validation shares
+those files with the user's real server — the one incidental write, an
+`activeWatchlist` pointer changed by testing a watchlist switch, was
+reverted before finishing, confirmed via `git diff`). Files changed:
+`script.js`, `styles.css`.
+
+**Watchlist Research scrolling architecture reconsidered — floating header
+clone replaces the bounded per-table scrollbox** (2026-09-03, follow-on UX/
+architecture review of the pass immediately above): the prior entry's fix —
+making `.scroll` itself a bounded `overflow-y:auto` container per table, so
+its sticky `<thead>` had a real scrolling ancestor to clamp against — was
+accepted as *working* but rejected on UX grounds: it traded one real bug
+(sticky non-functional) for 14 nested vertical scroll contexts, each capped
+to a fraction of the viewport, contrary to the single-page-scroll UX this app
+holds to everywhere else. The review's brief required evaluating genuine
+alternatives before accepting that trade, not simply re-asserting "CSS can't
+do this."
+
+Three architectures were evaluated, live, against a scratch server (Puppeteer-
+driven real Chrome, never the user's own dev server, same discipline as the
+prior audit):
+
+- **Page-level sticky header, single `<table>` markup** (keep `.scroll`
+  purely horizontal, put `position:sticky` back on `thead th` relative to the
+  page): re-confirmed broken, and more rigorously than the prior pass — a
+  from-scratch minimal repro isolated the csswg-drafts #865 gap (`position:
+  sticky` on a table cell is defeated by *any* ancestor with overflow other
+  than visible) and showed it holds even with `overflow-x`/`overflow-y` split
+  onto separate values, even with zero overflow ancestors reachable from the
+  same table at all elsewhere on the page, and even with `border-collapse:
+  separate` — ruling out every variant of "just tune the CSS further" for
+  this exact "single `<table>`, `.scroll` needs horizontal-only overflow"
+  combination.
+- **Two-table split** (header and body as separate `<table>` elements, width-
+  synced, so the header sits outside the horizontal-scroll ancestor
+  entirely): rejected before implementation — it would require abandoning the
+  single semantic `<table>` (splitting `thead`/`tbody` across two elements
+  breaks the native header/cell association a real single table gives screen
+  readers for free), for no benefit over the option below.
+- **Floating header clone** (selected): the real `<thead>` stays exactly
+  where it is — in normal page flow, fully accessible, never sticky. A
+  purely visual `position:fixed` clone of just the header row is shown only
+  while the real header has scrolled above the sticky nav stack and the
+  table's own rows still extend below it. `position:fixed` is not subject to
+  the csswg-drafts #865 gap at all (confirmed live before committing to this
+  approach) since it isn't a sticky/scroll-relative positioning scheme —
+  it's a viewport coordinate the code sets directly.
+
+Implementation (`script.js`, new code near `STANDARD_SORT_KEYS`; `styles.css`
+gained `.floating-thead`/`.floating-thead.visible`, replacing the deleted
+`.scroll:has(...)`/`.thead-sticky-N thead th{position:sticky}` rules):
+`.scroll` reverts to purely horizontal-scrolling (no `max-height`, no
+`overflow-y`) across all 14 Watchlist Research comparison tables — the
+bounded per-table scrollbox is gone, restoring one natural page-level
+vertical scroll. The clone is rebuilt from the real header's current markup
+and rendered column widths (`table-layout:fixed`, pixel widths copied from
+the real `<th>` cells) every time it is shown, never hand-maintained, so it
+cannot drift out of sync with a sort/re-render the way a persistent second
+copy could. Horizontal scroll syncs via `transform: translateX()` mirroring
+the real `.scroll` container's own `scrollLeft` — no second horizontal
+scrollbar. The depth-aware offset (1/2/3 stacked nav bars above a table,
+`thead-sticky-1/2/3`) reuses the same `--header-h`/`--subtabs-h` measurement
+`syncHeaderHeight()` already maintains, now also triggering
+`refreshFloatingHeaders()` (covering every call site that already funnels
+through it: data load, company switch, workspace switch, resize) plus a new
+call from `applySubtabState()` (a subtab switch changes which table is
+visible without firing resize/scroll, so the floating header for a newly-
+shown table must be evaluated immediately, not on the next scroll tick).
+Sorting is delegated, not duplicated: a click on a clone header cell replays
+as a real `.click()` on the corresponding real `<th>` at the same column
+index, so `initTableSort`'s existing delegated listener — and everything
+that follows from it, including the full `render(currentData)` re-render —
+remains the only place sort state actually lives. Accessibility: the clone's
+wrapper is `aria-hidden="true"` (the one real, fully-labeled table is the
+only thing assistive tech encounters) with every cloned cell defensively
+`tabIndex=-1`.
+
+Validated live (Puppeteer-driven real Chrome against a scratch server, each
+scenario in its own isolated browser context to avoid this app's own
+by-design `localStorage` subtab/company persistence leaking state between
+scenarios): zero nested vertical scroll contexts remain on Watchlist Research
+at three viewport heights (600/900/1400px) and at the 540px mobile
+breakpoint; a table nested two `.subtab-root` levels deep (Fundamentals →
+Quality → Profitability, `thead-sticky-3`) shows exactly one floating header,
+correctly stacked below all three real nav bars; column alignment between
+the floating clone and the real body rows measured pixel-exact both at rest
+and after a horizontal scroll; clicking a floating-clone header cell sorted
+the real table (verified strictly ascending/descending on a numeric column)
+and the clone rebuilt itself showing the resulting sort indicator, never
+desynced; switching subtabs mid-scroll correctly swapped which table's
+floating header was showing with no gap or stale duplicate; a real mouse-
+wheel walkthrough (25 ticks) scrolled the page naturally to its end with
+never more than one floating header visible at any point; `PageDown`
+advanced the page; no `.floating-thead` descendant is keyboard-focusable;
+zero duplicate DOM ids; Company Research's unrelated scrollspy/nav mechanism
+confirmed unaffected. `node --check script.js` clean; `node --test`: all 109
+tests / 36 suites pass (no analytics/scoring/decision/quant module touched).
+No incidental writes to `data/watchlists/`/`data/cache/` this pass (no
+watchlist-mutating route was ever called against the scratch server).
+Files changed: `script.js`, `styles.css`.
+
+**Nested sub-navigation**: `applySubtabState()`/`initSubtabs()` now scope
+`.subsection` matching to the *nearest* owning root via
+`panel.closest('.tab,.subtab-root')`, so a `.subtab-root` nested inside a
+`.tab`'s own subsection (e.g. Company Research → Valuation's DCF/Reverse DCF/
+Sensitivity/Relative valuation/Historical valuation nav) coexists with the
+outer root's own nav without one's `applySubtabState()` pass touching the
+other's panels. `$$('.tab,.subtab-root').forEach(initSubtabs)` (was
+`$$('.tab')`) is the only other change to this mechanism — every existing
+single-level tab/sub-tab pair is unaffected.
+
+**Header context bar** (§17 of the redesign brief): the existing two-row
+toolbar (`#watchlist-bar`, `#company-context-bar`) gained explicit
+"Watchlist context"/"Company context" micro-labels (`.context-row-label`) so
+which selector controls what is never inferred from the controls alone —
+purely additive, no control removed or moved.
+
+**Company Context scoping correction** (2026-08-29, follow-on to the IA
+redesign above): the redesign moved single-company deep-dives into Company
+Research, but left `#company-context-bar` (selected company name/ticker/
+sector/price/rating, Quick Jump, and the Compare toggle) rendered globally in
+the header on every workspace — so Watchlist Research, Market Intelligence,
+Portfolio Analysis, Dashboard, Watchlists, and Compare all visually implied
+they were analyzing whichever company happened to be last-selected, even
+though none of them are company-scoped. Fixed with a small conditional-
+visibility change, no new component: `activateWorkspaceTab()` (`script.js`)
+now toggles `hidden` on `#company-context-bar`/`#company-context-label`,
+shown only when `tabId === 'company-research'` (`#company-context-bar[hidden]`
+CSS added since `.toolbar`'s own `display:flex` would otherwise out-cascade
+the attribute, the same pattern `.subsection[hidden]`/`#research-category-bar
+[hidden]` already use). `activeCompanySymbol` and every render function that
+reads it are unchanged — this is purely a visibility toggle on an
+already-existing element, not a state change. Watchlist Research and
+Portfolio Analysis each gained a small in-page watchlist-context line
+(`#wr-watchlist-context`/`#portfolio-watchlist-context`, set from `render()`'s
+own `data.watchlistName`/`data.stocks.length` — no new computation) so the
+active watchlist and its company count are still visible without the
+company-scoped bar; Market Intelligence gained a static "Indian Equity
+Market" context line under its own `.workspace-title`. Reports/Compare/
+Dashboard/Watchlists needed no content change — Reports' existing
+`#reports-active-company` line and Compare's own `#compare-selector` already
+gave each its own correct scope-appropriate context.
+
+**Portfolio → "Portfolio Analysis"**: no content/route change (it was already
+100% watchlist/portfolio-scoped, no company-deep-dive mixing to split) — a
+`.workspace-title` heading and a `.card.disclaimer` block make explicit that
+Transactions (trade date/buy-sell/quantity/price/charges/cost basis/realized-
+unrealized P&L) is future, deferred functionality, not built and not faked.
+
+**Sector Research**: a disabled sidebar entry only (`.sidebar-item-disabled`,
+no `data-tab`, no section, no route, no data) — reserves the nav slot per the
+target IA's explicit future-extensibility requirement without implying
+market-wide coverage exists. Deferred pending a security-universe/
+classification data source (`docs/governance/roadmap.md` TD-10/03.8). Sector
+Intelligence (§3.8) is unrenamed and unmoved — it remains under Market
+Intelligence, unchanged in meaning, since it's cross-watchlist and doesn't
+fit the new single-active-watchlist-scoped Watchlist Research destination.
+
+**Compare**/**Reports**/**Market Intelligence** are otherwise unchanged from
+Phase 6.5 (Compare's `renderCompareAwarePillSelector()`+`compareGrid()`
+reuse, Reports' 3 shared launch helpers, Market Intelligence's 4 relocated
+sub-tabs) — Quick Jump's `data-jump` targets were updated to
+`"<tab>:<subtab>"` pairs (e.g. `"company-research:cr-valuation"`) so they land
+on the correct Company Research dimension, not just the workspace.
 
 Every workspace/sub-tab is still a pure client-side visibility toggle over
-already-rendered DOM (`applySubtabState()`, `activateWorkspaceTab()`) — none
-of this phase's changes trigger new computation or new network requests;
-confirmed live that switching among all 9 workspaces and all 6 Research
-categories fires zero HTTP requests.
+already-rendered DOM — none of this redesign's changes touch an API route,
+a data-flow step, or an analytics/scoring module; confirmed live (jsdom
+harness against a scratch-port server) that navigating through every
+workspace, every sub-tab, and every nested deep-dive sub-tab renders real
+content with zero console errors and zero duplicate element ids.
 
 ### 2.4 Rendering pattern
 
