@@ -530,6 +530,86 @@ harness against a scratch-port server) that navigating through every
 workspace, every sub-tab, and every nested deep-dive sub-tab renders real
 content with zero console errors and zero duplicate element ids.
 
+**App-wide UX/data-parity consistency pass** (2026-09-04, follow-on to the
+floating-header-clone/column-sort work above): a full audit (per an explicit
+user brief) confirmed the floating-header-clone + column-sort standard that
+commit `eaf024a` built for Watchlist Research had not been extended to
+comparison tables elsewhere in the app, and found two narrow, genuine bugs
+alongside it. **Extended the standard** (`sortForTable`/`initTableSort`/
+`STANDARD_SORT_KEYS`-style `keyFns`, floating-header registration via the
+generic `table[class*="thead-sticky-"]` selector) to 6 more tables whose row
+count scales with watchlist size: Dashboard's Action Required
+(`#pi-action-table`), Portfolio Analysis's screen-derived allocation
+(`#portfolio-table`), Rebalancing suggestions (`#rebalancing-table`) and
+Exposure Matrix (`#exposure-matrix-table`), and Market Intelligence's
+Earnings Intelligence (`#earnings-intel-table`, floating header) and Sector
+rollups (`#sector-intel-table`, sort only — bounded row count). Dashboard's
+5-row Top Opportunities table and Market Intelligence's fixed ~6/~9-row macro
+tables were audited and left alone (already have an equivalent sort control,
+or too short to matter) — explicit, documented exceptions, not oversights.
+
+The Watchlists tab's `#wl-table` — the single largest, most-used table in the
+app — kept its existing bespoke 3-state sort (`wlSortColumn`/`wlSortDir`, no
+defect in it, and it's entangled with the natural-order-only reorder buttons)
+but gained the floating header it previously lacked. Since `#wl-table` sits
+below a sticky `.wl-search-bar` rather than a `.subtabs` bar, the floating-
+header offset scheme (`floatingHeaderOffset()`, `script.js`) was generalized
+from a depth-number × `--subtabs-h` multiplier into a small
+`FLOATING_HEADER_OFFSET_VARS` map summing whichever named CSS vars a given
+`thead-sticky-*` class sits below — behaviorally identical for the existing
+`thead-sticky-1/2/3` classes (N copies of `--subtabs-h` ≡ the old
+multiplication), and now extensible to `thead-sticky-wl`
+(`['--header-h', '--wl-searchbar-h']`), a new var measured in
+`syncHeaderHeight()` the same way `--subtabs-h` already is. A real,
+independent bug was found and fixed while doing this: cloning `#wl-table`'s
+`<thead>` for the floating-header clone also cloned its bulk-select
+checkbox's `id="wl-select-all"` into the (`aria-hidden`) clone, producing a
+duplicate DOM id — `rebuildFloatingHeaderContent()` now strips every `id`
+from the cloned subtree defensively. Separately, `wlFilteredSortedStocks`'s
+Sector/Risk Trend/Technical Trend sort accessors used `|| ''` instead of
+`|| null`, so a missing value sorted *first* ascending instead of last —
+inconsistent with `isSortNA`'s N/A-always-last convention every other
+sortable column in the app already follows; fixed to `|| null`.
+
+**Company Research → Watchlist Research data-parity pass**: a field-level
+audit (fundamental/technical/risk/intelligence domains, per the same brief)
+found two more already-computed, already-registered fields with no
+comparison-table column: `recommendation.fundamentalView`/`.marketView`
+(short band labels, §4.6) — added as 2 columns on `#wr-overview-table` — and
+`performance.riskAdjusted.sharpeLike`/`.sortinoLike`/`.risk.maxDrawdown`
+(§3.9 Stage 2) — added as 3 columns on Watchlist Research → Technicals →
+Relative strength (`#technical-table-relative-strength`). `actionGuidance`
+(a full sentence) and the 1M/3M/6M performance periods (redundant with the
+1Y/3Y/5Y figures already shown) were evaluated and intentionally excluded —
+documented, not overlooked. Zero new calculation, zero new
+`metricRegistry.mjs` entries — both additions read fields the institutional
+research foundation upgrade and Phase 7 Stage 2 already computed and
+registered. Files changed: `index.html`, `script.js` — no analytics/scoring/
+decision/quant/provider/API change.
+
+Validated live (Puppeteer-driven real Chrome against a scratch server, port
+4187, never the user's own dev server on 4173): 37/37 assertions passed
+across the Asmita watchlist (30 companies, the largest saved watchlist) and
+Banking — column-sort asc/desc/natural cycles on every newly-wired table,
+the Sector-sort N/A-last fix confirmed directly (N/A rows moved from first to
+last), exactly one floating header visible at a time across 4 viewport sizes
+(600/900/1400px desktop, 540px mobile — the mobile case needed the test to
+locate the real thead's actual document position rather than assume a fixed
+scroll offset, since the header/toolbar wraps into more rows at that width),
+horizontal-scroll column alignment pixel-exact on `#wl-table`'s new floating
+header, zero duplicate DOM ids (after the `id`-stripping fix), zero console
+errors (the sole exception, `favicon.ico` 404, is the same pre-existing,
+disclosed non-issue every prior validation note in this app records), and no
+`NaN`/`undefined`/`null` leaking into any new cell. `node --check script.js`
+clean; `node --test`: all 109 tests/36 suites pass (no analytics/scoring/
+decision/quant module touched). The one incidental write during validation —
+switching the scratch server's active watchlist to Asmita/Banking to exercise
+each table — was reverted to its pre-session value (`defence`) before
+finishing; `git diff` on every `data/watchlists/*.json` file showed only that
+expected revert plus pre-existing uncommitted changes from the user's own
+prior sessions (all with `addedAt`/`updatedAt` timestamps in August, weeks
+before this pass).
+
 ### 2.4 Rendering pattern
 
 `render(data)` is the one function that sets `currentData = data` and cascades

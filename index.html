@@ -130,7 +130,7 @@
         <button type="button" id="wl-bulk-remove">Remove selected</button>
       </div>
       <div class="scroll wl-scroll">
-        <table id="wl-table" class="tech-table">
+        <table id="wl-table" class="tech-table thead-sticky-wl">
           <thead>
             <tr>
               <th><input type="checkbox" id="wl-select-all" aria-label="Select all companies"></th>
@@ -283,8 +283,8 @@
       <article class="card">
         <h3>Action Required</h3>
         <div class="scroll">
-          <table id="pi-action-table" class="tech-table">
-            <thead><tr><th>Company</th><th>Sector</th><th>Action</th><th class="num">Action Score</th><th>Confidence</th><th>Primary driver</th><th class="num">Fair value gap</th><th>Risk trend</th></tr></thead>
+          <table id="pi-action-table" class="tech-table thead-sticky-1">
+            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th data-sort="action">Action</th><th class="num" data-sort="actionScore">Action Score</th><th data-sort="confidence">Confidence</th><th data-sort="driver">Primary driver</th><th class="num" data-sort="fvGap">Fair value gap</th><th data-sort="riskTrend">Risk trend</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -446,7 +446,7 @@
         <p class="small">Headline recommendation, valuation, technical and risk read per company &mdash; every figure below is already computed elsewhere on this page; nothing here is a new calculation. Reorder with <b>Rank by</b>, off the same unified recommendation engine every other table on this page reads. For roster management (add/remove/rename/reorder/weights) and the full monitoring table with every filter, use <b>Watchlists</b>.</p>
         <div class="scroll">
           <table id="wr-overview-table" class="tech-table thead-sticky-1">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="change">Change</th><th data-sort="recommendation">Recommendation</th><th title="The recommendation bucket furthest from neutral -- the main driver behind the rating" data-sort="driver">Primary driver</th><th data-sort="confidence">Confidence</th><th class="num" data-sort="composite">Composite score</th><th class="num" title="Upside to the in-house Target Price" data-sort="upside">Upside %</th><th title="Rule-based label combining ADX trend strength, multi-timeframe alignment and volatility" data-sort="regime">Regime</th><th class="num" title="0-100, higher = higher risk" data-sort="riskScore">Risk score</th><th title="Portfolio Action Score band, from data/decision/actionScore.mjs -- blends Recommendation with portfolio fit (weight drift, sector concentration, correlation), so it can differ from Recommendation" data-sort="action">Action</th><th class="num" title="Weighted average of business/financial-strength/profitability/growth/cash-flow/balance-sheet/management/industry-position factors -- measures the underlying business, independent of price" data-sort="companyQuality">Company Quality</th><th class="num" title="Weighted average of valuation/risk-profile/technical-trend/momentum-volume factors -- measures whether today's price/setup is attractive, independent of business quality" data-sort="stockAttractiveness">Stock Attractiveness</th><th class="num" title="Institutional 6-factor framework (Value/Quality/Growth/Momentum/Risk/Size), sector-relative percentile blend. A distinct signal from Recommendation -- never overrides it" data-sort="factorScore">Factor score</th></tr></thead>
+            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="change">Change</th><th data-sort="recommendation">Recommendation</th><th title="The recommendation bucket furthest from neutral -- the main driver behind the rating" data-sort="driver">Primary driver</th><th data-sort="confidence">Confidence</th><th class="num" data-sort="composite">Composite score</th><th class="num" title="Upside to the in-house Target Price" data-sort="upside">Upside %</th><th title="Rule-based label combining ADX trend strength, multi-timeframe alignment and volatility" data-sort="regime">Regime</th><th class="num" title="0-100, higher = higher risk" data-sort="riskScore">Risk score</th><th title="Portfolio Action Score band, from data/decision/actionScore.mjs -- blends Recommendation with portfolio fit (weight drift, sector concentration, correlation), so it can differ from Recommendation" data-sort="action">Action</th><th class="num" title="Weighted average of business/financial-strength/profitability/growth/cash-flow/balance-sheet/management/industry-position factors -- measures the underlying business, independent of price" data-sort="companyQuality">Company Quality</th><th class="num" title="Weighted average of valuation/risk-profile/technical-trend/momentum-volume factors -- measures whether today's price/setup is attractive, independent of business quality" data-sort="stockAttractiveness">Stock Attractiveness</th><th title="Quality+Valuation+Risk buckets only, no Technical -- so a weak chart can never masquerade as a business-quality read" data-sort="fundamentalView">Fundamental View</th><th title="The Technical bucket plus the technical regime label" data-sort="marketView">Market View</th><th class="num" title="Institutional 6-factor framework (Value/Quality/Growth/Momentum/Risk/Size), sector-relative percentile blend. A distinct signal from Recommendation -- never overrides it" data-sort="factorScore">Factor score</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -546,7 +546,7 @@
         </div>
         <div class="subsection" data-subtab="relative-strength" role="tabpanel">
           <article class="card"><h3>Relative strength</h3><div class="scroll"><table id="technical-table-relative-strength" class="tech-table thead-sticky-2">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="stock1y">1Y return</th><th class="num" data-sort="benchmark1y">Benchmark 1Y return</th><th class="num" title="Company's trailing-1Y return minus the benchmark's" data-sort="relativeStrength">Relative strength</th><th data-sort="benchmark">Benchmark</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations, not an assumed integer year count" data-sort="cagr3y">3Y CAGR</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations" data-sort="cagr5y">5Y CAGR</th></tr></thead>
+            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="stock1y">1Y return</th><th class="num" data-sort="benchmark1y">Benchmark 1Y return</th><th class="num" title="Company's trailing-1Y return minus the benchmark's" data-sort="relativeStrength">Relative strength</th><th data-sort="benchmark">Benchmark</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations, not an assumed integer year count" data-sort="cagr3y">3Y CAGR</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations" data-sort="cagr5y">5Y CAGR</th><th class="num" title="Largest peak-to-trough price decline (weekly series)" data-sort="maxDrawdown">Max drawdown</th><th class="num" title="Proxy risk-adjusted return: (return - risk-free rate) / volatility. Not a conventional-methodology Sharpe ratio -- this app has no dividend-inclusive total-return data source" data-sort="sharpeLike">Sharpe-like</th><th class="num" title="Proxy risk-adjusted return using downside deviation instead of total volatility. Not a conventional-methodology Sortino ratio" data-sort="sortinoLike">Sortino-like</th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
@@ -644,8 +644,8 @@
           <h3>Screen-derived model allocation</h3>
           <p class="small">Weights favor stronger composite screens and are capped to avoid concentration. Rows follow the watchlist's own order &mdash; this tab does not re-rank your companies. This is an illustrative research output, not personalized investment advice.</p>
           <div class="scroll">
-            <table id="portfolio-table">
-              <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>P/E</th><th>Quality score</th><th>Target weight</th><th>Bucket</th></tr></thead>
+            <table id="portfolio-table" class="tech-table thead-sticky-1">
+              <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="quality">Quality score</th><th class="num" data-sort="weight">Target weight</th><th data-sort="bucket">Bucket</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -741,8 +741,8 @@
       <article class="card">
         <h3>Rebalancing suggestions <span id="rebalancing-info"></span></h3>
         <div class="scroll">
-          <table id="rebalancing-table" class="tech-table">
-            <thead><tr><th>Company</th><th class="num">Current weight</th><th class="num">Target weight</th><th>Suggested action</th><th class="num">Action Score</th><th>Rationale</th></tr></thead>
+          <table id="rebalancing-table" class="tech-table thead-sticky-1">
+            <thead><tr><th data-sort="company">Company</th><th class="num" data-sort="currentWeight">Current weight</th><th class="num" data-sort="targetWeight">Target weight</th><th data-sort="action">Suggested action</th><th class="num" data-sort="actionScore">Action Score</th><th data-sort="rationale">Rationale</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -755,8 +755,8 @@
       <article class="card">
         <h3>Per-company exposure</h3>
         <div class="scroll">
-          <table id="exposure-matrix-table" class="tech-table">
-            <thead><tr><th>Company</th><th class="num">Interest-rate</th><th>Currency</th><th class="num">Commodity</th><th class="num">Regulatory</th><th>Economic cycle</th></tr></thead>
+          <table id="exposure-matrix-table" class="tech-table thead-sticky-1">
+            <thead><tr><th data-sort="company">Company</th><th class="num" data-sort="interestRate">Interest-rate</th><th data-sort="currency">Currency</th><th class="num" data-sort="commodity">Commodity</th><th class="num" data-sort="regulatory">Regulatory</th><th data-sort="economicCycle">Economic cycle</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -837,7 +837,7 @@
         <h3>Sector rollups</h3>
         <div class="scroll">
           <table id="sector-intel-table" class="tech-table">
-            <thead><tr><th>Sector</th><th class="num">Companies</th><th class="num">Composite</th><th class="num">Valuation</th><th class="num">Technical</th><th class="num">Risk</th><th class="num">Rel. strength</th><th class="num">EPS CAGR 5Y</th><th class="num">Regulatory sens.</th><th class="num">Commodity sens.</th><th>Ratings</th></tr></thead>
+            <thead><tr><th data-sort="sector">Sector</th><th class="num" data-sort="companies">Companies</th><th class="num" data-sort="composite">Composite</th><th class="num" data-sort="valuation">Valuation</th><th class="num" data-sort="technical">Technical</th><th class="num" data-sort="risk">Risk</th><th class="num" data-sort="relStrength">Rel. strength</th><th class="num" data-sort="epsCagr">EPS CAGR 5Y</th><th class="num" data-sort="regulatorySens">Regulatory sens.</th><th class="num" data-sort="commoditySens">Commodity sens.</th><th>Ratings</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -854,8 +854,8 @@
       <article class="card">
         <h3>Earnings Intelligence</h3>
         <div class="scroll">
-          <table id="earnings-intel-table" class="tech-table">
-            <thead><tr><th>Company</th><th>Latest quarter</th><th class="num">Revenue QoQ</th><th class="num">Revenue YoY</th><th class="num">Net profit QoQ</th><th class="num">Net profit YoY</th><th class="num">Op. margin QoQ</th><th class="num">Op. margin YoY</th><th class="num">Vs. trailing avg</th><th>Next earnings date</th></tr></thead>
+          <table id="earnings-intel-table" class="tech-table thead-sticky-1">
+            <thead><tr><th data-sort="company">Company</th><th data-sort="latestPeriod">Latest quarter</th><th class="num" data-sort="revenueQoq">Revenue QoQ</th><th class="num" data-sort="revenueYoy">Revenue YoY</th><th class="num" data-sort="profitQoq">Net profit QoQ</th><th class="num" data-sort="profitYoy">Net profit YoY</th><th class="num" data-sort="marginQoq">Op. margin QoQ</th><th class="num" data-sort="marginYoy">Op. margin YoY</th><th class="num" data-sort="deviation">Vs. trailing avg</th><th data-sort="calendarStatus">Next earnings date</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
