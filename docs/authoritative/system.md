@@ -610,6 +610,306 @@ expected revert plus pre-existing uncommitted changes from the user's own
 prior sessions (all with `addedAt`/`updatedAt` timestamps in August, weeks
 before this pass).
 
+**Watchlist Research navigation/scroll redesign — reference implementation for
+an app-wide IA pattern** (2026-09-05): a UX audit (per an explicit user brief,
+with three annotated screenshots as the primary reference) found the root
+cause of "excessive whitespace" / "controls stacking during scroll" was not
+a spacing defect but an information-hierarchy one: the shared, app-wide
+`<header>` (title/subtitle/badge + `#watchlist-select`/`#refresh-btn`, used
+identically by every workspace) is `position:sticky;top:0` at its full
+"landing page" height and never shrinks at any scroll position, on any tab;
+directly beneath it, a primary `.subtabs` bar and any nested `.subtab-root
+.subtabs` bar both stick using identical pill styling, reading as two
+unrelated rows rather than a parent/child pair. Because `#watchlist-select`/
+`#refresh-btn`/`#status` are singleton elements `script.js` wires up once and
+every workspace shares (not duplicable into a Watchlist-Research-only
+container without breaking every other tab's watchlist switching), the fix
+gates a reusable mechanism to this one workspace instead of duplicating or
+moving shared chrome: `activateWorkspaceTab()` now sets
+`document.body.dataset.activeTab`, and a new rAF-throttled scroll listener
+(`updateHeaderScrollState()`) toggles `body.is-scrolled` — both fully generic,
+wired to zero visual effect on their own. New CSS gated on
+`body[data-active-tab="watchlist-research"].is-scrolled` collapses the
+existing header in place (hides the subtitle, shrinks the h1, removes the
+"Watchlist context" label, pulls the toolbar onto the same row) purely by
+restyling the unchanged DOM — every other workspace's header is pixel-
+identical to before until it opts in the same way. Separately, three new
+CSS-only modifier classes (`.subtabs-primary`/`.subtabs-secondary`/
+`.subtabs-tertiary`, applied only to Watchlist Research's own nav elements in
+`index.html`) give the primary Overview/Fundamentals/Technicals/Risk &
+Opportunity bar a bold underline-tab treatment while nested bars (e.g.
+Fundamentals → Valuation/Quality/Growth, Quality → Profitability/Balance
+sheet/Ownership) render as a visually subordinate, labeled toolbar (a
+`::before`-generated "SECTION ›" prefix from a new `data-section-label`
+attribute) — deliberately changing only color/weight/background/box-shadow,
+never container padding, button padding, font-size, or border-width, because
+`--subtabs-h` (`syncHeaderHeight()`) measures one bar's height and multiplies
+it by nesting depth for every level's sticky `top` offset; any height
+mismatch between levels would reintroduce a gap or overlap the whole feature
+exists to remove. `initSubtabs`/`applySubtabState` are unaffected (they match
+on the underlying `.subtabs`/`.subsection` classes, never the new modifiers).
+Scope, per the brief's own explicit instruction: implemented on Watchlist
+Research only, everywhere else unchanged, structured as a reference pattern
+for later app-wide rollout once approved. Files changed: `index.html`,
+`script.js`, `styles.css` — no analytics/scoring/decision/quant/provider/API
+change.
+
+Validated live against a scratch server (port 4187, never the user's own dev
+server; a zero-dependency Chrome DevTools Protocol driver over Node 22's
+built-in `fetch`/`WebSocket` was used in place of Puppeteer, which was not
+available in this session's sandbox and was not installed, preserving the
+zero-dependency validation discipline every prior pass in this history
+established): all 4 required scroll states captured and inspected
+(landing/small-scroll/deep-scroll-into-Technicals→Momentum/back-to-top)
+against the Asmita watchlist (30 companies, the largest saved watchlist, to
+guarantee enough page height to actually scroll) — the header correctly
+collapses (subtitle hidden, h1 27px→15px, toolbar single row) once scrolled
+and correctly restores full-size at the top with no flicker or duplicate
+spacing; at deep scroll, the primary bar, the "TECHNICALS ›" secondary bar,
+and the floating table-header clone measured (`getBoundingClientRect()`) with
+zero gap and zero overlap between all three (each docks at exactly the
+bottom edge of the one above it); zero console errors/exceptions throughout;
+tab/sub-tab clicks across all 4 primary sections plus one nested
+Fundamentals→Quality→Balance-sheet drill-down confirmed correct panel
+visibility. One functional check doubled as the required watchlist-switch
+validation: switching the active watchlist via `#watchlist-select` correctly
+reloaded and re-rendered; the scratch server's `activeWatchlist` was restored
+to its exact pre-run value (`banking`, this session's own already-in-progress
+uncommitted state, captured via `GET /api/watchlists` before the run) via the
+same `POST /api/watchlists/active` route the UI uses, confirmed after the
+fact with `git diff` showing no unintended change to `data/watchlists/
+index.json`. `node --check` clean on every changed file; `node --test`:
+109/109 unaffected (no analytics/scoring/decision/quant module touched).
+
+**App-wide bounded-viewport shell — supersedes the document-scroll design
+above** (2026-09-05, same-day follow-on): a second UX brief required the
+opposite of what the entry immediately above built. That entry's own
+rationale (quoted above) was to keep `html`/`body` as the *one* scrolling
+surface and fake "sticky" table headers with a `position:fixed` clone,
+specifically because a bounded per-table scrollbox had been tried and
+rejected minutes earlier for producing 14 nested scrollbars on one long
+page. The new brief's explicit, non-negotiable instruction (confirmed with
+the user after flagging this exact conflict) was the reverse: the
+application shell must not be the primary scroll surface at all — sidebar,
+header and each page's own identity/navigation must be genuinely fixed
+regions of the viewport, with only a page's own content region scrolling,
+using real flex/grid layout rather than sticky-offset math or a clone.
+
+**Shell structure** (`styles.css`, gated to `@media(min-width:901px)` —
+`<900px` keeps the pre-existing off-canvas-drawer/document-scroll mobile
+fallback unchanged, since mobile was explicitly out of scope for this pass):
+`html`/`body` are `height:100%`, `body{overflow:hidden}`. `.app-shell`
+(sidebar + `.app-main`) is `height:100vh;overflow:hidden`. `.app-main` is a
+flex column (`header` then `main#main`, both filling `height:100%`). `header`
+and `.sidebar` dropped `position:sticky` entirely — they're now plain,
+non-scrolling flex siblings, so they never need sticky-offset math at all.
+`main#main.container` is `flex:1;min-height:0;overflow-y:auto;display:flex;
+flex-direction:column` — the one shared scroll viewport, though in the
+common case (below) its own single child exactly fills it and it never
+actually needs to scroll itself.
+
+**Per-tab fixed/scroll split**: `.tab.active` is a flex column
+(`flex:1;min-height:0`) whose fixed children (title, intro text, nav bars,
+filters) keep their natural height and whose one visible `.subsection` (or,
+for the 3 tabs with no sub-nav — Watchlists, Company Research, Reports — a
+new `.scroll-body` wrapper div added around "everything after the fixed
+nav") becomes the actual scrolling region (`flex:1;min-height:0;
+overflow-y:auto`). A `.subsection` that itself just hosts one more level of
+nested sub-nav (a `.subtab-root`, e.g. Watchlist Research's Fundamentals →
+Quality → Profitability, 3 levels deep) is a pass-through instead
+(`.subsection:has(>.subtab-root){overflow-y:visible}`) and the nested
+`.subtab-root` repeats the exact same fixed-nav/scrollable-body split one
+level deeper — nav bars at every level are just ordinary stacked flex
+siblings now, with zero pixel-offset bookkeeping regardless of nesting
+depth (the old `--header-h`/`--subtabs-h` CSS vars and their
+`syncHeaderHeight()`-driven measurement are gone entirely).
+
+**A real, easy-to-miss flexbox trap, confirmed live**: flex items shrink
+below their content size by default (`flex-shrink:1`). A `.subsection`
+acting as its own scroll owner (a "mixed" panel: KPI cards + a table +
+notes, none individually bounded) needs its children to instead keep their
+*natural* height, so the total legitimately exceeds the subsection's own
+bounded height and its `overflow-y:auto` actually engages — without
+`.tab.active>*,.subsection>*{flex-shrink:0}` (with the pass-through/
+scroll-owning exceptions given back `flex-shrink:1` at higher specificity:
+the visible `.subsection` itself, `.scroll-body`, a nested `.subtab-root`,
+`.card-table-fill`), a tall card was observed silently squeezed down to fit
+instead of the subsection ever scrolling — `scrollHeight === clientHeight`,
+no overflow, no scrollbar, data invisibly cut off. This is exactly the kind
+of defect the brief's own "avoid fragile hard-coded offsets, let flex/grid
+allocate the remaining height" instruction was written to prevent, and it
+would not have been caught without live measurement (`element.scrollHeight`
+vs `.clientHeight`), not just visual inspection.
+
+**Table headers — native `position:sticky` where genuinely possible, the
+floating clone kept only where it's the more honest answer**: a panel whose
+entire content (after any intro text) is exactly one card wrapping one
+table — Watchlist Research's Profitability/Balance sheet/Ownership/Growth
+and its Trend/Momentum/Volume/Relative strength/Volatility/Signals tables,
+10 in total — now gets a real `position:sticky` header (new
+`.sticky-thead-native` marker class), because that table's own `.scroll`
+wrapper can legitimately be the panel's one bounded scroll box with nothing
+else competing for the space. Two real, confirmed-live prerequisites for
+this to actually work, beyond just adding `position:sticky`: (1)
+`border-collapse:collapse` (this table's own default) defeats sticky on a
+table cell in real Chrome regardless of the ancestor chain — needs
+`border-collapse:separate;border-spacing:0`, scoped to these tables only,
+not a global change to every table's border rendering; (2) `.card`'s own
+pre-existing `overflow:hidden` (rounded-corner clipping) *also* defeats
+sticky on a descendant table cell, even though `.card` sits further out
+than the table's actual (and actually bounded/scrolling) `.scroll`
+ancestor — confirmed by toggling it live, not by reasoning about the spec —
+so `.card-table-fill` (the marker on these 10 cards) overrides back to
+`overflow:visible`, safe because `.scroll`'s own `overflow:auto` still
+clips its own internal content with a real scrollbar and nothing in this
+exact-fit flex layout (h3 + `.scroll`) ever needed the rounded-corner clip.
+Every other table that shares a scroll region with sibling KPI cards/notes/
+a second card — Dashboard's Action Required, Portfolio's allocation/
+rebalancing/exposure-matrix, Watchlists' company table, Market
+Intelligence's Earnings Intelligence, Watchlist Research's own Overview/
+Valuation/Risk-overview/Alerts tables — keeps the floating-header-clone
+mechanism from the entry above (still the only way to get a stable header
+when the real scroll owner is a panel, not the table itself, without either
+losing the table's native horizontal scroll or reintroducing a second
+visible scrollbar on an already-scrolling panel — a deliberate, documented
+exception, not an oversight), repointed from `window`/CSS-var-summed
+offsets onto each table's own real scrolling ancestor
+(`entry.scrollAncestor.getBoundingClientRect().top` is now the correct
+show/hide and position threshold directly, found once at init by walking up
+past pass-through wrappers).
+
+**Portfolio Analysis's disclaimer banner**: the permanent `.card.disclaimer`
+block ("Watchlist-derived, not a transaction ledger...") is gone from the
+layout; the same copy is now a compact `helpIcon()` (new, generic sibling of
+the existing tier-specific `infoIcon()` — same `.info-icon`/`.info-popover`
+component, just without a Sourced/Calculated/Heuristic tier) next to the
+"Portfolio Analysis" workspace title, filled by `render()` on every load —
+no information lost, no new permanent vertical chrome.
+
+**Header density**: the previous entry's scroll-triggered header-collapse
+(`body.is-scrolled`, `updateHeaderScrollState()`) is removed outright, not
+just disabled — it existed to reclaim space while the header blocked a
+scrolling page, which no longer happens (the header is a fixed-height
+sibling above `#main`, never overlapping scrolling content). What replaces
+it is simpler: the header is compact by default now, on every workspace, all
+the time (`header .title h1` 27px→19px, tighter top/bottom padding) — a
+smaller permanent footprint instead of a large one that sometimes shrinks.
+
+Validated live (same zero-dependency CDP-driver discipline as the entry
+above, a fresh scratch server on a different port, never the user's own dev
+server): `html`/`body` never overflow at 1600×1000, 1400×900 and 1400×600
+(`scrollHeight === clientHeight` on `document.documentElement` in every
+case) across all 8 workspaces, zero duplicate DOM ids, zero console errors;
+the 3-level-deep Watchlist Research nested nav (primary/Fundamentals-Quality
+secondary/Quality-detail tertiary) measured with zero gap/overlap between
+levels; all 10 native-sticky tables confirmed to hold position across a
+manual `scrollTop` change (measuring the sticky `<th>` itself — an earlier
+check that measured the non-sticky `<thead>` wrapper instead produced a
+false failure, corrected before concluding anything); all 6 mixed-panel
+floating-clone tables checked directly against `floatingHeaders` (by object
+reference, not by fragile class-string matching) confirmed to genuinely
+overflow their own ancestor (not silently shrunk-to-fit) and the clone
+shows/positions/hides correctly against that ancestor's own bounding rect;
+column sort still applies its indicator class on both a native-sticky and a
+clone-based table; the Watchlists add-company autocomplete dropdown renders
+uncalibrated by any ancestor `overflow`, confirming `.tab.active`/
+`.subtab-root` deliberately do **not** set `overflow:hidden` themselves
+(scroll ownership is already fully assigned at the leaf level, so nothing
+needs those two to clip); Portfolio's disclaimer-banner removal and help-icon
+content confirmed present; sidebar collapse/expand confirmed; the Company
+Research anchor-nav scrollspy confirmed to scroll `.scroll-body` (not the
+page) after bringing the automated browser window to the OS foreground — an
+earlier check without that step showed no scroll at all, which traced to
+Chrome throttling `{behavior:'smooth'}` `scrollIntoView` animations in an
+unfocused window (a test-environment artifact, not a regression: `{behavior:
+'instant'}` and a real, user-focused click both worked throughout). `node
+--check` clean; `node --test`: 109/109 unaffected. No incidental writes to
+`data/watchlists/`/`data/cache/` (confirmed via `diff` against a pre-run
+snapshot of `data/watchlists/index.json`; no mutation route was ever called
+against the scratch server). Files changed: `index.html`, `script.js`,
+`styles.css`.
+
+**Explicit exceptions, not oversights**: `report.html`/`report.js`,
+`portfolio-review.html`/`.js` and `committee-pack.html`/`.js` remain
+separate, standalone, print-oriented pages with their own long-form-reading
+document scroll — untouched, per the brief's own long-form-reading
+carve-out. Below 900px the shell still falls back to normal document scroll
+with the existing off-canvas sidebar drawer — desktop is the primary target
+and this avoids reworking an already-working mobile path for a viewport
+class explicitly out of scope.
+
+**Fixed-context regression fix — decision-context regions still scrolling
+away inside a mixed `.subsection`** (2026-09-05, same-day follow-on): a
+regression report with annotated screenshots (Portfolio Analysis's KPI/
+summary-card area, Watchlist Research's recommendation/score/trend area)
+showed the bounded-viewport shell above did not fully deliver its own stated
+goal. Root cause: the shell's per-tab fixed/scroll split (above) correctly
+pins each `.tab`'s title/intro/nav bars, but treats **the entire visible
+`.subsection` as one scroll unit** — a `.subsection` that itself mixes a
+page-level KPI/summary/recommendation grid with a detail table (e.g.
+Watchlist Research Overview's `#wr-kpis` grid sitting directly beside its
+screening-matrix table, Portfolio Analysis Overview's `#portfolio-kpis` grid
+beside its allocation table) had no mechanism to keep the grid fixed while
+only the table scrolled — both were equally direct children of the one
+`overflow-y:auto` `.subsection`, so scrolling the table carried the KPI grid
+away with it. This is the **desktop scrolling standard** this app now holds
+to everywhere: persistent application, page, navigation and decision context
+(Levels 1-4 below) remain outside the detailed-content scroll region; only
+high-volume/detail content (Level 5) scrolls.
+
+```
+Level 1 — Application context     Global header, sidebar, watchlist selector, refresh
+Level 2 — Page context            Page title, page description
+Level 3 — Navigation              Primary / secondary / tertiary tabs
+Level 4 — Decision context        KPI / summary / recommendation / score / trend cards
+Level 5 — Detail work area        Tables, long lists, detailed analysis (scrolls)
+```
+
+**Fix**: reused the exact `.scroll-body` marker class the 3 no-sub-nav tabs
+(Watchlists, Company Research, Reports) already use for "everything after
+the fixed nav," one level deeper — a `.subsection` that mixes fixed Level-4
+content with Level-5 detail now wraps only the Level-5 part in a
+`.scroll-body` sibling placed after the fixed grid/context elements. One new
+CSS rule generalizes the existing pass-through pattern:
+`.subsection:has(>.scroll-body){overflow-y:visible}` (alongside the existing
+`:has(>.subtab-root)`/`:has(>.card-table-fill)` cases), with
+`.subsection>.scroll-body` added to the flex-shrink:1 exception list so the
+wrapped region — not the outer `.subsection` — is the one that actually
+bounds and scrolls. No JS, no pixel-offset math, no new scroll container
+type: `.scroll-body` was already the shell's own answer to "wrap the
+scrollable part," just previously applied only at the whole-tab level.
+
+Applied everywhere this KPI-grid-plus-detail pattern existed: Watchlist
+Research (Overview's screening matrix; Risk & Opportunity → Risk overview's
+stock-by-stock matrix + institutional risk view), Portfolio Analysis
+(Overview's allocation table + notes; Exposure Matrix's per-company table;
+Health & Rebalancing's rebalancing-suggestions table, with the Portfolio
+health/Historical health trend score cards kept fixed as Level-4 context
+alongside it), Dashboard (Portfolio Intelligence's Action Required table +
+Opportunity/Risk monitors + change log; Committee View's opportunity/risk/
+sector/concentration/rebalancing cards), Market Intelligence (Macro
+Intelligence's indicator tables, with the Market regime and Data Quality
+cards kept fixed; Sector Intelligence's rollup table), and the Watchlists
+tab (the "Portfolio summary" KPI card, previously inside the tab's own
+`.scroll-body` alongside the company table — pulled out as a fixed sibling
+before it).
+
+Validated live (zero-dependency CDP driver over Node 22's built-in
+`fetch`/WebSocket, same discipline as every prior pass in this history,
+driving the system's real installed Chrome headless against a scratch
+server on port 4188, never the user's own dev server): at both 1600×1000 and
+a shorter 1400×600 viewport, `#wr-kpis`'/`#portfolio-kpis`' bounding rects
+are pixel-identical before and after scrolling their subsection's
+`.scroll-body` to its end (confirming the grid never moves while the table
+genuinely does scroll); zero page-level (`html`/`body`) scroll at either
+height; zero duplicate DOM ids; column sort, sidebar collapse, tab/sub-tab
+navigation and watchlist data loading confirmed still functioning
+end-to-end. No mutating route was ever called against the scratch server
+(cache-only `GET` requests only); `git diff` after the run showed no change
+to any `data/watchlists/*.json` beyond what was already uncommitted at the
+start of the session. `node --check` clean on every touched file; `node
+--test`: 109/109 unaffected. Files changed: `index.html`, `styles.css`.
+
 ### 2.4 Rendering pattern
 
 `render(data)` is the one function that sets `currentData = data` and cascades
@@ -640,6 +940,47 @@ frontend module system exists to import them from, §1.2), fetching
 `GET /api/watchlists/:id/portfolio-review` (also cache-only). Not a third
 distinct pattern, just `report.html`'s own template reused for a different
 scope.
+
+### 2.6 Missing-data display standard
+
+**Standard**: missing, unavailable or unverified data is displayed as a
+**blank** value everywhere in the UI — tables, KPI/summary cards, tooltips,
+generated report pages — unless explicit semantic text is genuinely required
+(e.g. a disclosed methodology note explaining *why* a field is blank, such as
+"Gross margin is left blank: this data source exposes no separate
+cost-of-goods-sold line"). Never `-`, `—`, "Unknown," or "Not available" as a
+generic substitute — those are still guesses at a convention nobody asked
+for; blank is the one answer that never implies a value exists.
+
+**Implementation**: the string `'N/A'` remains the internal missing-value
+sentinel several backend modules return (`data/analytics`, `data/decision`,
+`data/scoring`, `data/watchlist`, `data/reporting`, `data/providers`) — this
+is a backend data-contract detail predating this standard, not changed by it
+(changing it would ripple into the automated test suite's exact-value
+assertions and every report/frontend consumer for no behavioral gain, since
+the display layer already normalizes it below). Each of the 4 frontend
+entry points (`script.js`, `report.js`, `portfolio-review.js`,
+`committee-pack.js` — independent copies, per §1.2/§2.5's no-shared-runtime
+architecture) blanks it at the one place nearly every displayed string
+already passes through, its own `escape()`: `str === 'N/A' ? '' : ...`. The
+4 numeric formatters each file also carries (`fmt`/`pct`/`compact`/
+`suffixed`) return `''` instead of `'N/A'` for a `null`/non-finite input, for
+the same reason. `isSortNA()` (`script.js`'s column-sort mechanism) treats
+both `''` and the literal `'N/A'` as not-available, so blanked cells keep
+sorting last exactly as before. A handful of internal-only sentinel
+comparisons/lookup keys are deliberately left as the literal string `'N/A'`
+— e.g. `EXPOSURE_TIER_CLASS`/`MACRO_DIRECTION_CLASS`'s `'N/A'` object keys
+(mapping a real backend tier/direction value to a CSS class, never displayed
+as text) and the Watchlists-tab rating-filter's `sig !== 'N/A'` (excluding
+unresolved companies from a dropdown) — these compare against the backend's
+real sentinel value and produce no visible "N/A" text either way, so they're
+unaffected by, and orthogonal to, this display standard.
+
+**Future work**: any new displayed field follows the same rule — read the
+real value or render blank; never fabricate `-`/"Unknown"/"N/A" text. If a
+new frontend file is added outside the 4 above, it needs its own equivalent
+`escape()`/formatter treatment; there is no shared frontend module system to
+inherit it from (§1.2).
 
 ---
 
@@ -1341,8 +1682,13 @@ additive fields on the same registry entries.
 
 **Rule for all future work**: every new metric added anywhere in the system
 must get a `metricRegistry.mjs` entry before it ships. A metric with no real
-data source available renders an explicit "N/A"/"not available" — it is never
-estimated to fill a gap.
+data source available renders blank — it is never estimated to fill a gap.
+Several backend modules (`data/analytics`, `data/decision`, `data/scoring`)
+still return the internal sentinel string `'N/A'` for such a metric; this is
+a backend data-contract detail, not a UI convention — the display layer
+(`script.js`/`report.js`/`portfolio-review.js`/`committee-pack.js`, each via
+its own `escape()`) blanks that sentinel at render time (§2.6) rather than
+showing the literal text "N/A" to a user.
 
 ---
 

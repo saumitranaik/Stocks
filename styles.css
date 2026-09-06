@@ -1,4 +1,62 @@
-:root{--bg:#0b1020;--panel:#121a2b;--panel2:#18233a;--text:#e6eefc;--muted:#9fb0d1;--green:#16c784;--blue:#4da3ff;--amber:#f5b942;--red:#ff5c5c;--border:#26344f}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,Segoe UI,Arial,sans-serif}header{position:sticky;top:0;z-index:3;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}.container{max-width:1900px;margin:auto;padding:20px}.title{display:flex;justify-content:space-between;gap:20px;align-items:center}.title h1{font-size:27px;margin:0}.title p,.small{color:var(--muted);font-size:12px}.badge{padding:8px 12px;border-radius:999px;color:var(--blue);background:#10203a;border:1px solid var(--border);white-space:nowrap}form{display:flex;gap:10px;margin-top:18px}input,select,button{font:inherit}input,select{color:var(--text);background:var(--panel);border:1px solid var(--border);padding:11px 12px;border-radius:8px}input{flex:1;min-width:200px}button{cursor:pointer;color:var(--text);background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:9px;font-weight:700}form button{color:#08111f;background:var(--blue);border-color:var(--blue)}.tab{display:none;padding:2px 0 24px}.tab.active{display:block}.empty{min-height:50vh;display:grid;place-content:center;text-align:center;gap:9px;color:var(--muted)}.empty b{color:var(--text);font-size:17px}.grid{display:grid;gap:16px;margin:16px 0}.four{grid-template-columns:repeat(4,1fr)}.two-col{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:16px 0}.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:18px;overflow:hidden}.card h3{color:var(--muted);font-size:14px;margin:0 0 12px}.card p{line-height:1.65}.kpi{font-size:29px;font-weight:800;margin:8px 0}.positive{color:var(--green)}.amber{color:var(--amber)}.blue{color:var(--blue)}.score{display:flex;align-items:center;gap:12px}.score-circle{width:63px;height:63px;border-radius:50%;display:grid;place-items:center;border:5px solid var(--green);font-weight:800;font-size:20px}.progress,.bar{height:9px;border-radius:99px;background:#0e1627;border:1px solid var(--border);overflow:hidden}.progress i,.bar i{height:100%;display:block;background:var(--green)}.progress i.blue{background:var(--blue)}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--border);white-space:nowrap}th{color:#c9d6f2;background:#10192b}tr:hover{background:#13203a}.scroll{overflow:auto}.tag{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800}.tag-lg{padding:6px 12px;font-size:12px;letter-spacing:.02em}.buy{color:var(--green);background:#16c78422}.hold{color:var(--amber);background:#f5b94222}.neutral{color:var(--muted);background:#9fb0d122}.donut{width:180px;height:180px;margin:15px auto;background:conic-gradient(var(--green) 0 42%,var(--blue) 42% 72%,var(--amber) 72% 88%,var(--red) 88%);border-radius:50%;display:grid;place-items:center}.donut:before{content:'';position:absolute;width:118px;height:118px;border-radius:50%;background:var(--panel2)}.donut span{z-index:1;text-align:center;font-size:13px;font-weight:800;max-width:95px}.news-list{display:grid;gap:9px}.news-item{border-bottom:1px solid var(--border);padding:11px 0;display:flex;justify-content:space-between;gap:14px}.news-item a{color:var(--text);text-decoration:none;font-weight:700}.news-item small{color:var(--muted);white-space:nowrap}.industry-pe{color:var(--muted)}.tech-table th.num,.tech-table td.num{text-align:right}.risk{padding:16px}.risk .bar i{background:var(--green)}.risk.medium .bar i{background:var(--amber)}.risk.high .bar i{background:var(--red)}.disclaimer{font-size:12px;color:var(--muted)}ul{line-height:1.8;padding-left:20px}@media(max-width:900px){.four{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.title{align-items:flex-start;flex-direction:column}.container{padding:16px}}@media(max-width:540px){form{flex-wrap:wrap}form input{flex-basis:100%}.four{grid-template-columns:1fr}.title h1{font-size:22px}}.strong-buy{color:var(--green);background:#16c78440;font-weight:900}.accumulate{color:var(--blue);background:#4da3ff22}.reduce{color:var(--amber);background:#f5b94240}.sell{color:var(--red);background:#ff5c5c22}.limited-data{display:inline-block;margin-bottom:8px}.pill-row{display:flex;gap:8px;overflow:auto;margin:0 0 16px;padding-bottom:4px}.pill{font-size:12px;padding:8px 12px;border-radius:999px;white-space:nowrap}.pill.active{color:#08111f;background:var(--blue);border-color:var(--blue)}.grid.five{grid-template-columns:repeat(5,1fr)}.rec-badges{display:flex;gap:8px;align-items:center;margin:8px 0}@media(max-width:900px){.grid.five{grid-template-columns:repeat(2,1fr)}}@media(max-width:540px){.grid.five{grid-template-columns:1fr}}
+:root{--bg:#0b1020;--panel:#121a2b;--panel2:#18233a;--text:#e6eefc;--muted:#9fb0d1;--green:#16c784;--blue:#4da3ff;--amber:#f5b942;--red:#ff5c5c;--border:#26344f}*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,Segoe UI,Arial,sans-serif}@media(min-width:901px){body{overflow:hidden}}header{flex:0 0 auto;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}.container{max-width:1900px;margin:auto;padding:20px}
+@media(min-width:901px){
+  main#main.container{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column}
+}.title{display:flex;justify-content:space-between;gap:20px;align-items:center}.title h1{font-size:27px;margin:0}.title p,.small{color:var(--muted);font-size:12px}.badge{padding:8px 12px;border-radius:999px;color:var(--blue);background:#10203a;border:1px solid var(--border);white-space:nowrap}form{display:flex;gap:10px;margin-top:18px}input,select,button{font:inherit}input,select{color:var(--text);background:var(--panel);border:1px solid var(--border);padding:11px 12px;border-radius:8px}input{flex:1;min-width:200px}button{cursor:pointer;color:var(--text);background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:9px;font-weight:700}form button{color:#08111f;background:var(--blue);border-color:var(--blue)}.tab{display:none;padding:2px 0 24px}.tab.active{display:block}
+@media(min-width:901px){
+  /* .tab.active/.subtab-root deliberately do NOT set overflow:hidden --
+     scroll ownership is already fully assigned at the leaf level below
+     (.subsection/.scroll-body/.card-table-fill>.scroll), since their
+     children's heights always exactly fill the flex parent. Leaving these
+     two visible (the default) lets a dropdown/tooltip positioned within a
+     tab's own fixed (non-scrolling) region -- e.g. the Watchlists add-company
+     autocomplete list -- render without being clipped by an ancestor that
+     has no actual need to clip anything itself. */
+  .tab.active{display:flex;flex-direction:column;flex:1;min-height:0}
+  /* Flex items shrink below their content size by default (flex-shrink:1).
+     A .subsection acting as its own scroll owner (the default case: a mixed
+     panel of KPI cards + a table + notes, none of them individually bounded)
+     needs its children to instead keep their natural content height, so the
+     TOTAL exceeds the subsection's own bounded height and its own
+     overflow-y:auto genuinely engages -- confirmed live: without this, a
+     tall card just silently got squeezed down to fit instead of the
+     subsection ever scrolling. .tab.active's own direct children (page
+     title/intro/nav bars, plus whichever one .subsection is visible) need
+     the same treatment for the same reason. */
+  .tab.active>*,.subsection>*{flex-shrink:0}
+  .subtab-root{display:flex;flex-direction:column;flex:1;min-height:0}
+  .subsection{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto}
+  /* A .subsection that mixes page-level decision context (a KPI/summary/
+     recommendation grid, a compact context paragraph) with a detail table or
+     card below it is NOT a mixed panel in the sense the comment above
+     describes -- the KPI grid must stay visible while only the detail
+     content scrolls, not scroll away together with it. Such a subsection
+     wraps its detail content in a .scroll-body sibling (same marker class
+     the 3 no-sub-nav tabs already use for their whole body) placed after the
+     fixed KPI/context elements; this rule then makes the outer .subsection a
+     plain pass-through (like the existing .subtab-root/.card-table-fill
+     cases below) so .scroll-body -- not .subsection -- is the real scroll
+     owner. See index.html's wr-overview/wr-risk-overview/portfolio overview/
+     exposure-matrix/health-rebalancing, Dashboard's portfolio-intelligence/
+     committee-view, Market Intelligence's macro/sector-intelligence, and the
+     Watchlists tab's Portfolio summary card for the pattern in use. */
+  .subsection:has(>.subtab-root),.subsection:has(>.card-table-fill),.subsection:has(>.scroll-body){overflow-y:visible}
+  /* These ARE meant to shrink-to-fit exactly (they're the pass-through/
+     scroll-owning elements the rule above would otherwise wrongly pin to
+     natural size) -- higher specificity than the generic rule above wins
+     regardless of source order. */
+  .tab.active>.subsection,.tab.active>.scroll-body,.subsection>.subtab-root,.subsection>.card-table-fill,.subsection>.scroll-body{flex-shrink:1}
+  .scroll-body{flex:1;min-height:0;overflow-y:auto}
+  /* .card's own overflow:hidden (rounded-corner clipping) genuinely defeats
+     position:sticky on a descendant table cell in real Chrome -- confirmed
+     live -- even though .card is further out than .scroll, the table's own
+     intended (and actually bounded/scrolling) sticky container. Overriding
+     back to visible here is safe: .scroll's own overflow:auto still clips
+     its own internal content with a real scrollbar, and nothing in a
+     .card-table-fill's exact-fit flex layout (h3 + .scroll) ever needs the
+     rounded-corner clip this card would otherwise apply. */
+  .card.card-table-fill{flex:1;min-height:0;display:flex;flex-direction:column;overflow:visible}
+  .card-table-fill>.scroll{flex:1;min-height:0;overflow:auto}
+}.empty{min-height:50vh;display:grid;place-content:center;text-align:center;gap:9px;color:var(--muted)}.empty b{color:var(--text);font-size:17px}.grid{display:grid;gap:16px;margin:16px 0}.four{grid-template-columns:repeat(4,1fr)}.two-col{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:16px 0}.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:18px;overflow:hidden}.card h3{color:var(--muted);font-size:14px;margin:0 0 12px}.card p{line-height:1.65}.kpi{font-size:29px;font-weight:800;margin:8px 0}.positive{color:var(--green)}.amber{color:var(--amber)}.blue{color:var(--blue)}.score{display:flex;align-items:center;gap:12px}.score-circle{width:63px;height:63px;border-radius:50%;display:grid;place-items:center;border:5px solid var(--green);font-weight:800;font-size:20px}.progress,.bar{height:9px;border-radius:99px;background:#0e1627;border:1px solid var(--border);overflow:hidden}.progress i,.bar i{height:100%;display:block;background:var(--green)}.progress i.blue{background:var(--blue)}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--border);white-space:nowrap}th{color:#c9d6f2;background:#10192b}tr:hover{background:#13203a}.scroll{overflow:auto}.tag{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800}.tag-lg{padding:6px 12px;font-size:12px;letter-spacing:.02em}.buy{color:var(--green);background:#16c78422}.hold{color:var(--amber);background:#f5b94222}.neutral{color:var(--muted);background:#9fb0d122}.donut{width:180px;height:180px;margin:15px auto;background:conic-gradient(var(--green) 0 42%,var(--blue) 42% 72%,var(--amber) 72% 88%,var(--red) 88%);border-radius:50%;display:grid;place-items:center}.donut:before{content:'';position:absolute;width:118px;height:118px;border-radius:50%;background:var(--panel2)}.donut span{z-index:1;text-align:center;font-size:13px;font-weight:800;max-width:95px}.news-list{display:grid;gap:9px}.news-item{border-bottom:1px solid var(--border);padding:11px 0;display:flex;justify-content:space-between;gap:14px}.news-item a{color:var(--text);text-decoration:none;font-weight:700}.news-item small{color:var(--muted);white-space:nowrap}.industry-pe{color:var(--muted)}.tech-table th.num,.tech-table td.num{text-align:right}.risk{padding:16px}.risk .bar i{background:var(--green)}.risk.medium .bar i{background:var(--amber)}.risk.high .bar i{background:var(--red)}.disclaimer{font-size:12px;color:var(--muted)}ul{line-height:1.8;padding-left:20px}@media(max-width:900px){.four{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.title{align-items:flex-start;flex-direction:column}.container{padding:16px}}@media(max-width:540px){form{flex-wrap:wrap}form input{flex-basis:100%}.four{grid-template-columns:1fr}.title h1{font-size:22px}}.strong-buy{color:var(--green);background:#16c78440;font-weight:900}.accumulate{color:var(--blue);background:#4da3ff22}.reduce{color:var(--amber);background:#f5b94240}.sell{color:var(--red);background:#ff5c5c22}.limited-data{display:inline-block;margin-bottom:8px}.pill-row{display:flex;gap:8px;overflow:auto;margin:0 0 16px;padding-bottom:4px}.pill{font-size:12px;padding:8px 12px;border-radius:999px;white-space:nowrap}.pill.active{color:#08111f;background:var(--blue);border-color:var(--blue)}.grid.five{grid-template-columns:repeat(5,1fr)}.rec-badges{display:flex;gap:8px;align-items:center;margin:8px 0}@media(max-width:900px){.grid.five{grid-template-columns:repeat(2,1fr)}}@media(max-width:540px){.grid.five{grid-template-columns:1fr}}
 .empty[hidden]{display:none}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}.toolbar select{flex:1;min-width:200px}button.primary{color:#08111f;background:var(--blue);border-color:var(--blue)}
 .add-company{position:relative}.add-company input{width:100%}
@@ -37,7 +95,7 @@
    existing 1500px reading-width layout untouched. */
 .container.full-bleed{max-width:100%}
 .wl-table-card{padding:12px}
-.wl-search-bar{position:sticky;top:var(--header-h,0px);z-index:4;background:var(--bg);padding:14px 0 10px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.wl-search-bar{flex:0 0 auto;background:var(--bg);padding:14px 0 10px;margin-bottom:14px;border-bottom:1px solid var(--border)}
 .wl-search-bar .add-company input{padding:14px 16px;font-size:15px;border-radius:10px;border-color:var(--blue)}
 .wl-search-bar .add-company input:focus{outline:2px solid var(--blue);outline-offset:1px}
 .wl-search-bar #wl-notice{margin-top:8px}
@@ -74,32 +132,38 @@ th.sorted-desc:after{content:' \25BC';font-size:9px;opacity:1}
 @media(max-width:900px){.grid.three{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:540px){.grid.three{grid-template-columns:1fr}}
 /* Section sub-tabs: second-level navigation within a main tab (script.js
-   initSubtabs/applySubtabState). Sticky under the real header via the same
-   --header-h var the Watchlists search bar uses, so it docks in place while
-   a long section scrolls underneath it. Reuses the existing --blue
-   active-pill language (.pill.active, .tabs button.active) rather than a
-   new color, per the "don't redesign" navigation-only scope. */
-.subtabs{display:flex;gap:8px;overflow-x:auto;position:sticky;top:var(--header-h,0px);z-index:2;background:var(--bg);padding:10px 0;margin:0 0 14px;border-bottom:1px solid var(--border)}
+   initSubtabs/applySubtabState). Bounded viewport shell (2026-09-05): nav
+   bars are plain non-scrolling flex children of their owning .tab/
+   .subtab-root (see the .tab.active/.subtab-root/.subsection rules above) --
+   they never sit inside a scrolling ancestor any more, so no position:sticky
+   or stacked pixel-offset math is needed even when nested (Watchlist
+   Research's Fundamentals -> Quality -> Profitability is 3 levels deep and
+   still just 3 ordinary stacked flex siblings, zero overlap by construction).
+   Reuses the existing --blue active-pill language (.pill.active, .tabs
+   button.active) rather than a new color. */
+.subtabs{flex:0 0 auto;display:flex;gap:8px;overflow-x:auto;background:var(--bg);padding:10px 0;margin:0 0 14px;border-bottom:1px solid var(--border)}
 .subtabs button{flex:none;font-size:12px;padding:8px 14px;border-radius:999px;white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--border);cursor:pointer}
 .subtabs button:hover{background:var(--panel2)}
 .subtabs button.active{color:#08111f;background:var(--blue);border-color:var(--blue)}
 .subtabs button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .subsection[hidden]{display:none}
-/* Sticky-hierarchy fix (scrolling/table-usability audit): a nested
-   .subtab-root's own .subtabs bar (e.g. Watchlist Research -> Fundamentals ->
-   Quality, or Company Research -> Valuation's DCF/Reverse DCF/... nav) used
-   to stick at the exact same `top` as the outer nav above it, so once
-   scrolled into view it painted directly on top of (hid) that outer nav
-   instead of docking below it. --subtabs-h (measured in script.js, same
-   pattern as --header-h) is one nav bar's real height; each extra level of
-   .subtab-root nesting adds one more bar's worth of offset so stacked sticky
-   navs dock in a clean vertical stack with zero overlap. Two levels covers
-   every case in this app today (Watchlist Research's Fundamentals->Quality
-   is the deepest); a third level would simply have no rule and fall back to
-   the 2-level offset, which is still correct-enough (no overlap) rather than
-   broken. */
-.subtab-root .subtabs{top:calc(var(--header-h,0px) + var(--subtabs-h,0px))}
-.subtab-root .subtab-root .subtabs{top:calc(var(--header-h,0px) + var(--subtabs-h,0px)*2)}
+/* Watchlist Research navigation hierarchy (applied only where these modifier
+   classes are actually added in index.html -- .subtabs itself, and every
+   other tab's plain .subtabs bar, is untouched). Primary/secondary/tertiary
+   read as three distinct tiers of "how important is this row" instead of
+   uniform stacked pill rows -- color/weight/background only, since nav bars
+   are now plain stacked flex siblings (bounded viewport shell) rather than
+   stacked sticky offsets, so a mismatched height no longer risks a gap or
+   overlap the way it used to. box-shadow (not border) is used for the
+   "framed toolbar" look on secondary precisely because it doesn't add to
+   layout height. */
+.subtabs-primary button{font-weight:700}
+.subtabs-primary button.active{box-shadow:inset 0 0 0 1px var(--blue)}
+.subtabs-secondary{background:var(--panel);box-shadow:inset 0 0 0 1px var(--border)}
+.subtabs-secondary::before,.subtabs-tertiary::before{content:attr(data-section-label) " \203A";flex:none;box-sizing:border-box;padding:8px 10px 8px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);white-space:nowrap}
+.subtabs-secondary button,.subtabs-tertiary button{background:transparent;border-color:transparent;color:var(--muted);font-weight:600}
+.subtabs-secondary button:hover,.subtabs-tertiary button:hover{color:var(--text);background:var(--panel2)}
+.subtabs-secondary button.active,.subtabs-tertiary button.active{color:#08111f;background:var(--blue);border-color:var(--blue)}
 /* Phase 3f: unified company context. The Name cell in every table (via
    prefixCells) becomes a plain-looking button so click-to-select works
    everywhere without changing how the tables read; .active-company-row
@@ -130,9 +194,20 @@ tr.active-company-row td:first-child,.allocation-row.active-company-row{box-shad
    Reuses --panel/--border/--blue tokens throughout -- no new colors, same
    active-pill language as .pill.active/.subtabs button.active. */
 :root{--sidebar-w:220px;--sidebar-w-collapsed:64px}
-.app-shell{display:flex;align-items:stretch;min-height:100vh}
-.app-main{flex:1;min-width:0}
-.sidebar{width:var(--sidebar-w);flex:none;display:flex;flex-direction:column;justify-content:space-between;background:var(--panel);border-right:1px solid var(--border);position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;transition:width .15s ease}
+/* Bounded viewport shell (2026-09-05, app-wide rollout): the shell fills the
+   viewport exactly (height:100vh, no document scroll) so the sidebar and
+   header are genuinely fixed regions rather than sticky elements riding a
+   scrolling page -- only the innermost content region of whichever tab/
+   subtab is active ever scrolls. See styles.css's own .tab/.subtab-root/
+   .subsection/.scroll-body rules below for how that split is expressed, and
+   system.md §2.3 for the full rationale (this replaces an earlier documented
+   document-scroll + sticky/floating-clone design). */
+@media(min-width:901px){
+  .app-shell{height:100vh;overflow:hidden}
+}
+.app-shell{display:flex}
+.app-main{flex:1;min-width:0;display:flex;flex-direction:column;height:100%;min-height:0}
+.sidebar{width:var(--sidebar-w);flex:none;display:flex;flex-direction:column;justify-content:space-between;background:var(--panel);border-right:1px solid var(--border);height:100%;overflow-y:auto;transition:width .15s ease}
 .sidebar-top{display:flex;flex-direction:column;gap:2px;padding:14px 8px}
 .sidebar-item{display:flex;align-items:center;gap:10px;background:none;border:1px solid transparent;color:var(--text);text-align:left;padding:10px;border-radius:8px;font-weight:600;font-size:13px;width:100%}
 .sidebar-item:hover{background:var(--panel2)}
@@ -172,6 +247,18 @@ body.sidebar-collapsed .sidebar-item,body.sidebar-collapsed .sidebar-collapse-to
    controls alone. */
 .context-row-label{text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-top:14px;color:var(--muted)}
 .context-row-label:first-of-type{margin-top:18px}
+/* Bounded viewport shell (2026-09-05): the header is now a fixed-height flex
+   sibling above #main (see .app-shell/.app-main/header rules) -- it never
+   sits inside a scrolling ancestor, so it never needs to fight scrolling
+   content for space and never needs a scroll-triggered collapse. An earlier
+   design (superseded) instead kept the header permanently sticky at full
+   size over a document-level scroll and shrank it only on Watchlist
+   Research past a scroll threshold; that mechanism (body.is-scrolled) is
+   removed entirely. What replaces it: the header is simply compact by
+   default, on every workspace, all the time -- a fixed but small permanent
+   footprint rather than a large one that sometimes shrinks. */
+header .container{padding-top:14px;padding-bottom:14px}
+header .title h1{font-size:19px}
 /* Company Context scoping: this header row only names/analyzes ONE company,
    so it must only appear on Company Research (system.md §2.3) — everywhere
    else it falsely implied the page was about the last-selected company. */
@@ -191,46 +278,49 @@ body.sidebar-collapsed .sidebar-item,body.sidebar-collapsed .sidebar-collapse-to
 .hidden-switcher{display:none}
 .workspace-title{margin:0 0 4px;font-size:20px}
 /* Company Research one-page redesign: replaces click-to-switch .subtabs with
-   a sticky in-page anchor nav (plain scroll-links, not tab-switching -- every
-   .cr-section stays in the DOM and visible at once) plus lightweight section
-   headings. Reuses the exact same sticky/pill visual language as .subtabs
-   (--header-h offset, .pill.active blue) so it reads as the same navigation
-   idiom, not a new one. */
-.cr-page-nav{display:flex;gap:8px;overflow-x:auto;position:sticky;top:var(--header-h,0px);z-index:2;background:var(--bg);padding:10px 0;margin:0 0 14px;border-bottom:1px solid var(--border)}
+   a fixed in-page anchor nav (plain scroll-links, not tab-switching -- every
+   .cr-section stays in the DOM and visible at once, inside the tab's own
+   .scroll-body) plus lightweight section headings. Reuses the same pill
+   visual language as .subtabs (.pill.active blue) so it reads as the same
+   navigation idiom, not a new one. */
+.cr-page-nav{flex:0 0 auto;display:flex;gap:8px;overflow-x:auto;background:var(--bg);padding:10px 0;margin:0 0 14px;border-bottom:1px solid var(--border)}
 .cr-page-nav a{flex:none;font-size:12px;padding:8px 14px;border-radius:999px;white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--border);text-decoration:none;cursor:pointer}
 .cr-page-nav a:hover{background:var(--panel2)}
 .cr-page-nav a.active{color:#08111f;background:var(--blue);border-color:var(--blue)}
-.cr-section{padding-top:6px;margin-bottom:8px;scroll-margin-top:calc(var(--header-h,0px) + 54px)}
+.cr-section{padding-top:6px;margin-bottom:8px;scroll-margin-top:6px}
 .cr-section-title{margin:0 0 10px;font-size:17px;color:var(--text);border-top:1px solid var(--border);padding-top:18px}
 .cr-section:first-of-type .cr-section-title{border-top:none;padding-top:0}
 .cr-subsection-title{margin:18px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-/* Sticky table headers (Watchlist Research comparison tables) -- floating
-   header clone, not a bounded per-table scrollbox.
-   A follow-up UX/architecture review rejected the previous fix below (making
-   .scroll itself a bounded overflow-y:auto container per table, so its
-   sticky thead had a real scrolling ancestor to clamp against) even though
-   it worked: it traded one real bug (sticky non-functional) for 14 nested
-   vertical scrollboxes, each capped to a fraction of the viewport, contrary
-   to the single-page-scroll UX this app otherwise holds to everywhere else.
-   That review re-verified, live, that plain position:sticky genuinely
-   cannot satisfy "sticky header + native horizontal scroll + single page-
-   level vertical scroll" together on this markup: the csswg-drafts #865 gap
-   (position:sticky on a table cell is defeated by ANY ancestor with
-   overflow other than visible) holds even with overflow-x/overflow-y split
-   onto separate values, even with zero overflow ancestors elsewhere
-   reachable from the same table, and even with border-collapse:separate --
-   confirmed with a minimal from-scratch repro before concluding a CSS-only
-   fix isn't possible for this exact "single <table>, .scroll needs
-   horizontal-only overflow" combination. position:fixed is not subject to
-   that gap (it isn't a sticky/scroll-relative positioning scheme at all),
-   so the fix here keeps .scroll purely horizontal-scrolling again (no
-   vertical clipping, no second scrollbar -- the real <thead> stays in
-   normal page flow, fully accessible, never sticky) and shows a purely-
-   visual position:fixed clone of just the header row, built and positioned
-   by script.js's floating-header code, only while the real header has
-   scrolled above the sticky nav stack and the table's own rows still
-   extend below it. See script.js's own comment at that code for the
-   show/hide, width-sync and sort-delegation detail. */
+/* Table header stickiness, two deliberately different mechanisms depending
+   on the panel's own content shape (bounded viewport shell, 2026-09-05):
+   - .sticky-thead-native: a panel whose entire content is one card wrapping
+     one table (.card-table-fill, see the .tab/.subtab-root/.subsection rules
+     above) gives that table's own .scroll wrapper the bounded, real
+     vertical+horizontal scroll box -- nothing else shares the space, so
+     position:sticky on thead th works natively, no JS clone needed.
+   - .floating-thead (JS-driven clone): a panel that mixes a table with KPI
+     cards/notes/a second card needs the WHOLE panel to scroll together as
+     one region (avoiding a second nested scrollbar just for the table), and
+     native position:sticky cannot satisfy "sticky header relative to an
+     ancestor further out than the table's own horizontal-scroll wrapper"
+     (csswg-drafts #865: sticky is defeated by ANY intermediate ancestor with
+     non-visible overflow, confirmed with a from-scratch repro in an earlier
+     pass of this app). position:fixed is not subject to that gap, so these
+     panels keep a purely-visual clone of just the header row, built and
+     positioned by script.js's floating-header code (now positioned relative
+     to the panel's own bounded scroll container, not page/window scroll),
+     shown only while the real header has scrolled above that container's own
+     top edge and the table's rows still extend below it. This is a
+     deliberate, documented exception -- not every table could be converted
+     to native sticky without either losing native horizontal scroll or
+     reintroducing a second visible scrollbar on an already-scrolling panel. */
+/* border-collapse:collapse (table's own default, above) is a well-known real
+   Chrome/Firefox limitation for position:sticky table cells -- sticky simply
+   never engages on a collapsed-border table regardless of ancestor overflow.
+   Scoped to just these tables (border-spacing:0 keeps cells visually flush,
+   same as collapse) rather than changing every table's border rendering. */
+.sticky-thead-native{border-collapse:separate;border-spacing:0}
+.sticky-thead-native thead th{position:sticky;top:0;z-index:1}
 .floating-thead{position:fixed;overflow:hidden;z-index:5;display:none;box-shadow:0 3px 8px rgba(0,0,0,.4)}
 .floating-thead.visible{display:block}
 .floating-thead table{margin:0}

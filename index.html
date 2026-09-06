@@ -82,6 +82,7 @@
       <div id="wl-concentration-warning"></div>
     </article>
 
+    <div class="scroll-body">
     <article class="card">
       <div class="section-head">
         <h3>Watchlist</h3>
@@ -162,6 +163,7 @@
         </table>
       </div>
     </article>
+    </div>
   </section>
 
   <section class="tab active" id="dashboard">
@@ -280,6 +282,7 @@
     <div class="subsection" data-subtab="portfolio-intelligence" role="tabpanel">
       <p class="small">Decision layer built entirely from analytics already computed elsewhere in this app (recommendation, valuation, risk, technical) plus one persisted run-over-run snapshot per watchlist &mdash; see <span id="pi-methodology-info"></span> for the Action Score methodology. Nothing here triggers a new fetch.</p>
       <div class="grid four" id="pi-kpis"></div>
+      <div class="scroll-body">
       <article class="card">
         <h3>Action Required</h3>
         <div class="scroll">
@@ -303,6 +306,7 @@
         <h3>What changed since last refresh</h3>
         <div id="pi-changes"></div>
       </article>
+      </div>
     </div>
 
     <div class="subsection" data-subtab="committee-view" role="tabpanel">
@@ -312,6 +316,7 @@
         <button type="button" id="cv-committee-pack-btn" title="Open the printable Weekly Investment Committee Pack (portfolio/macro/sector/thesis changes + recommended actions) in a new tab">Open Weekly Committee Pack &#8599;</button>
       </div>
       <div class="grid four" id="cv-kpis"></div>
+      <div class="scroll-body">
       <div class="two-col">
         <article class="card">
           <h3>Top opportunities</h3>
@@ -336,6 +341,7 @@
         <h3>Rebalancing priorities</h3>
         <div id="cv-rebalancing"></div>
       </article>
+      </div>
     </div>
   </section>
 
@@ -349,6 +355,7 @@
       <a href="#cr-section-risk">Risk</a>
       <a href="#cr-section-intelligence">Intelligence</a>
     </nav>
+    <div class="scroll-body">
     <div class="pill-row hidden-switcher" id="fundamentals-selector"></div>
     <div class="pill-row hidden-switcher" id="technical-selector"></div>
     <div class="pill-row hidden-switcher" id="risk-selector"></div>
@@ -416,12 +423,13 @@
       <p class="small">The explainability layer: thesis tracking, the quantitative factor engine and research-quality gates. None of these override the primary Recommendation above &mdash; a disagreement is surfaced, never blended away.</p>
       <div id="cr-intelligence-content"></div>
     </section>
+    </div>
   </section>
 
   <section class="tab" id="watchlist-research">
     <h2 class="workspace-title">Watchlist Research</h2>
     <p class="small">Every company in the active watchlist, compared side by side. For a single company's deep-dive, use <b>Company Research</b>. Coverage is this watchlist's own saved companies, not a market-wide sector or index universe.</p>
-    <nav class="subtabs" role="tablist" aria-label="Watchlist Research sections">
+    <nav class="subtabs subtabs-primary" role="tablist" aria-label="Watchlist Research sections">
       <button type="button" role="tab" data-subtab="wr-overview">Overview</button>
       <button type="button" role="tab" data-subtab="wr-fundamentals">Fundamentals</button>
       <button type="button" role="tab" data-subtab="wr-technicals">Technicals</button>
@@ -430,6 +438,7 @@
 
     <div class="subsection" data-subtab="wr-overview" role="tabpanel">
       <div class="grid four" id="wr-kpis"></div>
+      <div class="scroll-body">
       <article class="card">
         <div class="section-head">
           <h3>Screening matrix</h3>
@@ -451,18 +460,19 @@
           </table>
         </div>
       </article>
+      </div>
     </div>
 
     <div class="subsection" data-subtab="wr-fundamentals" role="tabpanel">
       <div class="subtab-root" id="wr-fundamentals-detail">
-        <nav class="subtabs" role="tablist" aria-label="Fundamentals sections">
+        <nav class="subtabs subtabs-secondary" data-section-label="Fundamentals" role="tablist" aria-label="Fundamentals sections">
           <button type="button" role="tab" data-subtab="wr-valuation">Valuation</button>
           <button type="button" role="tab" data-subtab="wr-quality">Quality</button>
           <button type="button" role="tab" data-subtab="wr-growth">Growth</button>
         </nav>
 
         <div class="subsection" data-subtab="wr-valuation" role="tabpanel">
-          <p class="small">Forward P/E and EV/EBITDA are "N/A" where this data source cannot verify them. Sector premium/discount and rankings are computed against this watchlist's own same-sector peers, not a market-wide sector.</p>
+          <p class="small">Forward P/E and EV/EBITDA are left blank where this data source cannot verify them. Sector premium/discount and rankings are computed against this watchlist's own same-sector peers, not a market-wide sector.</p>
           <div class="scroll">
             <table id="valuation-table" class="thead-sticky-2">
               <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="forwardPe">Forward P/E</th><th class="num" data-sort="pb">P/B</th><th class="num" data-sort="evEbitda">EV/EBITDA</th><th class="num" data-sort="peg">PEG</th><th class="num" data-sort="fairValue">Fair value</th><th class="num" data-sort="targetPrice">Target price</th><th class="num" data-sort="upside">Upside</th><th class="num" data-sort="marginOfSafety">Margin of safety</th><th title="Confidence in the Fair Value/Target Price heuristic itself: completeness of the P/E-P/B reversion inputs, watchlist peer sample size, and how far this stock's own multiple already sits from the peer average it's reverting to" data-sort="confidence">Confidence</th><th data-sort="sectorPremium">Sector premium/discount</th><th data-sort="earningsYield">Earnings yield</th><th data-sort="fcfYield">FCF yield</th><th title="Rank by ROCE (falling back to ROE) among same-sector watchlist peers" data-sort="sectorRank">Sector rank</th><th class="num" title="Blend of relative valuation, sector-normalized and multi-factor peer scores" data-sort="relativeAttractiveness">Relative attractiveness</th><th title="Strong (6+ same-sector peers) / Adequate (3-5) / Weak (1-2) / Unavailable (0) -- below 3, relative-valuation scores are withheld rather than shown as a misleading self-comparison" data-sort="peerCompleteness">Peer completeness</th></tr></thead>
@@ -478,29 +488,29 @@
 
         <div class="subsection" data-subtab="wr-quality" role="tabpanel">
           <div class="subtab-root" id="wr-quality-detail">
-            <nav class="subtabs" role="tablist" aria-label="Quality sections">
+            <nav class="subtabs subtabs-tertiary" data-section-label="Quality" role="tablist" aria-label="Quality sections">
               <button type="button" role="tab" data-subtab="wr-profitability">Profitability</button>
               <button type="button" role="tab" data-subtab="wr-balance-sheet">Balance sheet</button>
               <button type="button" role="tab" data-subtab="wr-ownership">Ownership</button>
             </nav>
 
             <div class="subsection" data-subtab="wr-profitability" role="tabpanel">
-              <p class="small">Gross margin is "N/A": Screener.in does not expose a separate cost-of-goods-sold line to derive it from. EBITDA margin and operating margin show the same reported figure. Full DuPont ROE decomposition is on Company Research &rarr; Fundamentals &rarr; Business quality, per company.</p>
-              <article class="card"><h3>Profitability</h3><div class="scroll"><table id="profitability-table" class="tech-table thead-sticky-3">
+              <p class="small">Gross margin is left blank: Screener.in does not expose a separate cost-of-goods-sold line to derive it from. EBITDA margin and operating margin show the same reported figure. Full DuPont ROE decomposition is on Company Research &rarr; Fundamentals &rarr; Business quality, per company.</p>
+              <article class="card card-table-fill"><h3>Profitability</h3><div class="scroll"><table id="profitability-table" class="tech-table sticky-thead-native">
                 <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" title="Not available: this data source exposes no separate cost-of-goods-sold line to derive it from">Gross margin</th><th class="num" data-sort="ebitdaMargin">EBITDA margin</th><th class="num" title="Same reported figure as EBITDA margin -- this data source does not distinguish the two">Operating margin</th><th class="num" data-sort="netMargin">Net margin</th><th class="num" data-sort="roe">ROE</th><th class="num" data-sort="roce">ROCE</th><th class="num" data-sort="roa">ROA</th><th class="num" data-sort="earningsQuality">Earnings quality</th></tr></thead><tbody></tbody>
               </table></div></article>
             </div>
 
             <div class="subsection" data-subtab="wr-balance-sheet" role="tabpanel">
               <p class="small">Interest coverage and solvency indicators (Piotroski F-Score, Altman Z-Score) are risk metrics and are shown on the Risk &amp; Opportunity sub-tab instead.</p>
-              <article class="card"><h3>Balance sheet</h3><div class="scroll"><table id="balance-sheet-table" class="tech-table thead-sticky-3">
+              <article class="card card-table-fill"><h3>Balance sheet</h3><div class="scroll"><table id="balance-sheet-table" class="tech-table sticky-thead-native">
                 <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="debt">Total debt (Rs Cr)</th><th class="num" data-sort="cash">Cash</th><th class="num" data-sort="netDebt">Net debt</th><th class="num" data-sort="debtToEquity">Debt / equity</th><th class="num" data-sort="currentRatio">Current ratio</th><th class="num" data-sort="quickRatio">Quick ratio</th><th class="num" data-sort="wcDays">Working capital (days)</th><th data-sort="capitalStructure">Capital structure</th></tr></thead><tbody></tbody>
               </table></div></article>
             </div>
 
             <div class="subsection" data-subtab="wr-ownership" role="tabpanel">
               <p class="small">Ownership fields are shown only when supplied by a public source (India only in this phase).</p>
-              <article class="card"><h3>Ownership</h3><div class="scroll"><table id="ownership-table" class="tech-table thead-sticky-3">
+              <article class="card card-table-fill"><h3>Ownership</h3><div class="scroll"><table id="ownership-table" class="tech-table sticky-thead-native">
                 <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="promoter">Promoter holding</th><th data-sort="promoterTrend">Promoter trend</th><th class="num" data-sort="fii">FII holding</th><th class="num" data-sort="dii">DII holding</th><th class="num" data-sort="mf">Mutual fund holding</th><th class="num" data-sort="institutional">Institutional ownership</th><th class="num" data-sort="concentration">Ownership concentration</th></tr></thead><tbody></tbody>
               </table></div></article>
             </div>
@@ -508,7 +518,7 @@
         </div>
 
         <div class="subsection" data-subtab="wr-growth" role="tabpanel">
-          <article class="card"><h3>Growth</h3><div class="scroll"><table id="growth-table" class="tech-table thead-sticky-2">
+          <article class="card card-table-fill"><h3>Growth</h3><div class="scroll"><table id="growth-table" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="revenue3y">Revenue growth 3Y</th><th class="num" data-sort="revenue5y">Revenue growth 5Y</th><th class="num" data-sort="ebitda3y">EBITDA growth 3Y</th><th class="num" data-sort="ebitda5y">EBITDA growth 5Y</th><th class="num" data-sort="profit3y">Profit growth 3Y</th><th class="num" data-sort="profit5y">Profit growth 5Y</th><th class="num" data-sort="eps5y">EPS CAGR</th><th class="num" data-sort="bookValue">Book value CAGR</th><th class="num" data-sort="fcf">FCF CAGR</th></tr></thead><tbody></tbody>
           </table></div></article>
         </div>
@@ -516,9 +526,9 @@
     </div>
 
     <div class="subsection" data-subtab="wr-technicals" role="tabpanel">
-      <p class="small">Relative strength is trailing-1-year return vs. a market benchmark (NIFTY 50 for India, S&amp;P 500 for US; "N/A" for Global &mdash; no single defensible benchmark spans every exchange). Trend/Momentum/Volatility/Breakout scores are an in-house 0-100 screening blend, not statistical probabilities &mdash; higher is more of that condition (e.g. higher Volatility Score = more volatile), not necessarily "better."</p>
+      <p class="small">Relative strength is trailing-1-year return vs. a market benchmark (NIFTY 50 for India, S&amp;P 500 for US; left blank for Global &mdash; no single defensible benchmark spans every exchange). Trend/Momentum/Volatility/Breakout scores are an in-house 0-100 screening blend, not statistical probabilities &mdash; higher is more of that condition (e.g. higher Volatility Score = more volatile), not necessarily "better."</p>
       <div class="subtab-root" id="wr-technical">
-        <nav class="subtabs" role="tablist" aria-label="Technicals sections">
+        <nav class="subtabs subtabs-secondary" data-section-label="Technicals" role="tablist" aria-label="Technicals sections">
           <button type="button" role="tab" data-subtab="trend">Trend</button>
           <button type="button" role="tab" data-subtab="momentum">Momentum</button>
           <button type="button" role="tab" data-subtab="volume">Volume</button>
@@ -527,37 +537,37 @@
           <button type="button" role="tab" data-subtab="signals">Signals</button>
         </nav>
         <div class="subsection" data-subtab="trend" role="tabpanel">
-          <article class="card"><h3>Trend</h3><div class="scroll"><table id="technical-table-trend" class="tech-table thead-sticky-2">
+          <article class="card card-table-fill"><h3>Trend</h3><div class="scroll"><table id="technical-table-trend" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th title="50/200-DMA alignment vs. price" data-sort="trend">Trend</th><th class="num" data-sort="dma20">20 DMA</th><th class="num" data-sort="dma50">50 DMA</th><th class="num" data-sort="dma100">100 DMA</th><th class="num" data-sort="dma200">200 DMA</th><th title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA alignment</th><th class="num" data-sort="trendScore">Trend score</th><th class="num" title="Wilder's Average Directional Index (14): trend strength, not direction. DI+/DI- show which direction is dominant. Bands: &lt;20 no trend, 20-25 developing, 25-50 strong, &gt;50 very strong" data-sort="adx">ADX (14)</th><th class="num" title="Directional Movement +: strength of upward price movement" data-sort="diPlus">DI+</th><th class="num" title="Directional Movement -: strength of downward price movement" data-sort="diMinus">DI-</th><th class="num" title="Heuristic support level off real prices (DMAs, 52W range) -- not a literal pivot-point or order-book level" data-sort="support">Support</th><th class="num" title="Heuristic resistance level off real prices -- not a literal pivot-point or order-book level" data-sort="resistance">Resistance</th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="momentum" role="tabpanel">
-          <article class="card"><h3>Momentum</h3><div class="scroll"><table id="technical-table-momentum" class="tech-table thead-sticky-2">
+          <article class="card card-table-fill"><h3>Momentum</h3><div class="scroll"><table id="technical-table-momentum" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="rsi">RSI (14)</th><th title="RSI-based read: Strong (RSI>=60) / Neutral (>=45) / Weak" data-sort="momentum">RSI state</th><th class="num" data-sort="momentumScore">Momentum score</th><th class="num" title="Momentum/trend relationship between moving averages: 12/26-period EMA difference" data-sort="macdLine">MACD line</th><th class="num" title="9-period EMA of the MACD line" data-sort="signalLine">Signal line</th><th class="num" title="MACD line minus Signal line" data-sort="histogram">Histogram</th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="volume" role="tabpanel">
-          <article class="card"><h3>Volume</h3><div class="scroll"><table id="technical-table-volume" class="tech-table thead-sticky-2">
+          <article class="card card-table-fill"><h3>Volume</h3><div class="scroll"><table id="technical-table-volume" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th data-sort="volumeTrend">Volume trend</th><th class="num" data-sort="volume">Volume</th><th class="num" data-sort="avgVolume20">Avg. volume (20D)</th><th class="num" title="On-Balance Volume: cumulative volume-flow indicator based on price direction" data-sort="obv">OBV</th><th title="OBV trend read" data-sort="obvTrend">OBV trend</th><th class="num" title="Accumulation/Distribution: cumulative indicator of buying vs. selling pressure" data-sort="accDist">Accumulation/Distribution</th><th title="Accumulation/Distribution trend read" data-sort="accDistTrend">A/D trend</th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="relative-strength" role="tabpanel">
-          <article class="card"><h3>Relative strength</h3><div class="scroll"><table id="technical-table-relative-strength" class="tech-table thead-sticky-2">
+          <article class="card card-table-fill"><h3>Relative strength</h3><div class="scroll"><table id="technical-table-relative-strength" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="stock1y">1Y return</th><th class="num" data-sort="benchmark1y">Benchmark 1Y return</th><th class="num" title="Company's trailing-1Y return minus the benchmark's" data-sort="relativeStrength">Relative strength</th><th data-sort="benchmark">Benchmark</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations, not an assumed integer year count" data-sort="cagr3y">3Y CAGR</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations" data-sort="cagr5y">5Y CAGR</th><th class="num" title="Largest peak-to-trough price decline (weekly series)" data-sort="maxDrawdown">Max drawdown</th><th class="num" title="Proxy risk-adjusted return: (return - risk-free rate) / volatility. Not a conventional-methodology Sharpe ratio -- this app has no dividend-inclusive total-return data source" data-sort="sharpeLike">Sharpe-like</th><th class="num" title="Proxy risk-adjusted return using downside deviation instead of total volatility. Not a conventional-methodology Sortino ratio" data-sort="sortinoLike">Sortino-like</th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="volatility" role="tabpanel">
-          <article class="card"><h3>Volatility</h3><div class="scroll"><table id="technical-table-volatility" class="tech-table thead-sticky-2">
+          <article class="card card-table-fill"><h3>Volatility</h3><div class="scroll"><table id="technical-table-volatility" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" title="Annualized realized volatility of weekly returns" data-sort="volatilityPct">Volatility %</th><th class="num" title="In-house 0-100 screening score, higher = more volatile (not necessarily worse)" data-sort="volatilityScore">Volatility score</th><th class="num" title="Wilder's Average True Range (14): average trading range, an absolute volatility measure in price units" data-sort="atr">ATR (14)</th><th class="num" title="ATR divided by price -- makes ATR comparable across stocks at very different price levels" data-sort="atrPct">ATR % of price</th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="signals" role="tabpanel">
-          <article class="card"><h3>Signals</h3><div class="scroll"><table id="technical-table-signals" class="tech-table thead-sticky-2">
+          <article class="card card-table-fill"><h3>Signals</h3><div class="scroll"><table id="technical-table-signals" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" title="In-house 0-100 screening score off resistance proximity, ADX and volume surge -- not a statistically calibrated probability" data-sort="breakoutScore">Breakout score</th><th title="ADX trend strength + multi-timeframe alignment + volatility" data-sort="regime">Regime</th><th title="Data completeness + multi-timeframe corroboration" data-sort="signalConfidence">Signal confidence</th><th title="Wilder ADX bands: <20 no trend, 20-25 developing, 25-50 strong, >50 very strong" data-sort="adxInterpretation">ADX interpretation</th></tr></thead>
             <tbody></tbody>
           </table></div></article>
@@ -568,13 +578,14 @@
     <div class="subsection" data-subtab="wr-risk-opportunity" role="tabpanel">
       <p class="small">5-category institutional risk framework: Financial, Business, Market, Sector and Governance. Sector risk is a static, disclosed qualitative sector lookup (not a live regulatory/commodity feed).</p>
       <div class="subtab-root" id="wr-risk-detail">
-        <nav class="subtabs" role="tablist" aria-label="Risk and Opportunity sections">
+        <nav class="subtabs subtabs-secondary" data-section-label="Risk &amp; Opportunity" role="tablist" aria-label="Risk and Opportunity sections">
           <button type="button" role="tab" data-subtab="wr-risk-overview">Risk overview</button>
           <button type="button" role="tab" data-subtab="wr-risk-alerts">Alerts</button>
           <button type="button" role="tab" data-subtab="wr-opportunities">Opportunities</button>
         </nav>
         <div class="subsection" data-subtab="wr-risk-overview" role="tabpanel">
           <div class="grid four" id="risk-cards"></div>
+          <div class="scroll-body">
           <article class="card">
             <h3>Stock-by-stock risk matrix</h3>
             <div class="scroll">
@@ -588,6 +599,7 @@
             <h3>Institutional risk view</h3>
             <p id="risk-summary">Risk analysis will appear once the watchlist loads.</p>
           </article>
+          </div>
         </div>
         <div class="subsection" data-subtab="wr-risk-alerts" role="tabpanel">
           <p class="small">Rule-based severity off fixed thresholds &mdash; see <span id="alerts-methodology-info"></span>. Standing conditions keep firing until the condition clears or the alert is acknowledged; crossing events fire once, off the persisted run-over-run snapshot.</p>
@@ -620,11 +632,8 @@
   </section>
 
   <section class="tab" id="portfolio">
-    <h2 class="workspace-title">Portfolio Analysis</h2>
+    <h2 class="workspace-title">Portfolio Analysis <span id="portfolio-disclaimer-info"></span></h2>
     <p class="small" id="portfolio-watchlist-context">Loading watchlist…</p>
-    <div class="card disclaimer">
-      <b>Watchlist-derived, not a transaction ledger.</b> Every figure below reads the same illustrative target-weight allocation as the rest of this app &mdash; there is no buy/sell/quantity/price transaction record, cost basis, or realized/unrealized P&amp;L anywhere in this app today. <b>Transactions</b> (trade date, buy/sell, quantity, price, charges, cost basis, realized/unrealized P&amp;L) is future, deferred functionality &mdash; not built, not faked here.
-    </div>
     <nav class="subtabs" role="tablist" aria-label="Portfolio Analysis sections">
       <button type="button" role="tab" data-subtab="overview">Overview</button>
       <button type="button" role="tab" data-subtab="diversification">Diversification</button>
@@ -639,6 +648,7 @@
 
     <div class="subsection" data-subtab="overview" role="tabpanel">
       <div class="grid four" id="portfolio-kpis"></div>
+      <div class="scroll-body">
       <div class="two-col">
         <article class="card">
           <h3>Screen-derived model allocation</h3>
@@ -659,6 +669,7 @@
             <li>Refresh this dashboard before each allocation review.</li>
           </ul>
         </article>
+      </div>
       </div>
     </div>
 
@@ -738,6 +749,7 @@
           <div id="health-history"></div>
         </article>
       </div>
+      <div class="scroll-body">
       <article class="card">
         <h3>Rebalancing suggestions <span id="rebalancing-info"></span></h3>
         <div class="scroll">
@@ -747,11 +759,13 @@
           </table>
         </div>
       </article>
+      </div>
     </div>
 
     <div class="subsection" data-subtab="exposure-matrix" role="tabpanel">
       <p class="small">Each company is tagged by its own sector against 4 disclosed static sensitivity lookup tables (not a live regulatory/rates/FX feed) &mdash; see <span id="exposure-matrix-info"></span>. Portfolio-level figures are a weighted average using each holding's own illustrative target weight, same as every other portfolio aggregate on this tab.</p>
       <div class="grid four" id="exposure-portfolio-kpis"></div>
+      <div class="scroll-body">
       <article class="card">
         <h3>Per-company exposure</h3>
         <div class="scroll">
@@ -761,11 +775,13 @@
           </table>
         </div>
       </article>
+      </div>
     </div>
   </section>
 
   <section class="tab" id="reports">
     <p class="small">Every report below is generated from the same already-computed research payload &mdash; nothing here recomputes an analytic. This is the single discoverable launch point; the same reports also remain reachable from the Watchlists manage row and Committee View, unchanged.</p>
+    <div class="scroll-body">
     <div class="grid three">
       <article class="card">
         <h3>Company Research Report</h3>
@@ -783,6 +799,7 @@
         <p class="small">Portfolio/macro/sector/thesis changes plus recommended actions since the watchlist's own last genuine refresh.</p>
         <button type="button" id="reports-committee-pack-btn">Open Weekly Committee Pack &#8599;</button>
       </article>
+    </div>
     </div>
   </section>
 
@@ -809,6 +826,7 @@
         <h3>Data Quality</h3>
         <div class="grid four" id="macro-data-quality"></div>
       </article>
+      <div class="scroll-body">
       <article class="card">
         <h3>Macro indicators</h3>
         <div class="scroll">
@@ -828,11 +846,13 @@
           </table>
         </div>
       </article>
+      </div>
     </div>
 
     <div class="subsection" data-subtab="sector-intelligence" role="tabpanel">
       <p class="small">Cross-watchlist: the only view in this app that reads every saved watchlist at once (cache-only, no new fetch) and groups your own companies by sector &mdash; see <span id="sector-intel-methodology-info"></span>. Coverage is limited to companies you've actually added somewhere; there is no market-wide sector database.</p>
       <div class="grid four" id="sector-intel-kpis"></div>
+      <div class="scroll-body">
       <article class="card">
         <h3>Sector rollups</h3>
         <div class="scroll">
@@ -847,6 +867,7 @@
         <p class="small">Named in the Phase 6 brief but matched by no company's sector label in any of your saved watchlists today (matched via the same keyword patterns as Company Research &rarr; Risks &rarr; Sector's lookup) &mdash; either genuinely absent, or present under a differently-worded sector label this app's classification doesn't distinguish (e.g. defence companies are labeled "Capital Goods," not "Defence" &mdash; a known limitation, see roadmap TD-1). Never fabricated.</p>
         <div id="sector-intel-gaps" class="small"></div>
       </article>
+      </div>
     </div>
 
     <div class="subsection" data-subtab="upcoming-earnings" role="tabpanel">
@@ -866,7 +887,7 @@
         <div id="event-calendar-list" class="news-list"></div>
       </article>
 
-      <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. "N/A" means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
+      <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. A blank value means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
         <ul id="data-limitations"></ul>
       </div>
     </div>

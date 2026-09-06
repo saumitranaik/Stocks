@@ -65,7 +65,7 @@ rule, read on demand only.
   confidence) before it ships — see `system.md` §6.
 - **Never guess a sourced field.** `name`/`sector`/`industry`/`exchange` and
   anything else tagged Sourced must come from a real fetch or explicit user
-  input, never be estimated. Missing data renders "N/A", not a guess.
+  input, never be estimated. Missing data renders blank, not a guess.
 - **Documentation governance**: rationale for a change goes in
   `docs/governance/roadmap.md`'s completed-work ledger (§2 there), not a new
   standalone markdown file. Don't create a new doc for a single feature —

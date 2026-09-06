@@ -9,13 +9,18 @@
 // with script.js or any other page, only the same house style.
 
 const $ = (selector, root = document) => root.querySelector(selector);
-const escape = (value) => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
-const fmt = (value, digits = 2) => value == null || !Number.isFinite(value) ? 'N/A' : new Intl.NumberFormat('en-IN', { maximumFractionDigits: digits }).format(value);
-const pct = (value, digits = 1) => value == null || !Number.isFinite(value) ? 'N/A' : `${value >= 0 ? '+' : ''}${fmt(value, digits)}%`;
+// Blank is this app's one missing-data convention everywhere a value is
+// displayed -- the string "N/A" is still the internal sentinel several backend modules
+// return, so escape() blanks it out here at the one point almost every
+// displayed string passes through, rather than changing the backend's data
+// contract.
+const escape = (value) => { const str = String(value ?? ''); return str === 'N/A' ? '' : str.replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); };
+const fmt = (value, digits = 2) => value == null || !Number.isFinite(value) ? '' : new Intl.NumberFormat('en-IN', { maximumFractionDigits: digits }).format(value);
+const pct = (value, digits = 1) => value == null || !Number.isFinite(value) ? '' : `${value >= 0 ? '+' : ''}${fmt(value, digits)}%`;
 
 const RATING_CLASS = { 'Strong Buy': 'tag-strong-buy', Buy: 'tag-buy', Accumulate: 'tag-accumulate', Hold: 'tag-hold', Reduce: 'tag-reduce', Sell: 'tag-sell', 'Add aggressively': 'tag-strong-buy', Add: 'tag-buy', Exit: 'tag-sell' };
 const tagClass = (label) => RATING_CLASS[label] || 'tag-neutral';
-const labelTag = (label) => `<span class="tag ${tagClass(label)}">${escape(label || 'N/A')}</span>`;
+const labelTag = (label) => `<span class="tag ${tagClass(label)}">${escape(label || '')}</span>`;
 const THESIS_STATUS_CLASS = { Improving: 'tag-buy', Weakening: 'tag-hold', Broken: 'tag-sell' };
 
 let metricMeta = {};
@@ -43,7 +48,7 @@ function barRow(label, valuePct, displayValue, max = 100) {
 
 // ---------------------------------------------------------------- Masthead
 function renderMasthead(pack) {
-  const generated = pack.generatedAt ? new Date(pack.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+  const generated = pack.generatedAt ? new Date(pack.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '';
   return `<div class="masthead">
     <div>
       <div class="brand">Investment Committee &mdash; Weekly Pack</div>
@@ -80,7 +85,7 @@ function renderMacroChanges(m) {
   const dq = m.dataQuality || {};
   return `
     <div class="kpi-grid three">
-      ${kpi('Market regime', escape(regime.label || 'N/A'), `Confidence: ${escape(regime.confidence || 'N/A')}`)}
+      ${kpi('Market regime', escape(regime.label || ''), `Confidence: ${escape(regime.confidence || '')}`)}
       ${kpi('Live indicators', dq.live ?? 0)}
       ${kpi('Future Integration', dq.futureIntegration ?? 0, 'No data source configured')}
     </div>
@@ -93,8 +98,8 @@ function renderSectorChanges(s) {
   if (!s?.topSectors?.length) return '<p class="small">Not available.</p>';
   const rows = s.topSectors.map(sec => `<tr>
       <td>${escape(sec.sector)}</td><td class="num">${sec.companyCount}</td>
-      <td class="num ${scoreCellClass(sec.avgCompositeScore)}">${sec.avgCompositeScore ?? 'N/A'}</td>
-      <td class="num ${scoreCellClass(sec.avgRiskScore, true)}">${sec.avgRiskScore ?? 'N/A'}</td>
+      <td class="num ${scoreCellClass(sec.avgCompositeScore)}">${sec.avgCompositeScore ?? ''}</td>
+      <td class="num ${scoreCellClass(sec.avgRiskScore, true)}">${sec.avgRiskScore ?? ''}</td>
       <td class="num">${pct(sec.avgRelativeStrengthPct)}</td>
     </tr>`).join('');
   return `<table><thead><tr><th>Sector</th><th class="num">Companies</th><th class="num">Composite</th><th class="num">Risk</th><th class="num">Rel. strength</th></tr></thead><tbody>${rows}</tbody></table>
@@ -107,7 +112,7 @@ function renderThesisChanges(items) {
   const rows = items.map(t => `<tr>
       <td>${escape(t.name)} <span class="small">(${escape(t.symbol)})</span></td>
       <td><span class="tag ${THESIS_STATUS_CLASS[t.status] || 'tag-neutral'}">${escape(t.status)}</span></td>
-      <td class="small">${escape((t.reasons || []).join('; ') || 'N/A')}</td>
+      <td class="small">${escape((t.reasons || []).join('; ') || '')}</td>
     </tr>`).join('');
   return `<table><thead><tr><th>Company</th><th>Thesis status</th><th>Reasons</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="small">${dataTag('thesisStatus')}</p>`;
@@ -118,9 +123,9 @@ function renderValuationSummary(v) {
   const a = v.averages || {};
   return `
     <div class="kpi-grid three">
-      ${kpi('Valuation status', escape(v.valuationStatus || 'N/A'), dataTag('sectorPremiumDiscount'))}
+      ${kpi('Valuation status', escape(v.valuationStatus || ''), dataTag('sectorPremiumDiscount'))}
       ${kpi('Avg. premium/discount', pct(v.avgPremiumDiscount), '', v.avgPremiumDiscount >= 0 ? 'neg' : 'pos')}
-      ${kpi('Avg. composite score', a.score != null ? fmt(a.score, 0) : 'N/A')}
+      ${kpi('Avg. composite score', a.score != null ? fmt(a.score, 0) : '')}
     </div>`;
 }
 
@@ -129,12 +134,12 @@ function renderRiskSummary(r) {
   const h = r.health || {};
   return `
     <div class="kpi-grid three">
-      ${kpi('Risk status', escape(r.riskStatus || 'N/A'), r.avgCompositeRisk != null ? `Avg. composite risk ${r.avgCompositeRisk}/100` : '', scoreCellClass(r.avgCompositeRisk, true))}
-      ${kpi('Portfolio health', h.score != null ? `${h.score}/100` : 'N/A', dataTag('portfolioHealthScore'), scoreCellClass(h.score))}
-      ${kpi('Health trend', escape(h.trend || 'N/A'))}
+      ${kpi('Risk status', escape(r.riskStatus || ''), r.avgCompositeRisk != null ? `Avg. composite risk ${r.avgCompositeRisk}/100` : '', scoreCellClass(r.avgCompositeRisk, true))}
+      ${kpi('Portfolio health', h.score != null ? `${h.score}/100` : '', dataTag('portfolioHealthScore'), scoreCellClass(h.score))}
+      ${kpi('Health trend', escape(h.trend || ''))}
     </div>
     <div class="card"><h4>Health contributors (weakest first)</h4>
-      ${(h.contributors || []).map(c => barRow(c.label, c.score, c.score != null ? `${fmt(c.score, 0)}/100` : 'N/A')).join('') || '<p class="small">Not available.</p>'}
+      ${(h.contributors || []).map(c => barRow(c.label, c.score, c.score != null ? `${fmt(c.score, 0)}/100` : '')).join('') || '<p class="small">Not available.</p>'}
     </div>`;
 }
 
@@ -143,7 +148,7 @@ function renderRecommendedActions(items) {
   if (!items?.length) return '<p class="small">No action-scored positions.</p>';
   const rows = items.map(a => `<tr>
       <td>${escape(a.name)} <span class="small">(${escape(a.symbol)})</span></td>
-      <td>${labelTag(a.label)}</td><td class="num">${a.score}</td><td class="small">${escape(a.rationale || 'N/A')}</td>
+      <td>${labelTag(a.label)}</td><td class="num">${a.score}</td><td class="small">${escape(a.rationale || '')}</td>
     </tr>`).join('');
   return `<table><thead><tr><th>Company</th><th>Action</th><th class="num">Score</th><th>Rationale</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="small">${dataTag('actionScore')}</p>`;
@@ -154,7 +159,7 @@ function renderRebalancing(items) {
   if (!items?.length) return '<p class="small">No rebalancing suggestions.</p>';
   const rows = items.map(r => `<tr>
       <td>${escape(r.name)} <span class="small">(${escape(r.symbol)})</span></td>
-      <td>${escape(r.action)}</td><td class="small">${escape(r.rationale || 'N/A')}</td>
+      <td>${escape(r.action)}</td><td class="small">${escape(r.rationale || '')}</td>
     </tr>`).join('');
   return `<table><thead><tr><th>Company</th><th>Action</th><th>Rationale</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="small">${dataTag('rebalancingSuggestion')}</p>`;

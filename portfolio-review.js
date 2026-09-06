@@ -7,14 +7,19 @@
 // report.js, only the same house style.
 
 const $ = (selector, root = document) => root.querySelector(selector);
-const escape = (value) => String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
-const fmt = (value, digits = 2) => value == null || !Number.isFinite(value) ? 'N/A' : new Intl.NumberFormat('en-IN', { maximumFractionDigits: digits }).format(value);
-const pct = (value, digits = 1) => value == null || !Number.isFinite(value) ? 'N/A' : `${value >= 0 ? '+' : ''}${fmt(value, digits)}%`;
-const compact = (value) => value == null || !Number.isFinite(value) ? 'N/A' : new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 2 }).format(value);
+// Blank is this app's one missing-data convention everywhere a value is
+// displayed -- the string "N/A" is still the internal sentinel several backend modules
+// return, so escape() blanks it out here at the one point almost every
+// displayed string passes through, rather than changing the backend's data
+// contract.
+const escape = (value) => { const str = String(value ?? ''); return str === 'N/A' ? '' : str.replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); };
+const fmt = (value, digits = 2) => value == null || !Number.isFinite(value) ? '' : new Intl.NumberFormat('en-IN', { maximumFractionDigits: digits }).format(value);
+const pct = (value, digits = 1) => value == null || !Number.isFinite(value) ? '' : `${value >= 0 ? '+' : ''}${fmt(value, digits)}%`;
+const compact = (value) => value == null || !Number.isFinite(value) ? '' : new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 2 }).format(value);
 
 const RATING_CLASS = { 'Strong Buy': 'tag-strong-buy', Buy: 'tag-buy', Accumulate: 'tag-accumulate', Hold: 'tag-hold', Reduce: 'tag-reduce', Sell: 'tag-sell', 'Add aggressively': 'tag-strong-buy', Add: 'tag-buy', Exit: 'tag-sell' };
 const tagClass = (label) => RATING_CLASS[label] || 'tag-neutral';
-const labelTag = (label) => `<span class="tag ${tagClass(label)}">${escape(label || 'N/A')}</span>`;
+const labelTag = (label) => `<span class="tag ${tagClass(label)}">${escape(label || '')}</span>`;
 
 let metricMeta = {};
 function dataTag(key) {
@@ -77,7 +82,7 @@ function chart(title, series, opts) {
 
 // ---------------------------------------------------------------- Masthead
 function renderMasthead(pack) {
-  const generated = pack.generatedAt ? new Date(pack.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+  const generated = pack.generatedAt ? new Date(pack.generatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : '';
   return `<div class="masthead">
     <div>
       <div class="brand">Investment Committee &mdash; Portfolio Review</div>
@@ -100,9 +105,9 @@ function renderPortfolioSummary(p) {
       ${kpi('Portfolio beta', fmt(p.beta), dataTag('portfolioBeta'))}
       ${kpi('Risk-adjusted return (proxy)', fmt(p.riskAdjustedReturn, 2), dataTag('riskAdjustedReturnScore'))}
       ${kpi('Cash target', `${fmt(p.cashTargetPct)}%`, dataTag('cashTargetPct'))}
-      ${kpi('Trend', escape(p.trend || 'N/A'))}
-      ${kpi('Quality score', p.quality?.qualityScore != null ? `${fmt(p.quality.qualityScore, 0)}/100` : 'N/A', dataTag('portfolioQualityScore'), scoreCellClass(p.quality?.qualityScore))}
-      ${kpi('Risk score (inverted)', p.quality?.riskScore != null ? `${fmt(p.quality.riskScore, 0)}/100` : 'N/A', '', scoreCellClass(p.quality?.riskScore))}
+      ${kpi('Trend', escape(p.trend || ''))}
+      ${kpi('Quality score', p.quality?.qualityScore != null ? `${fmt(p.quality.qualityScore, 0)}/100` : '', dataTag('portfolioQualityScore'), scoreCellClass(p.quality?.qualityScore))}
+      ${kpi('Risk score (inverted)', p.quality?.riskScore != null ? `${fmt(p.quality.riskScore, 0)}/100` : '', '', scoreCellClass(p.quality?.riskScore))}
     </div>
     <div class="card"><h4>Weighted-average fundamentals</h4>
       <table><tbody>
@@ -118,11 +123,11 @@ function renderValuationSummary(v) {
   const a = v.averages || {};
   const dispersionRows = Object.entries(v.valuationDispersion || {}).map(([sector, d]) => `<tr>
       <td>${escape(sector)}</td><td class="num">${fmt(d.mean)}</td><td class="num">${fmt(d.median)}</td>
-      <td class="num">${fmt(d.stdDev)}</td><td class="num">${fmt(d.coefficientOfVariation, 2)}</td><td class="num">${d.sampleSize ?? 'N/A'}</td>
+      <td class="num">${fmt(d.stdDev)}</td><td class="num">${fmt(d.coefficientOfVariation, 2)}</td><td class="num">${d.sampleSize ?? ''}</td>
     </tr>`).join('');
   return `
     <div class="kpi-grid three">
-      ${kpi('Valuation status', escape(v.valuationStatus || 'N/A'), dataTag('sectorPremiumDiscount'))}
+      ${kpi('Valuation status', escape(v.valuationStatus || ''), dataTag('sectorPremiumDiscount'))}
       ${kpi('Avg. premium/discount', pct(v.avgPremiumDiscount), '', v.avgPremiumDiscount >= 0 ? 'neg' : 'pos')}
       ${kpi('Sector/watchlist P/E &middot; P/B', `${fmt(v.industryPe)} &middot; ${fmt(v.industryPb)}`, dataTag('industryPe'))}
     </div>
@@ -130,7 +135,7 @@ function renderValuationSummary(v) {
       <table><tbody>
         <tr><td>P/E</td><td class="num">${fmt(a.pe)}</td><td>ROE</td><td class="num">${pct(a.roe)}</td></tr>
         <tr><td>ROCE</td><td class="num">${pct(a.roce)}</td><td>Debt/equity</td><td class="num">${fmt(a.debtToEquity)}%</td></tr>
-        <tr><td>Revenue growth (3Y)</td><td class="num">${pct(a.revenueGrowth3y)}</td><td>Avg. composite score</td><td class="num">${a.score != null ? fmt(a.score, 0) : 'N/A'}</td></tr>
+        <tr><td>Revenue growth (3Y)</td><td class="num">${pct(a.revenueGrowth3y)}</td><td>Avg. composite score</td><td class="num">${a.score != null ? fmt(a.score, 0) : ''}</td></tr>
       </tbody></table>
     </div>
     ${dispersionRows ? `<div class="card"><h4>Valuation dispersion by sector ${dataTag('valuationDispersion')}</h4>
@@ -147,12 +152,12 @@ function renderConcentration(c) {
   const riskRows = (c.positionRiskContribution || []).slice(0, 10).map(r => `<tr>
       <td>${escape(r.name)} <span class="small">(${escape(r.symbol)})</span></td><td class="num">${fmt(r.riskContributionPct)}%</td>
     </tr>`).join('');
-  const factorRows = Object.values(c.factorExposure || {}).map(f => barRow(f.label, f.exposure, f.exposure != null ? `${f.exposure}/100` : 'N/A'));
+  const factorRows = Object.values(c.factorExposure || {}).map(f => barRow(f.label, f.exposure, f.exposure != null ? `${f.exposure}/100` : ''));
   return `
     <div class="kpi-grid three">
-      ${kpi('Diversification score', c.diversificationScore != null ? `${c.diversificationScore}/100` : 'N/A', dataTag('diversification'))}
-      ${kpi('Largest position', c.positionConcentration?.topPositionPct != null ? `${fmt(c.positionConcentration.topPositionPct)}%` : 'N/A')}
-      ${kpi('Risk status', escape(c.riskStatus || 'N/A'), c.avgCompositeRisk != null ? `Avg. composite risk ${c.avgCompositeRisk}/100` : '', scoreCellClass(c.avgCompositeRisk, true))}
+      ${kpi('Diversification score', c.diversificationScore != null ? `${c.diversificationScore}/100` : '', dataTag('diversification'))}
+      ${kpi('Largest position', c.positionConcentration?.topPositionPct != null ? `${fmt(c.positionConcentration.topPositionPct)}%` : '')}
+      ${kpi('Risk status', escape(c.riskStatus || ''), c.avgCompositeRisk != null ? `Avg. composite risk ${c.avgCompositeRisk}/100` : '', scoreCellClass(c.avgCompositeRisk, true))}
     </div>
     <div class="card"><h4>Sector allocation (weighted) ${dataTag('diversification')}</h4>${sectorRows.join('') || '<p class="small">No sector allocation available.</p>'}</div>
     <div class="two-col">
@@ -189,13 +194,13 @@ function renderHealth(h) {
   const history = (h.history || []).map(pt => ({ date: pt.fetchedAt, value: pt.healthScore }));
   return `
     <div class="kpi-grid three">
-      ${kpi('Health score', h.score != null ? `${h.score}/100` : 'N/A', dataTag('portfolioHealthScore'), scoreCellClass(h.score))}
-      ${kpi('Trend', escape(h.trend || 'N/A'))}
+      ${kpi('Health score', h.score != null ? `${h.score}/100` : '', dataTag('portfolioHealthScore'), scoreCellClass(h.score))}
+      ${kpi('Trend', escape(h.trend || ''))}
       ${kpi('History points', history.length)}
     </div>
     ${chart('Portfolio health score over time', history)}
     <div class="card"><h4>Contributors (weakest first)</h4>
-      ${(h.contributors || []).map(c => barRow(c.label, c.score, c.score != null ? `${fmt(c.score, 0)}/100` : 'N/A')).join('') || '<p class="small">Not available.</p>'}
+      ${(h.contributors || []).map(c => barRow(c.label, c.score, c.score != null ? `${fmt(c.score, 0)}/100` : '')).join('') || '<p class="small">Not available.</p>'}
     </div>`;
 }
 
@@ -204,7 +209,7 @@ function renderActionPriorities(items) {
   if (!items?.length) return '<p class="small">No action-scored positions.</p>';
   const rows = items.map(a => `<tr>
       <td>${escape(a.name)} <span class="small">(${escape(a.symbol)})</span></td>
-      <td>${labelTag(a.label)}</td><td class="num">${a.score}</td><td class="small">${escape(a.rationale || 'N/A')}</td>
+      <td>${labelTag(a.label)}</td><td class="num">${a.score}</td><td class="small">${escape(a.rationale || '')}</td>
     </tr>`).join('');
   return `<table><thead><tr><th>Company</th><th>Action</th><th class="num">Score</th><th>Rationale</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="small">${dataTag('actionScore')}</p>`;
@@ -215,7 +220,7 @@ function renderRebalancing(items) {
   if (!items?.length) return '<p class="small">No rebalancing suggestions.</p>';
   const rows = items.map(r => `<tr>
       <td>${escape(r.name)} <span class="small">(${escape(r.symbol)})</span></td>
-      <td>${escape(r.action)}</td><td class="small">${escape(r.rationale || 'N/A')}</td>
+      <td>${escape(r.action)}</td><td class="small">${escape(r.rationale || '')}</td>
     </tr>`).join('');
   return `<table><thead><tr><th>Company</th><th>Action</th><th>Rationale</th></tr></thead><tbody>${rows}</tbody></table>
     <p class="small">${dataTag('rebalancingSuggestion')}</p>`;
