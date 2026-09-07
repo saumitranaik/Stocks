@@ -144,9 +144,9 @@ const STANDARD_SORT_KEYS = { company: s => s.name, sector: s => s.sector || null
 // the panel's whole bounded scroll box -- see the .tab/.subtab-root/
 // .subsection/.card-table-fill rules). This clone mechanism remains only for
 // tables sharing a scroll region with sibling content (e.g. Dashboard's
-// Action Required table alongside its KPI grid, Portfolio's allocation/
-// rebalancing/exposure tables alongside notes cards, Watchlists' company
-// table alongside the summary/manage cards) -- native `position:sticky`
+// Action Required table alongside its KPI grid, Portfolio's rebalancing/
+// exposure tables alongside notes cards, Watchlists' company table
+// alongside the summary/manage cards) -- native `position:sticky`
 // cannot satisfy "sticky header relative to an ancestor further out than the
 // table's own horizontal-scroll wrapper" (csswg-drafts #865: sticky is
 // defeated by ANY intermediate ancestor with non-visible overflow, confirmed
@@ -322,7 +322,6 @@ function activateWorkspaceTab(tabId) {
   $$('#app-sidebar .sidebar-item,.tab').forEach(element => element.classList.remove('active'));
   $(`#${tabId}`)?.classList.add('active');
   $(`#app-sidebar .sidebar-item[data-tab="${tabId}"]`)?.classList.add('active');
-  $('#main').classList.toggle('full-bleed', tabId === 'watchlists');
   if (currentData) $('#empty').hidden = currentData.stocks.length > 0 || tabId === 'watchlists';
   // Company Context (header) names/analyzes exactly one company, so it is only
   // ever shown on Company Research — every other workspace analyzes a
@@ -1610,7 +1609,7 @@ function renderCorrelationMatrix(corr) {
   if (!corr.symbols?.length) return '<p class="small">Not enough overlapping price history yet.</p>';
   const header = `<tr><th></th>${corr.names.map(n => `<th>${escape(n)}</th>`).join('')}</tr>`;
   const rows = corr.matrix.map((row, i) => `<tr><th scope="row">${escape(corr.names[i])}</th>${row.map(r => `<td class="num" style="background:${correlationColor(r)}">${r == null ? '' : r.toFixed(2)}</td>`).join('')}</tr>`).join('');
-  return `<table class="corr-table">${header ? `<thead>${header}</thead>` : ''}<tbody>${rows}</tbody></table>`;
+  return `<table class="corr-table sticky-thead-native">${header ? `<thead>${header}</thead>` : ''}<tbody>${rows}</tbody></table>`;
 }
 function renderPortfolioAnalytics(data) {
   const p = data.portfolio || {};

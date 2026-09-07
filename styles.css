@@ -1,4 +1,4 @@
-:root{--bg:#0b1020;--panel:#121a2b;--panel2:#18233a;--text:#e6eefc;--muted:#9fb0d1;--green:#16c784;--blue:#4da3ff;--amber:#f5b942;--red:#ff5c5c;--border:#26344f}*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,Segoe UI,Arial,sans-serif}@media(min-width:901px){body{overflow:hidden}}header{flex:0 0 auto;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}.container{max-width:1900px;margin:auto;padding:20px}
+:root{--bg:#0b1020;--panel:#121a2b;--panel2:#18233a;--text:#e6eefc;--muted:#9fb0d1;--green:#16c784;--blue:#4da3ff;--amber:#f5b942;--red:#ff5c5c;--border:#26344f}*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,Segoe UI,Arial,sans-serif}@media(min-width:901px){body{overflow:hidden}}header{flex:0 0 auto;background:rgba(11,16,32,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}.container{width:100%;padding:20px}
 @media(min-width:901px){
   main#main.container{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column}
 }.title{display:flex;justify-content:space-between;gap:20px;align-items:center}.title h1{font-size:27px;margin:0}.title p,.small{color:var(--muted);font-size:12px}.badge{padding:8px 12px;border-radius:999px;color:var(--blue);background:#10203a;border:1px solid var(--border);white-space:nowrap}form{display:flex;gap:10px;margin-top:18px}input,select,button{font:inherit}input,select{color:var(--text);background:var(--panel);border:1px solid var(--border);padding:11px 12px;border-radius:8px}input{flex:1;min-width:200px}button{cursor:pointer;color:var(--text);background:var(--panel);border:1px solid var(--border);padding:10px 14px;border-radius:9px;font-weight:700}form button{color:#08111f;background:var(--blue);border-color:var(--blue)}.tab{display:none;padding:2px 0 24px}.tab.active{display:block}
@@ -32,20 +32,65 @@
      content scrolls, not scroll away together with it. Such a subsection
      wraps its detail content in a .scroll-body sibling (same marker class
      the 3 no-sub-nav tabs already use for their whole body) placed after the
-     fixed KPI/context elements; this rule then makes the outer .subsection a
-     plain pass-through (like the existing .subtab-root/.card-table-fill
-     cases below) so .scroll-body -- not .subsection -- is the real scroll
-     owner. See index.html's wr-overview/wr-risk-overview/portfolio overview/
-     exposure-matrix/health-rebalancing, Dashboard's portfolio-intelligence/
-     committee-view, Market Intelligence's macro/sector-intelligence, and the
-     Watchlists tab's Portfolio summary card for the pattern in use. */
-  .subsection:has(>.subtab-root),.subsection:has(>.card-table-fill),.subsection:has(>.scroll-body){overflow-y:visible}
+     fixed KPI/context elements. See index.html's wr-overview/wr-risk-overview/
+     portfolio overview/exposure-matrix/health-rebalancing, Dashboard's
+     portfolio-intelligence/committee-view, Market Intelligence's macro/
+     sector-intelligence, and the Watchlists tab's Portfolio summary card for
+     the pattern in use. */
+  /* Unlike the .subtab-root/.card-table-fill cases below, .subsection:has(>
+     .scroll-body) is deliberately left OFF this pass-through list -- the
+     .subsection here keeps its own default overflow-y:auto. Confirmed live:
+     when the fixed siblings before .scroll-body (a KPI grid, or a two-col
+     pair of cards, e.g. Portfolio Analysis's Health & Rebalancing, or Market
+     Intelligence's Market regime + Data Quality cards) are, combined, taller
+     than the subsection's own flex-allocated box -- which can happen at a
+     shorter desktop viewport height even when every individual card is a
+     reasonable size -- .scroll-body (flex-shrink:1, min-height:0) correctly
+     shrinks to its floor before anything else gives, but the fixed siblings
+     (flex-shrink:0, by design, so they never lose content) cannot shrink
+     further, so the subsection's total content genuinely exceeds its box.
+     If the subsection were a pass-through (overflow-y:visible) here, that
+     excess would keep escaping upward through .tab.active (deliberately
+     non-clipping, see the comment above) all the way to #main, whose own
+     overflow-y:auto would then engage -- turning #main into the page's
+     accidental scroll surface and dragging the *tab's own title/subtabs nav*
+     along with it too, which is worse than this fallback. Leaving overflow-y
+     at its default auto here means that overflow is instead contained and
+     scrolled at the subsection itself: the tab-level title/nav above it
+     never moves, #main never becomes a scroll surface, and nothing is
+     clipped/inaccessible -- the KPI cards only lose their "stays fixed while
+     the table scrolls" behavior in this one edge case, which is an
+     acceptable, disclosed degradation, not a silent failure. In the
+     overwhelmingly common case (fixed content comfortably fits) this rule
+     has zero visual effect -- .scroll-body still gets 100% of the
+     subsection's remaining flex space and this auto overflow never engages. */
+  /* .card-table-fill's pass-through assumes it's the only substantial
+     content in the .subsection (per the "one card wrapping one table, after
+     any intro text" contract above) -- when a .grid KPI summary (Level 4)
+     also sits in the same .subsection (Watchlist Research Overview's
+     #wr-kpis beside its Screening matrix card), that combination is exactly
+     the "mixed panel" case .scroll-body's own pass-through exclusion already
+     protects against (see the comment above), so it's excluded here too via
+     :not(:has(>.grid)) -- a general rule keyed to the same structural
+     signal (a KPI grid sibling), not a one-off selector for this one panel. */
+  .subsection:has(>.subtab-root),.subsection:has(>.card-table-fill):not(:has(>.grid)){overflow-y:visible}
   /* These ARE meant to shrink-to-fit exactly (they're the pass-through/
      scroll-owning elements the rule above would otherwise wrongly pin to
      natural size) -- higher specificity than the generic rule above wins
      regardless of source order. */
   .tab.active>.subsection,.tab.active>.scroll-body,.subsection>.subtab-root,.subsection>.card-table-fill,.subsection>.scroll-body{flex-shrink:1}
   .scroll-body{flex:1;min-height:0;overflow-y:auto}
+  /* A .two-col pair where one side is a .card-table-fill (e.g. Portfolio
+     Overview's allocation table beside its fixed notes card) needs the same
+     flex:1;min-height:0 treatment as .scroll-body/.card-table-fill above so
+     it actually fills -- and can shrink into -- the subsection's remaining
+     space, instead of sizing to its own content and pushing the overflow up
+     to the subsection (or further). The KPI grid above it stays flex-shrink:0
+     (the default) and pinned; only this row's own .scroll (inside the table
+     card) ends up bounded and scrollable, and the sibling notes card simply
+     stretches to match the row's resulting height (CSS Grid's default
+     align-items:stretch), staying fixed with nothing of its own to scroll. */
+  .subsection>.two-col:has(>.card-table-fill){flex:1;min-height:0}
   /* .card's own overflow:hidden (rounded-corner clipping) genuinely defeats
      position:sticky on a descendant table cell in real Chrome -- confirmed
      live -- even though .card is further out than .scroll, the table's own
@@ -55,7 +100,17 @@
      .card-table-fill's exact-fit flex layout (h3 + .scroll) ever needs the
      rounded-corner clip this card would otherwise apply. */
   .card.card-table-fill{flex:1;min-height:0;display:flex;flex-direction:column;overflow:visible}
-  .card-table-fill>.scroll{flex:1;min-height:0;overflow:auto}
+  /* min-height:160px (roughly the sticky header row plus 2-3 data rows) is a
+     floor, not a fixed size -- .scroll still gets 100% of whatever space
+     card-table-fill actually has whenever that's more than the floor. Without
+     it, a short viewport combined with a tall fixed header above .scroll
+     (long intro text, or -- Watchlist Research Overview -- a KPI grid
+     sibling outside this card entirely) could squeeze .scroll toward 0,
+     which both hides the table and (confirmed live) breaks position:sticky
+     itself once the sticky cell's own height exceeds its scrolling
+     container's -- Chrome only holds a sticky cell fully in place while the
+     container is tall enough to contain it undamped. */
+  .card-table-fill>.scroll{flex:1;min-height:120px;overflow:auto}
 }.empty{min-height:50vh;display:grid;place-content:center;text-align:center;gap:9px;color:var(--muted)}.empty b{color:var(--text);font-size:17px}.grid{display:grid;gap:16px;margin:16px 0}.four{grid-template-columns:repeat(4,1fr)}.two-col{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:16px 0}.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:18px;overflow:hidden}.card h3{color:var(--muted);font-size:14px;margin:0 0 12px}.card p{line-height:1.65}.kpi{font-size:29px;font-weight:800;margin:8px 0}.positive{color:var(--green)}.amber{color:var(--amber)}.blue{color:var(--blue)}.score{display:flex;align-items:center;gap:12px}.score-circle{width:63px;height:63px;border-radius:50%;display:grid;place-items:center;border:5px solid var(--green);font-weight:800;font-size:20px}.progress,.bar{height:9px;border-radius:99px;background:#0e1627;border:1px solid var(--border);overflow:hidden}.progress i,.bar i{height:100%;display:block;background:var(--green)}.progress i.blue{background:var(--blue)}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--border);white-space:nowrap}th{color:#c9d6f2;background:#10192b}tr:hover{background:#13203a}.scroll{overflow:auto}.tag{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800}.tag-lg{padding:6px 12px;font-size:12px;letter-spacing:.02em}.buy{color:var(--green);background:#16c78422}.hold{color:var(--amber);background:#f5b94222}.neutral{color:var(--muted);background:#9fb0d122}.donut{width:180px;height:180px;margin:15px auto;background:conic-gradient(var(--green) 0 42%,var(--blue) 42% 72%,var(--amber) 72% 88%,var(--red) 88%);border-radius:50%;display:grid;place-items:center}.donut:before{content:'';position:absolute;width:118px;height:118px;border-radius:50%;background:var(--panel2)}.donut span{z-index:1;text-align:center;font-size:13px;font-weight:800;max-width:95px}.news-list{display:grid;gap:9px}.news-item{border-bottom:1px solid var(--border);padding:11px 0;display:flex;justify-content:space-between;gap:14px}.news-item a{color:var(--text);text-decoration:none;font-weight:700}.news-item small{color:var(--muted);white-space:nowrap}.industry-pe{color:var(--muted)}.tech-table th.num,.tech-table td.num{text-align:right}.risk{padding:16px}.risk .bar i{background:var(--green)}.risk.medium .bar i{background:var(--amber)}.risk.high .bar i{background:var(--red)}.disclaimer{font-size:12px;color:var(--muted)}ul{line-height:1.8;padding-left:20px}@media(max-width:900px){.four{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.title{align-items:flex-start;flex-direction:column}.container{padding:16px}}@media(max-width:540px){form{flex-wrap:wrap}form input{flex-basis:100%}.four{grid-template-columns:1fr}.title h1{font-size:22px}}.strong-buy{color:var(--green);background:#16c78440;font-weight:900}.accumulate{color:var(--blue);background:#4da3ff22}.reduce{color:var(--amber);background:#f5b94240}.sell{color:var(--red);background:#ff5c5c22}.limited-data{display:inline-block;margin-bottom:8px}.pill-row{display:flex;gap:8px;overflow:auto;margin:0 0 16px;padding-bottom:4px}.pill{font-size:12px;padding:8px 12px;border-radius:999px;white-space:nowrap}.pill.active{color:#08111f;background:var(--blue);border-color:var(--blue)}.grid.five{grid-template-columns:repeat(5,1fr)}.rec-badges{display:flex;gap:8px;align-items:center;margin:8px 0}@media(max-width:900px){.grid.five{grid-template-columns:repeat(2,1fr)}}@media(max-width:540px){.grid.five{grid-template-columns:1fr}}
 .empty[hidden]{display:none}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}.toolbar select{flex:1;min-width:200px}button.primary{color:#08111f;background:var(--blue);border-color:var(--blue)}
@@ -78,6 +133,25 @@
 .section-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.section-head h3{margin:0}.section-head select{padding:7px 10px;font-size:12px}
 .grid.two{grid-template-columns:repeat(2,1fr)}
 .allocation-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px}.allocation-row .bar{flex:1;height:8px}.allocation-row span:first-child{min-width:160px}.allocation-row span:last-child{min-width:48px;text-align:right;color:var(--muted)}
+/* Portfolio Analysis -> Health & Rebalancing keeps this card fixed (Level 4
+   decision context, alongside the Rebalancing suggestions table's own
+   .scroll-body) but its list grows by one row per genuine data refresh, capped
+   server-side at 30 (data/decision/config.mjs HEALTH_HISTORY_MAX_ENTRIES) --
+   confirmed live that a well-refreshed watchlist's full 30-row list is taller
+   than a typical viewport, and since nothing between .subsection and #main
+   clips (by design, so tooltips/dropdowns in fixed regions aren't chopped),
+   an unbounded fixed-region list bubbles all the way up and makes #main
+   itself scroll -- the one genuine "specific component" exception to "avoid
+   nested scrollbars" the layout contract allows (same class of exception as
+   a wide table). */
+#health-history{max-height:220px;overflow-y:auto}
+/* Market Intelligence -> Macro Intelligence -> Market regime card: its notes
+   list length is data-driven (0-5 sentences off live VIX/benchmark-trend/
+   yield/currency/crude conditions, data/decision/marketRegime.mjs) -- fine at
+   a normal viewport height but confirmed live to push #main into the same
+   leak-scroll failure mode as the health-history case above at a shorter
+   (~900px) desktop viewport height. Same fix, same reasoning. */
+#macro-regime ul{max-height:160px;overflow-y:auto}
 .news-item{align-items:flex-start}.news-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 @media(max-width:540px){.toolbar{flex-wrap:wrap}.toolbar select{flex-basis:100%}}
 .info-icon{position:relative;display:inline-flex;cursor:help;color:var(--muted);font-size:13px;vertical-align:middle}.info-icon.tier-sourced{color:var(--green)}.info-icon.tier-calculated{color:var(--blue)}.info-icon.tier-heuristic{color:var(--amber)}
@@ -89,11 +163,6 @@
 .corr-table{border-collapse:collapse;font-size:11px}.corr-table th,.corr-table td{padding:6px 9px;border:1px solid var(--border);text-align:center;white-space:nowrap}.corr-table th{background:#10192b;color:#c9d6f2;font-weight:600}
 .risk-flags{margin-top:12px;display:flex;flex-direction:column;gap:4px}
 .weight-input{width:62px;padding:6px 8px;font-size:11px;border-radius:6px}
-/* Watchlists workspace: full-bleed while that tab is active (toggled on
-   .container by the tab-switch handler in script.js), so the company table
-   claims the maximum available screen width -- every other tab keeps the
-   existing 1500px reading-width layout untouched. */
-.container.full-bleed{max-width:100%}
 .wl-table-card{padding:12px}
 .wl-search-bar{flex:0 0 auto;background:var(--bg);padding:14px 0 10px;margin-bottom:14px;border-bottom:1px solid var(--border)}
 .wl-search-bar .add-company input{padding:14px 16px;font-size:15px;border-radius:10px;border-color:var(--blue)}

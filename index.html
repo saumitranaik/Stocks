@@ -28,7 +28,7 @@
   </nav>
   <div class="app-main">
 <header>
-  <div class="container">
+  <div class="container" id="header-container">
     <div class="title">
       <button type="button" id="sidebar-mobile-open" class="sidebar-mobile-open" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
       <div>
@@ -438,8 +438,7 @@
 
     <div class="subsection" data-subtab="wr-overview" role="tabpanel">
       <div class="grid four" id="wr-kpis"></div>
-      <div class="scroll-body">
-      <article class="card">
+      <article class="card card-table-fill">
         <div class="section-head">
           <h3>Screening matrix</h3>
           <select id="wr-ranking-sort" aria-label="Rank by">
@@ -454,13 +453,12 @@
         </div>
         <p class="small">Headline recommendation, valuation, technical and risk read per company &mdash; every figure below is already computed elsewhere on this page; nothing here is a new calculation. Reorder with <b>Rank by</b>, off the same unified recommendation engine every other table on this page reads. For roster management (add/remove/rename/reorder/weights) and the full monitoring table with every filter, use <b>Watchlists</b>.</p>
         <div class="scroll">
-          <table id="wr-overview-table" class="tech-table thead-sticky-1">
+          <table id="wr-overview-table" class="tech-table sticky-thead-native">
             <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="change">Change</th><th data-sort="recommendation">Recommendation</th><th title="The recommendation bucket furthest from neutral -- the main driver behind the rating" data-sort="driver">Primary driver</th><th data-sort="confidence">Confidence</th><th class="num" data-sort="composite">Composite score</th><th class="num" title="Upside to the in-house Target Price" data-sort="upside">Upside %</th><th title="Rule-based label combining ADX trend strength, multi-timeframe alignment and volatility" data-sort="regime">Regime</th><th class="num" title="0-100, higher = higher risk" data-sort="riskScore">Risk score</th><th title="Portfolio Action Score band, from data/decision/actionScore.mjs -- blends Recommendation with portfolio fit (weight drift, sector concentration, correlation), so it can differ from Recommendation" data-sort="action">Action</th><th class="num" title="Weighted average of business/financial-strength/profitability/growth/cash-flow/balance-sheet/management/industry-position factors -- measures the underlying business, independent of price" data-sort="companyQuality">Company Quality</th><th class="num" title="Weighted average of valuation/risk-profile/technical-trend/momentum-volume factors -- measures whether today's price/setup is attractive, independent of business quality" data-sort="stockAttractiveness">Stock Attractiveness</th><th title="Quality+Valuation+Risk buckets only, no Technical -- so a weak chart can never masquerade as a business-quality read" data-sort="fundamentalView">Fundamental View</th><th title="The Technical bucket plus the technical regime label" data-sort="marketView">Market View</th><th class="num" title="Institutional 6-factor framework (Value/Quality/Growth/Momentum/Risk/Size), sector-relative percentile blend. A distinct signal from Recommendation -- never overrides it" data-sort="factorScore">Factor score</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
       </article>
-      </div>
     </div>
 
     <div class="subsection" data-subtab="wr-fundamentals" role="tabpanel">
@@ -473,6 +471,7 @@
 
         <div class="subsection" data-subtab="wr-valuation" role="tabpanel">
           <p class="small">Forward P/E and EV/EBITDA are left blank where this data source cannot verify them. Sector premium/discount and rankings are computed against this watchlist's own same-sector peers, not a market-wide sector.</p>
+          <div class="scroll-body">
           <div class="scroll">
             <table id="valuation-table" class="thead-sticky-2">
               <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="forwardPe">Forward P/E</th><th class="num" data-sort="pb">P/B</th><th class="num" data-sort="evEbitda">EV/EBITDA</th><th class="num" data-sort="peg">PEG</th><th class="num" data-sort="fairValue">Fair value</th><th class="num" data-sort="targetPrice">Target price</th><th class="num" data-sort="upside">Upside</th><th class="num" data-sort="marginOfSafety">Margin of safety</th><th title="Confidence in the Fair Value/Target Price heuristic itself: completeness of the P/E-P/B reversion inputs, watchlist peer sample size, and how far this stock's own multiple already sits from the peer average it's reverting to" data-sort="confidence">Confidence</th><th data-sort="sectorPremium">Sector premium/discount</th><th data-sort="earningsYield">Earnings yield</th><th data-sort="fcfYield">FCF yield</th><th title="Rank by ROCE (falling back to ROE) among same-sector watchlist peers" data-sort="sectorRank">Sector rank</th><th class="num" title="Blend of relative valuation, sector-normalized and multi-factor peer scores" data-sort="relativeAttractiveness">Relative attractiveness</th><th title="Strong (6+ same-sector peers) / Adequate (3-5) / Weak (1-2) / Unavailable (0) -- below 3, relative-valuation scores are withheld rather than shown as a misleading self-comparison" data-sort="peerCompleteness">Peer completeness</th></tr></thead>
@@ -484,6 +483,7 @@
             <p class="small">Spread of P/E across each sector's own watchlist peers — a tightly bunched sector vs. a widely scattered one.</p>
             <div class="scroll" id="valuation-dispersion"></div>
           </article>
+          </div>
         </div>
 
         <div class="subsection" data-subtab="wr-quality" role="tabpanel">
@@ -585,11 +585,10 @@
         </nav>
         <div class="subsection" data-subtab="wr-risk-overview" role="tabpanel">
           <div class="grid four" id="risk-cards"></div>
-          <div class="scroll-body">
-          <article class="card">
+          <article class="card card-table-fill">
             <h3>Stock-by-stock risk matrix</h3>
             <div class="scroll">
-              <table id="risk-table" class="thead-sticky-2">
+              <table id="risk-table" class="sticky-thead-native">
                 <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th data-sort="cmp">CMP</th><th data-sort="pe">P/E</th><th data-sort="interestCoverage">Interest coverage</th><th data-sort="financial">Financial</th><th data-sort="business">Business</th><th data-sort="market">Market</th><th data-sort="sectorRisk">Sector</th><th data-sort="governance">Governance</th><th data-sort="downside200">Scenario: downside to 200-DMA</th><th data-sort="downsideLow">Scenario: downside to 52W low</th><th data-sort="composite">Composite</th><th data-sort="trend">Trend</th><th title="Intact / Improving / Weakening / Broken -- run-over-run classification off recommendation, risk and technical direction since the last genuine data refresh" data-sort="thesisStatus">Thesis status</th></tr></thead>
                 <tbody></tbody>
               </table>
@@ -599,7 +598,6 @@
             <h3>Institutional risk view</h3>
             <p id="risk-summary">Risk analysis will appear once the watchlist loads.</p>
           </article>
-          </div>
         </div>
         <div class="subsection" data-subtab="wr-risk-alerts" role="tabpanel">
           <p class="small">Rule-based severity off fixed thresholds &mdash; see <span id="alerts-methodology-info"></span>. Standing conditions keep firing until the condition clears or the alert is acknowledged; crossing events fire once, off the persisted run-over-run snapshot.</p>
@@ -613,11 +611,13 @@
               <button type="button" class="pill" data-severity="Low">Low</button>
             </div>
           </div>
+          <div class="scroll-body">
           <div class="scroll">
             <table id="alerts-table" class="tech-table thead-sticky-2">
               <thead><tr><th data-sort="severity">Severity</th><th data-sort="company">Company</th><th data-sort="category">Category</th><th data-sort="alert">Alert</th><th data-sort="confidence">Confidence</th><th data-sort="time">Time</th><th>Acknowledge</th></tr></thead>
               <tbody></tbody>
             </table>
+          </div>
           </div>
         </div>
         <div class="subsection" data-subtab="wr-opportunities" role="tabpanel">
@@ -648,13 +648,12 @@
 
     <div class="subsection" data-subtab="overview" role="tabpanel">
       <div class="grid four" id="portfolio-kpis"></div>
-      <div class="scroll-body">
       <div class="two-col">
-        <article class="card">
+        <article class="card card-table-fill">
           <h3>Screen-derived model allocation</h3>
           <p class="small">Weights favor stronger composite screens and are capped to avoid concentration. Rows follow the watchlist's own order &mdash; this tab does not re-rank your companies. This is an illustrative research output, not personalized investment advice.</p>
           <div class="scroll">
-            <table id="portfolio-table" class="tech-table thead-sticky-1">
+            <table id="portfolio-table" class="tech-table sticky-thead-native">
               <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="quality">Quality score</th><th class="num" data-sort="weight">Target weight</th><th data-sort="bucket">Bucket</th></tr></thead>
               <tbody></tbody>
             </table>
@@ -669,7 +668,6 @@
             <li>Refresh this dashboard before each allocation review.</li>
           </ul>
         </article>
-      </div>
       </div>
     </div>
 
@@ -687,13 +685,25 @@
     </div>
 
     <div class="subsection" data-subtab="correlation" role="tabpanel">
-      <article class="card">
-        <h3>Correlation matrix</h3>
-        <p class="small">Pairwise correlation of weekly returns over the trailing overlapping price history per pair.</p>
-        <div class="scroll"><div id="portfolio-correlation"></div></div>
-        <div class="two-col" id="portfolio-correlation-lists"></div>
-        <div id="portfolio-rolling-correlation"></div>
-      </article>
+      <div class="subtab-root" id="portfolio-correlation-detail">
+        <nav class="subtabs subtabs-secondary" data-section-label="Correlation" role="tablist" aria-label="Correlation sections">
+          <button type="button" role="tab" data-subtab="corr-matrix">Matrix</button>
+          <button type="button" role="tab" data-subtab="corr-insights">Insights</button>
+        </nav>
+
+        <div class="subsection" data-subtab="corr-matrix" role="tabpanel">
+          <p class="small">Pairwise correlation of weekly returns over the trailing overlapping price history per pair.</p>
+          <article class="card card-table-fill">
+            <h3>Correlation matrix</h3>
+            <div class="scroll" id="portfolio-correlation"></div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="corr-insights" role="tabpanel">
+          <div class="two-col" id="portfolio-correlation-lists"></div>
+          <div id="portfolio-rolling-correlation"></div>
+        </div>
+      </div>
     </div>
 
     <div class="subsection" data-subtab="factor-exposure" role="tabpanel">
@@ -872,6 +882,7 @@
 
     <div class="subsection" data-subtab="upcoming-earnings" role="tabpanel">
       <p class="small">Earnings &amp; Events &mdash; see <span id="earnings-methodology-info"></span>. Quarterly revenue/profit/margin deltas below are real, computed from Screener's own scraped quarterly results. Calendar-dependent fields (next earnings date, expected impact, historical reaction, guidance, estimate revisions) have no data source in this app and render an explicit status rather than an invented date.</p>
+      <div class="scroll-body">
       <article class="card">
         <h3>Earnings Intelligence</h3>
         <div class="scroll">
@@ -889,6 +900,7 @@
 
       <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. A blank value means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
         <ul id="data-limitations"></ul>
+      </div>
       </div>
     </div>
 

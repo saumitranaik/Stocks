@@ -910,6 +910,391 @@ to any `data/watchlists/*.json` beyond what was already uncommitted at the
 start of the session. `node --check` clean on every touched file; `node
 --test`: 109/109 unaffected. Files changed: `index.html`, `styles.css`.
 
+**Global scrolling/width audit — 3 more fixed-context leaks, and a real
+flex-item width bug** (2026-09-06, follow-on to the entry above): an explicit
+user brief asked for a full repo-wide audit against this same Level 1-5
+contract (not just the tabs already covered) plus a horizontal-width
+consistency pass. Reading every `.subsection` in `index.html` against the
+`:has(>.scroll-body)`/`:has(>.card-table-fill)`/`:has(>.subtab-root)` pattern
+found 3 more instances the 2026-09-05 pass missed — all the same defect
+(fixed context and Level 5 detail as un-wrapped flex siblings, so the whole
+`.subsection` scrolled as one unit): Watchlist Research → Fundamentals →
+Valuation (`wr-valuation` — the intro paragraph plus the valuation table and
+the sector-dispersion card below it), Watchlist Research → Risk & Opportunity
+→ Alerts (`wr-risk-alerts` — the intro paragraph and severity-filter pill row
+plus the alerts table), and Market Intelligence → Earnings & Events
+(`upcoming-earnings` — the intro paragraph plus the Earnings Intelligence
+table, Portfolio Event Calendar card, and data-policy disclaimer). Each fixed
+identically to every existing instance: wrap the Level 5 content in a
+`.scroll-body` sibling placed after the fixed paragraph/filter row, no new
+CSS rule needed (the existing `:has(>.scroll-body){overflow-y:visible}`
+generalization already covers it). Portfolio Analysis → Health & Rebalancing
+(one of the 3 named in the brief) was inspected and found already correct
+from the 2026-09-05 pass — no change needed there.
+
+**Width defect, distinct from the scroll-boundary issue**: the brief also
+reported header/content width inconsistency and unnecessary centering.
+Investigation found two independent causes. (1) `activateWorkspaceTab()`
+toggled `full-bleed` (edge-to-edge width) only on `#main` for the Watchlists
+tab, never on the header's own `.container` div — so on that one tab the
+header's title/toolbar row stayed capped at 1900px while the page content
+below it went edge-to-edge, a real left/right-edge mismatch between the two.
+Fixed by giving the header's container div an id (`#header-container`) and
+toggling `full-bleed` on both elements together. (2) A genuine, previously
+undiagnosed CSS bug, confirmed live by inspecting computed styles (not
+reasoning about the spec): `main#main.container` is both a flex item of
+`.app-main` (`flex:1`) and carries `.container`'s own `max-width:1900px;
+margin:auto` — and per the flexbox spec, an `auto` margin on a flex item's
+cross axis (horizontal, since `.app-main` is `flex-direction:column`)
+disables `align-items:stretch` for that item entirely, so the browser instead
+shrink-to-fits the item to its own content width and only *then* distributes
+the leftover space into the auto margins. Measured directly on a 1600px-wide
+viewport: `#main` computed to 1205px wide with 87px auto margins each side,
+on a workspace where 1380px was actually available (and the 1900px
+`max-width` never even applied) — an arbitrary, content-dependent width that
+varied per tab, exactly the "content centred inside a narrower container"
+symptom reported. The header's own `.container` div is not a flex item
+(`<header>` is the flex item; the div is an ordinary block inside it), so it
+was never affected — which is why the two diverged. Fixed with one property:
+`.container` gained an explicit `width:100%`, which gives the flex item a
+definite cross size (stretching to fill available width) that `max-width`
+then correctly caps only when available width actually exceeds 1900px —
+confirmed live at both a narrow viewport (1380px available: header and main
+both fill it exactly, zero gutter) and a wide one (2180px available: both
+cap at 1900px and center with identical 140px margins each side). `report.
+html`/`portfolio-review.html`/`committee-pack.html` do not reference
+`styles.css` or the `.container` class at all (confirmed via grep) and are
+unaffected, per this app's standing long-form-page exception.
+
+Validated live: a zero-dependency Chrome DevTools Protocol driver (Node 22's
+built-in `fetch`/`WebSocket`, same discipline as every prior pass in this
+history) against a scratch server (port 4197, never the user's own dev
+server on 4173), driving the system's real installed Chrome headless. All 3
+newly-wrapped panels confirmed their fixed paragraph/filter row's
+`getBoundingClientRect().top` was pixel-identical before and after scrolling
+their own `.scroll-body` to its end. Header/main edge alignment confirmed at
+1600px (both 220-1600, matching, full-bleed on Watchlists) and 2400px (both
+360-2260, matching, centered at max-width on every other tab) viewport
+widths, both before and after the `width:100%` fix (the divergence was
+reproduced first, then confirmed resolved). Zero console errors (excluding
+the standing `favicon.ico` 404). `node --check` clean on `script.js`/
+`server.mjs`; `node --test`: 109/109 unaffected (no analytics/scoring/
+decision/quant module touched). No mutating route was ever called against
+the scratch server (`git status`/`git diff` on `data/watchlists/`/`data/
+cache/` showed zero change after the run). Files changed: `index.html`,
+`script.js`, `styles.css`.
+
+**Layout contract** (formalizing the Level 1-5 hierarchy above as the
+reusable rule for every future desktop screen and sub-tab in this app):
+
+```
+Application Shell
+├── Fixed Sidebar                      (Level 1)
+└── Workspace
+    ├── Fixed Workspace Header/Context (Level 1 -- header, watchlist selector, refresh)
+    └── Page Content Area
+        ├── Fixed Page Context         (Levels 2-4)
+        │   ├── Title, description     (Level 2)
+        │   ├── Tabs / sub-tabs        (Level 3, nests: primary -> secondary -> tertiary)
+        │   ├── Explanatory text       (Level 2/4, whichever precedes the detail region)
+        │   └── KPI / summary content  (Level 4)
+        └── Scroll Body                (Level 5 -- the ONLY region that scrolls)
+            └── Table / detail / event / list content
+```
+
+Implementation rule, not just description: a `.subsection` (or nested
+`.subtab-root`) that mixes any Level 1-4 element as a *direct sibling* of
+Level 5 content must wrap the Level 5 part in a `.scroll-body` div — never
+rely on the whole panel scrolling together. `:has(>.subtab-root)`/
+`:has(>.card-table-fill)` turn the outer `.subsection` into a non-clipping
+pass-through (safe there: a nested `.subtab-root` recursively repeats this
+same fixed/scroll split one level deeper, and `.card-table-fill`'s own child
+`.scroll` is directly flex-bounded, so nothing can overflow *its* box either
+way). `:has(>.scroll-body)` deliberately does **not** get the same
+pass-through treatment — see "Above yellow divider = fixed workspace
+context..." below for why — the `.subsection` keeps its own default
+`overflow-y:auto` as a contained fallback instead. A panel whose *entire*
+content, after any intro text, is exactly one card wrapping one table uses
+`.card-table-fill` + `.sticky-thead-native` instead (real `position:sticky`,
+no wrapper needed) — see the two mechanisms compared earlier in this section.
+A panel with no separate Level 1-4 content mixed in (the whole `.subsection`
+is one homogeneous detail view, e.g. Portfolio Analysis's Correlation matrix,
+Compare's per-metric panels) needs neither mechanism — the default
+`.subsection{overflow-y:auto}` is already correct there, since there is no
+separate context to keep pinned.
+
+**Canonical horizontal alignment rule**: exactly one width policy for the
+entire app shell, no per-tab exceptions. `.container` (used by both the
+header's own container div and `#main`) is `width:100%;padding:20px` — no
+`max-width`, no `margin:auto`, no centering, ever. The Watchlists tab (this
+rule's own reference case, since it was the first screen built to use the
+full available width) is not a special case any more; every workspace now
+renders exactly like it: content begins immediately after the sidebar with
+one consistent padding gutter, using 100% of the remaining width, and the
+header's title/toolbar row shares that exact same left/right edge as the
+page content below it on every tab, at every viewport width. There is no
+"full-bleed" toggle any more (retired, see the dated entry below) because
+there is no longer a second, narrower policy for it to toggle away from.
+
+**Global scrolling/width audit round 2 — one universal width rule, and a
+general leak-containment fix instead of per-page patches** (2026-09-06,
+same-day follow-on to the audit above): a second explicit user brief, with
+its own screenshots, found the previous pass's fix incomplete on both fronts
+it addressed.
+
+**Horizontal alignment**: the previous pass's `width:100%` fix correctly
+stopped `#main` from shrinking to an arbitrary content-dependent width, but
+left the *intentional* two-tier policy in place — every tab except
+Watchlists still capped at `max-width:1900px;margin:auto`, which centers
+content with a large gutter on any monitor wider than sidebar+1900px (common
+on a real desktop, not exercised by this repo's own prior 1600/2400px test
+viewports). The brief's explicit instruction, using the Watchlists tab's own
+full-width layout as the canonical reference: **one** width policy for every
+screen, not two. Fixed by deleting the cap outright — `.container` is now
+`width:100%;padding:20px` with no `max-width`/`margin` at all — and retiring
+the now-fully-redundant `full-bleed` toggle mechanism (`activateWorkspaceTab()`
+no longer toggles any width-related class; `.container.full-bleed` is
+deleted from `styles.css`) rather than leaving dead special-casing code
+behind, per the brief's own "one coherent global rule, not a collection of
+special-case fixes" instruction.
+
+**Scroll boundary — a real, general leak found via a repo-wide audit at
+multiple viewport heights, not just the 3 previously-checked screens**: a
+comprehensive automated sweep (43 tab/sub-tab/nested-sub-tab combinations,
+covering every screen named in the brief plus Dashboard/Reports/Compare for
+completeness) measuring `#main`'s own `scrollHeight` vs. `clientHeight` at
+each one (the general test for "did the page/main become an unintended
+scroll surface" — see the validation note below) found this held (`0px`
+overflow) for all 43 at a normal desktop viewport (1600x1000) and at a
+narrower width alone (1280x1000), confirming the alignment fix above didn't
+regress anything — but surfaced 2 real cases where `#main` genuinely
+overflowed at a shorter viewport height (≤900px, common on smaller laptop
+displays): Portfolio Analysis → Health & Rebalancing (a well-refreshed
+watchlist's Historical health trend list, capped server-side at 30 entries
+by `HEALTH_HISTORY_MAX_ENTRIES`, is taller than a typical viewport once
+populated) and Market Intelligence → Macro Intelligence (the Market regime
+card's data-driven notes list, `data/decision/marketRegime.mjs`, 0-5
+sentences, combined with the Data Quality card, at a shorter viewport).
+
+Root cause, confirmed by measuring each direct child's own bounding rect
+(not guessed from the CSS alone): `.subsection:has(>.scroll-body)` was made
+a non-clipping pass-through (`overflow-y:visible`) so `.scroll-body` would be
+the one real scroll owner — correct in the common case, but when the fixed
+siblings *before* `.scroll-body` (a KPI grid, or a two-col card pair) are,
+combined, taller than the subsection's own flex-allocated box, `.scroll-body`
+correctly shrinks to its floor (0px) but the fixed siblings (deliberately
+`flex-shrink:0`, so they never lose content) cannot shrink further — so the
+excess, with nothing between `.subsection` and `#main` willing to clip it
+(`.tab.active`/`.subtab-root` deliberately don't, so a fixed-region dropdown/
+tooltip isn't chopped), bubbled all the way up and made `#main` itself the
+scroll surface, dragging the *tab's own title/subtabs nav* along with it —
+worse than a merely-imperfect fixed region, since even Level 1-3 chrome
+stopped staying put.
+
+**General fix, not per-page patches**, per the brief's explicit instruction:
+removed `.scroll-body` from the pass-through `:has()` selector (`styles.css`)
+so `.subsection:has(>.scroll-body)` keeps its own *default*
+`overflow-y:auto` instead of `visible`. This has zero effect in the
+overwhelmingly common case (fixed content comfortably fits — confirmed live,
+see below) and, in the edge case, contains the overflow at the `.subsection`
+itself instead of leaking to `#main`: the tab-level title/subtabs nav above
+the subsection never moves and `#main` never becomes a scroll surface,
+though the KPI cards do lose their "stays fixed while the table scrolls"
+property in that one narrow edge case — an explicit, disclosed, contained
+degradation, not the previous silent architectural failure. Additionally, and
+as a narrower, principled "specific component" exception the layout contract
+already allows for a component whose content is genuinely unbounded (the
+same class of exception as a very wide table needing its own horizontal
+scroll): `#health-history` and `#macro-regime ul` each gained a
+`max-height`+`overflow-y:auto` cap, since both hold a data-driven list rather
+than a small fixed set of KPIs — this reduces (but, being a data-dependent
+list, can't fully eliminate on its own) how much these two specific cards
+can grow before the general `.subsection` fallback above would ever need to
+engage.
+
+Validated live (zero-dependency CDP driver over Node 22's built-in `fetch`/
+`WebSocket`, scratch server port 4198, never the user's own dev server on
+4173): the 43-path sweep re-run clean (`#main` and `document.scrollingElement`
+both `0px` overflow, header/main edges identical) at 1600×1000 (normal),
+1280×1000 (narrower width only), 1280×900, 1366×768 (a common real laptop
+resolution) and 1280×800; only at an extreme 1280×700 did one further,
+minor, disclosed case remain (Watchlists, 29px) — treated as an accepted
+edge case below what "narrower desktop viewport" reasonably means, and not
+fixed the same way `.tab.active` is, since making `.tab.active` itself
+`overflow-y:auto` risks clipping the Watchlists add-company autocomplete
+dropdown the existing "deliberately do NOT set overflow:hidden" comment
+already protects. The core fixed/scroll-body contract was independently
+re-confirmed at 1600×1000 on 6 representative panels (the 3 newly-fixed ones
+from the prior pass, plus Health & Rebalancing, Watchlist Research Overview,
+and Macro Intelligence): each fixed element's `getBoundingClientRect().top`
+was pixel-identical before/after scrolling its own `.scroll-body` to its end,
+and each `.scroll-body` genuinely scrolled (`scrollTop > 0` after the
+attempt) — confirming the `overflow-y:auto` change did not regress the
+primary "fixed stays fixed, only the detail region scrolls" behavior it was
+layered on top of. The Watchlists add-company autocomplete dropdown was
+re-checked directly (typed into the search box, read the suggestion
+dropdown's own bounding rect) and renders unclipped, confirming the
+`.tab.active`/`.subtab-root` overflow:visible behavior this fix deliberately
+left untouched. `node --check` clean on `script.js`/`server.mjs`; `node
+--test`: 109/109 unaffected (no analytics/scoring/decision/quant module
+touched). No mutating route was ever called against the scratch server
+(`git status`/`git diff` on `data/watchlists/`/`data/cache/` showed zero
+change after the run). Files changed: `script.js`, `styles.css` (`index.html`
+needed no change this pass).
+
+> **Above yellow divider = fixed workspace context. Below yellow divider =
+> bounded scrollable content.** Everything at Level 1-4 (sidebar, header,
+> title, description, tabs/sub-tabs at every nesting depth, explanatory text,
+> KPI/summary/recommendation cards) stays fixed; only Level 5 (tables, long
+> lists, event calendars, history lists, matrices) scrolls, inside its own
+> `.scroll-body` (or `.card-table-fill>.scroll`/`.sticky-thead-native`)
+> boundary — never the page, and never `#main`.
+
+**Watchlist Research Overview screening matrix — fixed-header regression fix**
+(2026-09-06, follow-on to the "yellow divider" rule immediately above): a
+screenshot-driven report showed `#wr-overview-table`'s own card — Screening
+matrix title, "Rank by" dropdown, description paragraph, and the table
+itself — scrolling away as one unit, i.e. entirely above the yellow divider
+by this section's own definition. Root cause: this panel is the one
+Watchlist Research table that mixes a KPI grid (`#wr-kpis`, Level 4) with a
+*single* detail table, so the 2026-09-05 "Fixed-context regression fix"
+above routed it to `.scroll-body` at the *subsection* level — correct for
+keeping the KPI grid pinned, but coarser than required here: the brief
+wanted the card's own title/dropdown/description pinned too, with only the
+table's header+rows split at the sticky boundary, i.e. the same
+`.card-table-fill`+`.sticky-thead-native` split this section already gives
+the other 10 single-table Watchlist Research panels (Profitability/Balance
+sheet/Ownership/Growth/Trend/Momentum/Volume/Relative strength/Volatility/
+Signals). Converted `#wr-overview-table`'s card to that same mechanism
+(`class="card card-table-fill"`, table `class="sticky-thead-native"`
+replacing the floating-clone marker `thead-sticky-1` — this table is no
+longer floating-clone-driven) instead of inventing a one-off structure for
+this one screen.
+
+That direct substitution alone reopened the exact "mixed panel can overflow"
+hazard `.scroll-body`'s own pass-through exclusion (the "Global scrolling/
+width audit round 2" entry above) already exists to prevent — confirmed
+live: at a short viewport, `.card-table-fill`'s unconditional
+`.subsection:has(>.card-table-fill){overflow-y:visible}` pass-through let
+`#wr-kpis` (which never shrinks) squeeze `.scroll` down to 0-9px, both
+hiding the table and (a new, distinct finding) breaking `position:sticky`
+itself — Chrome cannot hold a sticky cell fully in place once its own height
+exceeds its scroll container's. Fixed with two small, general refinements to
+the existing rules, not a per-panel special case: (1)
+`.subsection:has(>.card-table-fill)`'s pass-through now excludes a
+`.subsection` that also has a `.grid` sibling
+(`:not(:has(>.grid))`) — the identical structural signal (a KPI grid
+sharing the subsection) `.scroll-body`'s own exclusion already keys off,
+generalized to cover `.card-table-fill` too, so the other 10 no-KPI-grid
+single-table panels are unaffected (confirmed: none of them has a `.grid`
+sibling); (2) `.card-table-fill>.scroll` gained a `min-height:120px` floor
+(roughly the sticky header row plus 2 data rows) — a floor, not a fixed
+size, so it has zero effect whenever more space is actually available.
+
+**Disclosed residual edge case**: at 1366×768 and 1280×700 specifically, the
+floor can still make the fixed header content (KPI grid + card header)
+combined exceed the subsection's own allocated height by 77-145px; since the
+subsection is no longer a pass-through, this excess is contained at the
+subsection itself (its own `overflow-y:auto` engages) rather than leaking to
+`#main` — the identical accepted trade-off already disclosed above for
+Health & Rebalancing/Macro Intelligence at short viewports. This is reachable
+only by deliberately scrolling while hovering the fixed area itself (KPI
+cards/title text), not the table — the normal interaction (scrolling while
+hovering the table) always targets `.scroll` first and keeps every fixed
+element pinned exactly as required, confirmed live at all 4 viewports named
+in the brief (1600×1000, 1280×900, 1366×768, 1280×700): fixed elements'
+`getBoundingClientRect()` pixel-identical before/after scrolling the table,
+the sticky `<th>` itself (not the non-sticky `<thead>` wrapper — measuring
+the wrong element here first produced a false failure, corrected before
+concluding anything, the same class of mistake this document's own history
+already warns about) held at a constant position throughout, column
+alignment held (`theadFirstThLeft === firstRowFirstTdLeft`), and zero
+`document.documentElement`/`#main` overflow in every case. Validated live via
+a zero-dependency Chrome DevTools Protocol driver (Node 22's built-in
+`fetch`/`WebSocket`) against a scratch server (port 4199, never the user's
+own dev server on 4173); regression-checked Profitability (a `card-table-fill`
+panel with no `.grid` sibling, confirming `:not(:has(>.grid))` doesn't change
+its existing pass-through), Watchlist Research → Valuation
+(`.scroll-body`), Portfolio Analysis, Dashboard, and the Watchlists tab's
+add-company autocomplete dropdown (still unclipped) — all unaffected.
+`node --check` clean; `node --test`: 109/109 unaffected (`script.js`
+untouched this pass). No mutating route was called against the scratch
+server; `data/watchlists/`/`data/cache/` unchanged. Files changed:
+`index.html`, `styles.css`.
+
+**Portfolio Analysis Overview allocation table — same fixed-header regression,
+different shape (two-col, not KPI-grid-plus-single-card)** (2026-09-06,
+follow-on to the `#wr-overview-table` fix above): a screenshot-driven report
+showed the Screen-derived model allocation card's title, description
+paragraph, column headers, and the sibling Portfolio construction notes card
+all scrolling away together with the company rows — everything above the
+yellow header/body divider by this section's own definition. Root cause: this
+panel's `.scroll-body` (from the 2026-09-05 "Fixed-context regression fix")
+wrapped the entire `.two-col` — both the allocation card *and* the notes
+card — as one scroll unit, instead of bounding only the table's own rows.
+Unlike `#wr-overview-table` (one card, one table, no sibling card), this
+panel's table card sits beside a second, unrelated card in a `.two-col` grid,
+so the fix needed one further generalization beyond the direct substitution
+that worked there.
+
+Converted the allocation card to the same `.card-table-fill` +
+`.sticky-thead-native` mechanism (`#portfolio-table` class changed from
+`thead-sticky-1` to `sticky-thead-native`) and removed the `.scroll-body`
+wrapper entirely — the table's own `.scroll` is now the one bounded,
+scrolling box, with the card's `h3`/description staying naturally fixed
+(same flex-column mechanics as every other `card-table-fill` panel). The
+notes card is left as an ordinary `.card` sibling inside the same `.two-col`;
+CSS Grid's default `align-items:stretch` gives it the same row height as the
+table card with nothing of its own to scroll, so it stays genuinely fixed
+with no code of its own. One new general CSS rule handles the row's sizing:
+`.subsection>.two-col:has(>.card-table-fill){flex:1;min-height:0}` — the same
+flex:1;min-height:0 treatment `.scroll-body`/`.card-table-fill` already get
+as direct children of `.subsection`, extended to a `.two-col` wrapper so it
+can actually shrink into (and fill) the subsection's remaining space instead
+of sizing to its own content and pushing the overflow further up. `#portfolio-
+kpis` (the KPI grid above the two-col row) stays `flex-shrink:0` (the
+existing default), unaffected. `script.js`'s own comment documenting which
+tables remain on the floating-header-clone mechanism was updated to drop
+"Portfolio's allocation" from that list (rebalancing/exposure tables are
+unaffected and remain on the clone mechanism, since neither needed this
+change) — no functional change to `script.js`, `initFloatingHeaders()`'s
+generic `table[class*="thead-sticky-"]` selector automatically stops
+registering `#portfolio-table` for a clone now that its class no longer
+matches.
+
+Validated live (zero-dependency Chrome DevTools Protocol driver, Node 22's
+built-in `fetch`/`WebSocket`, driving the system's real installed Chrome
+headless against a scratch server, never the user's own dev server on 4173):
+at all 5 viewports named in the brief (1600×1000, 1280×900, 1366×768,
+1280×800, 1280×700), against the Asmita watchlist (30 companies): the
+allocation card's title, description paragraph, sticky `<th>` (not the
+non-sticky `<thead>` wrapper — measuring the wrong element here first, then
+correcting, is the same class of mistake this document's own history already
+warns about), the notes card, and `#portfolio-kpis` all measured pixel-
+identical (`getBoundingClientRect()`) before and after scrolling the table's
+own `.scroll` to its end; the scroll genuinely engaged (`scrollTop > 0` after
+the attempt) in every case; column alignment held
+(`theadFirstThLeft === firstBodyTdLeft`); `document.documentElement`/`#main`
+both measured exactly `0px` overflow before and after, at every viewport —
+confirming the fix contains scrolling at the table's own `.scroll` and never
+leaks to the page or `#main`. `#portfolio-table` confirmed to carry
+`sticky-thead-native` (not a `thead-sticky-*` clone class) with a real
+`position:sticky` computed style, and zero duplicate DOM ids app-wide.
+Regression-checked at the same 5 viewports: Watchlist Research → Overview →
+Screening matrix, Watchlist Research → Risk & Opportunity → Risk overview →
+Stock-by-stock risk matrix, and Portfolio Analysis's own Health & Rebalancing
+→ Rebalancing suggestions and Exposure Matrix → Per-company exposure (both
+still on the floating-clone mechanism, untouched by this change) — each
+panel's own fixed card title held position across a scroll attempt and
+neither `#main` nor the page ever overflowed. Zero console errors/exceptions
+throughout. `node --check` clean on `script.js`/`server.mjs`; `node --test`:
+109/109 unaffected (no analytics/scoring/decision/quant module touched — this
+pass is `index.html`/`styles.css`, plus one comment-only line in
+`script.js`). No mutating route was ever called against the scratch server
+(only page loads, tab/subtab clicks, and scroll/DOM measurement); `git diff`
+on `data/watchlists/`/`data/cache/` showed zero change after the run. Files
+changed: `index.html`, `styles.css`, `script.js` (comment only).
+
 ### 2.4 Rendering pattern
 
 `render(data)` is the one function that sets `currentData = data` and cascades
