@@ -72,8 +72,14 @@
      the "mixed panel" case .scroll-body's own pass-through exclusion already
      protects against (see the comment above), so it's excluded here too via
      :not(:has(>.grid)) -- a general rule keyed to the same structural
-     signal (a KPI grid sibling), not a one-off selector for this one panel. */
-  .subsection:has(>.subtab-root),.subsection:has(>.card-table-fill):not(:has(>.grid)){overflow-y:visible}
+     signal (a KPI grid sibling), not a one-off selector for this one panel.
+     The same exclusion applies to .subtab-root for the identical reason
+     (Market Intelligence's Sector Intelligence: #sector-intel-kpis sits
+     beside a nested .subtab-root splitting Sector Rollups/Coverage Gaps) --
+     without it, a .subtab-root sharing a .subsection with a never-shrinking
+     KPI grid would reproduce the exact same squeeze-to-0/broken-sticky
+     hazard the .card-table-fill exclusion above already exists to prevent. */
+  .subsection:has(>.subtab-root):not(:has(>.grid)),.subsection:has(>.card-table-fill):not(:has(>.grid)){overflow-y:visible}
   /* These ARE meant to shrink-to-fit exactly (they're the pass-through/
      scroll-owning elements the rule above would otherwise wrongly pin to
      natural size) -- higher specificity than the generic rule above wins

@@ -471,18 +471,30 @@
 
         <div class="subsection" data-subtab="wr-valuation" role="tabpanel">
           <p class="small">Forward P/E and EV/EBITDA are left blank where this data source cannot verify them. Sector premium/discount and rankings are computed against this watchlist's own same-sector peers, not a market-wide sector.</p>
-          <div class="scroll-body">
-          <div class="scroll">
-            <table id="valuation-table" class="thead-sticky-2">
-              <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="forwardPe">Forward P/E</th><th class="num" data-sort="pb">P/B</th><th class="num" data-sort="evEbitda">EV/EBITDA</th><th class="num" data-sort="peg">PEG</th><th class="num" data-sort="fairValue">Fair value</th><th class="num" data-sort="targetPrice">Target price</th><th class="num" data-sort="upside">Upside</th><th class="num" data-sort="marginOfSafety">Margin of safety</th><th title="Confidence in the Fair Value/Target Price heuristic itself: completeness of the P/E-P/B reversion inputs, watchlist peer sample size, and how far this stock's own multiple already sits from the peer average it's reverting to" data-sort="confidence">Confidence</th><th data-sort="sectorPremium">Sector premium/discount</th><th data-sort="earningsYield">Earnings yield</th><th data-sort="fcfYield">FCF yield</th><th title="Rank by ROCE (falling back to ROE) among same-sector watchlist peers" data-sort="sectorRank">Sector rank</th><th class="num" title="Blend of relative valuation, sector-normalized and multi-factor peer scores" data-sort="relativeAttractiveness">Relative attractiveness</th><th title="Strong (6+ same-sector peers) / Adequate (3-5) / Weak (1-2) / Unavailable (0) -- below 3, relative-valuation scores are withheld rather than shown as a misleading self-comparison" data-sort="peerCompleteness">Peer completeness</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <article class="card">
-            <h3>Sector valuation dispersion <span id="valuation-dispersion-info"></span></h3>
-            <p class="small">Spread of P/E across each sector's own watchlist peers — a tightly bunched sector vs. a widely scattered one.</p>
-            <div class="scroll" id="valuation-dispersion"></div>
-          </article>
+          <div class="subtab-root" id="wr-valuation-detail">
+            <nav class="subtabs subtabs-tertiary" data-section-label="Valuation" role="tablist" aria-label="Valuation sections">
+              <button type="button" role="tab" data-subtab="wr-valuation-table">Valuation</button>
+              <button type="button" role="tab" data-subtab="wr-valuation-dispersion">Sector Dispersion</button>
+            </nav>
+
+            <div class="subsection" data-subtab="wr-valuation-table" role="tabpanel">
+              <article class="card card-table-fill">
+                <div class="scroll">
+                  <table id="valuation-table" class="tech-table sticky-thead-native">
+                    <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="forwardPe">Forward P/E</th><th class="num" data-sort="pb">P/B</th><th class="num" data-sort="evEbitda">EV/EBITDA</th><th class="num" data-sort="peg">PEG</th><th class="num" data-sort="fairValue">Fair value</th><th class="num" data-sort="targetPrice">Target price</th><th class="num" data-sort="upside">Upside</th><th class="num" data-sort="marginOfSafety">Margin of safety</th><th title="Confidence in the Fair Value/Target Price heuristic itself: completeness of the P/E-P/B reversion inputs, watchlist peer sample size, and how far this stock's own multiple already sits from the peer average it's reverting to" data-sort="confidence">Confidence</th><th data-sort="sectorPremium">Sector premium/discount</th><th data-sort="earningsYield">Earnings yield</th><th data-sort="fcfYield">FCF yield</th><th title="Rank by ROCE (falling back to ROE) among same-sector watchlist peers" data-sort="sectorRank">Sector rank</th><th class="num" title="Blend of relative valuation, sector-normalized and multi-factor peer scores" data-sort="relativeAttractiveness">Relative attractiveness</th><th title="Strong (6+ same-sector peers) / Adequate (3-5) / Weak (1-2) / Unavailable (0) -- below 3, relative-valuation scores are withheld rather than shown as a misleading self-comparison" data-sort="peerCompleteness">Peer completeness</th></tr></thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+
+            <div class="subsection" data-subtab="wr-valuation-dispersion" role="tabpanel">
+              <article class="card">
+                <h3>Sector valuation dispersion <span id="valuation-dispersion-info"></span></h3>
+                <p class="small">Spread of P/E across each sector's own watchlist peers — a tightly bunched sector vs. a widely scattered one.</p>
+                <div class="scroll" id="valuation-dispersion"></div>
+              </article>
+            </div>
           </div>
         </div>
 
@@ -723,26 +735,38 @@
     </div>
 
     <div class="subsection" data-subtab="attribution" role="tabpanel">
-      <div class="two-col">
-        <article class="card">
-          <h3>Sector contribution <span id="sector-contribution-info"></span></h3>
-          <div id="portfolio-sector-contribution"></div>
-        </article>
-        <article class="card">
-          <h3>Position risk contribution <span id="position-risk-info"></span></h3>
-          <p class="small">Marginal contribution to portfolio volatility (weight × volatility × correlation), normalized to % of total.</p>
-          <div id="portfolio-position-risk"></div>
-        </article>
-      </div>
-      <div class="two-col">
-        <article class="card">
-          <h3>Portfolio quality attribution</h3>
-          <div id="portfolio-quality-attribution"></div>
-        </article>
-        <article class="card">
-          <h3>Portfolio valuation attribution</h3>
-          <div id="portfolio-valuation-attribution"></div>
-        </article>
+      <div class="subtab-root" id="portfolio-attribution-detail">
+        <nav class="subtabs subtabs-secondary" data-section-label="Attribution" role="tablist" aria-label="Attribution sections">
+          <button type="button" role="tab" data-subtab="attr-contribution">Contribution</button>
+          <button type="button" role="tab" data-subtab="attr-score">Score Attribution</button>
+        </nav>
+
+        <div class="subsection" data-subtab="attr-contribution" role="tabpanel">
+          <div class="two-col">
+            <article class="card">
+              <h3>Sector contribution <span id="sector-contribution-info"></span></h3>
+              <div id="portfolio-sector-contribution"></div>
+            </article>
+            <article class="card">
+              <h3>Position risk contribution <span id="position-risk-info"></span></h3>
+              <p class="small">Marginal contribution to portfolio volatility (weight × volatility × correlation), normalized to % of total.</p>
+              <div id="portfolio-position-risk"></div>
+            </article>
+          </div>
+        </div>
+
+        <div class="subsection" data-subtab="attr-score" role="tabpanel">
+          <div class="two-col">
+            <article class="card">
+              <h3>Portfolio quality attribution</h3>
+              <div id="portfolio-quality-attribution"></div>
+            </article>
+            <article class="card">
+              <h3>Portfolio valuation attribution</h3>
+              <div id="portfolio-valuation-attribution"></div>
+            </article>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -862,45 +886,68 @@
     <div class="subsection" data-subtab="sector-intelligence" role="tabpanel">
       <p class="small">Cross-watchlist: the only view in this app that reads every saved watchlist at once (cache-only, no new fetch) and groups your own companies by sector &mdash; see <span id="sector-intel-methodology-info"></span>. Coverage is limited to companies you've actually added somewhere; there is no market-wide sector database.</p>
       <div class="grid four" id="sector-intel-kpis"></div>
-      <div class="scroll-body">
-      <article class="card">
-        <h3>Sector rollups</h3>
-        <div class="scroll">
-          <table id="sector-intel-table" class="tech-table">
-            <thead><tr><th data-sort="sector">Sector</th><th class="num" data-sort="companies">Companies</th><th class="num" data-sort="composite">Composite</th><th class="num" data-sort="valuation">Valuation</th><th class="num" data-sort="technical">Technical</th><th class="num" data-sort="risk">Risk</th><th class="num" data-sort="relStrength">Rel. strength</th><th class="num" data-sort="epsCagr">EPS CAGR 5Y</th><th class="num" data-sort="regulatorySens">Regulatory sens.</th><th class="num" data-sort="commoditySens">Commodity sens.</th><th>Ratings</th></tr></thead>
-            <tbody></tbody>
-          </table>
+      <div class="subtab-root" id="sector-intel-detail">
+        <nav class="subtabs subtabs-secondary" data-section-label="Sector Intelligence" role="tablist" aria-label="Sector Intelligence sections">
+          <button type="button" role="tab" data-subtab="sector-intel-rollups">Sector Rollups</button>
+          <button type="button" role="tab" data-subtab="sector-intel-coverage-gaps">Coverage Gaps</button>
+        </nav>
+
+        <div class="subsection" data-subtab="sector-intel-rollups" role="tabpanel">
+          <article class="card card-table-fill">
+            <h3>Sector rollups</h3>
+            <div class="scroll">
+              <table id="sector-intel-table" class="tech-table sticky-thead-native">
+                <thead><tr><th data-sort="sector">Sector</th><th class="num" data-sort="companies">Companies</th><th class="num" data-sort="composite">Composite</th><th class="num" data-sort="valuation">Valuation</th><th class="num" data-sort="technical">Technical</th><th class="num" data-sort="risk">Risk</th><th class="num" data-sort="relStrength">Rel. strength</th><th class="num" data-sort="epsCagr">EPS CAGR 5Y</th><th class="num" data-sort="regulatorySens">Regulatory sens.</th><th class="num" data-sort="commoditySens">Commodity sens.</th><th>Ratings</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
         </div>
-      </article>
-      <article class="card">
-        <h3>Priority sectors with no coverage</h3>
-        <p class="small">Named in the Phase 6 brief but matched by no company's sector label in any of your saved watchlists today (matched via the same keyword patterns as Company Research &rarr; Risks &rarr; Sector's lookup) &mdash; either genuinely absent, or present under a differently-worded sector label this app's classification doesn't distinguish (e.g. defence companies are labeled "Capital Goods," not "Defence" &mdash; a known limitation, see roadmap TD-1). Never fabricated.</p>
-        <div id="sector-intel-gaps" class="small"></div>
-      </article>
+
+        <div class="subsection" data-subtab="sector-intel-coverage-gaps" role="tabpanel">
+          <article class="card">
+            <h3>Priority sectors with no coverage</h3>
+            <p class="small">Named in the Phase 6 brief but matched by no company's sector label in any of your saved watchlists today (matched via the same keyword patterns as Company Research &rarr; Risks &rarr; Sector's lookup) &mdash; either genuinely absent, or present under a differently-worded sector label this app's classification doesn't distinguish (e.g. defence companies are labeled "Capital Goods," not "Defence" &mdash; a known limitation, see roadmap TD-1). Never fabricated.</p>
+            <div id="sector-intel-gaps" class="small"></div>
+          </article>
+        </div>
       </div>
     </div>
 
     <div class="subsection" data-subtab="upcoming-earnings" role="tabpanel">
       <p class="small">Earnings &amp; Events &mdash; see <span id="earnings-methodology-info"></span>. Quarterly revenue/profit/margin deltas below are real, computed from Screener's own scraped quarterly results. Calendar-dependent fields (next earnings date, expected impact, historical reaction, guidance, estimate revisions) have no data source in this app and render an explicit status rather than an invented date.</p>
-      <div class="scroll-body">
-      <article class="card">
-        <h3>Earnings Intelligence</h3>
-        <div class="scroll">
-          <table id="earnings-intel-table" class="tech-table thead-sticky-1">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="latestPeriod">Latest quarter</th><th class="num" data-sort="revenueQoq">Revenue QoQ</th><th class="num" data-sort="revenueYoy">Revenue YoY</th><th class="num" data-sort="profitQoq">Net profit QoQ</th><th class="num" data-sort="profitYoy">Net profit YoY</th><th class="num" data-sort="marginQoq">Op. margin QoQ</th><th class="num" data-sort="marginYoy">Op. margin YoY</th><th class="num" data-sort="deviation">Vs. trailing avg</th><th data-sort="calendarStatus">Next earnings date</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-      <article class="card">
-        <h3>Portfolio Event Calendar</h3>
-        <p class="small">Real, dated company news items only &mdash; sorted newest-first. Not a forward-looking earnings/dividend/buyback/regulatory calendar (no data source exists for those in this app).</p>
-        <div id="event-calendar-list" class="news-list"></div>
-      </article>
+      <div class="subtab-root" id="earnings-events-detail">
+        <nav class="subtabs subtabs-secondary" data-section-label="Earnings &amp; Events" role="tablist" aria-label="Earnings and Events sections">
+          <button type="button" role="tab" data-subtab="earnings-intel">Earnings Intelligence</button>
+          <button type="button" role="tab" data-subtab="event-calendar">Event Calendar</button>
+          <button type="button" role="tab" data-subtab="earnings-data-policy">Data Policy</button>
+        </nav>
 
-      <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. A blank value means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
-        <ul id="data-limitations"></ul>
-      </div>
+        <div class="subsection" data-subtab="earnings-intel" role="tabpanel">
+          <article class="card card-table-fill">
+            <h3>Earnings Intelligence</h3>
+            <div class="scroll">
+              <table id="earnings-intel-table" class="tech-table sticky-thead-native">
+                <thead><tr><th data-sort="company">Company</th><th data-sort="latestPeriod">Latest quarter</th><th class="num" data-sort="revenueQoq">Revenue QoQ</th><th class="num" data-sort="revenueYoy">Revenue YoY</th><th class="num" data-sort="profitQoq">Net profit QoQ</th><th class="num" data-sort="profitYoy">Net profit YoY</th><th class="num" data-sort="marginQoq">Op. margin QoQ</th><th class="num" data-sort="marginYoy">Op. margin YoY</th><th class="num" data-sort="deviation">Vs. trailing avg</th><th data-sort="calendarStatus">Next earnings date</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="event-calendar" role="tabpanel">
+          <article class="card">
+            <h3>Portfolio Event Calendar</h3>
+            <p class="small">Real, dated company news items only &mdash; sorted newest-first. Not a forward-looking earnings/dividend/buyback/regulatory calendar (no data source exists for those in this app).</p>
+            <div id="event-calendar-list" class="news-list"></div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="earnings-data-policy" role="tabpanel">
+          <div class="card disclaimer"><b>Data policy:</b> Values are retrieved at fetch time. A blank value means the source did not provide a comparable field. Verify prices, filings and corporate actions before making investment decisions.
+            <ul id="data-limitations"></ul>
+          </div>
+        </div>
       </div>
     </div>
 

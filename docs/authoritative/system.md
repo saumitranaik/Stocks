@@ -1295,6 +1295,128 @@ pass is `index.html`/`styles.css`, plus one comment-only line in
 on `data/watchlists/`/`data/cache/` showed zero change after the run. Files
 changed: `index.html`, `styles.css`, `script.js` (comment only).
 
+**Below-the-yellow-divider content split into sub-tabs — 4 panels that
+bundled a distinct secondary analytical view inside one Level-5 scroll
+region** (2026-09-07, follow-on to the "yellow divider" rule above): a UX
+review asked, per panel, exactly what content lived below the fixed/scroll
+boundary and whether it represented a second, distinct analytical view
+crammed into the same scrolling region as the panel's primary table — the
+`.subtab-root` mechanism (`system.md` §2.3 above, `applySubtabState()`/
+`initSubtabs()`) already exists precisely to give such content its own
+click-to-switch view instead of forcing a scroll past one table to reach an
+unrelated one. Four genuine cases were found and split, each reusing the
+exact nested-subtab pattern Quality/Correlation/Technicals already
+established (`.tab`/`.subtab-root` → `.subtab-root`, `.subtabs-secondary`/
+`.subtabs-tertiary` nav styling, `data-section-label`) — no new tab
+mechanism, no per-panel one-off:
+
+1. **Watchlist Research → Fundamentals → Valuation** (`wr-valuation`): the
+   per-company valuation table and the "Sector valuation dispersion" card
+   (a statistical spread-of-P/E-by-sector view, a different analytical
+   question from the per-company table above it) shared one `.scroll-body`.
+   Split into a new tertiary `.subtab-root#wr-valuation-detail` (Valuation /
+   Sector Dispersion), matching Quality's own sibling nesting depth exactly.
+   `#valuation-table` migrated from the floating-header-clone mechanism
+   (`thead-sticky-2`) to `.card-table-fill`+`.sticky-thead-native` (real
+   `position:sticky`), consistent with every other table that ends up alone
+   in its own single-table subsection.
+2. **Portfolio Analysis → Attribution** (`attribution`): 4 cards (Sector
+   contribution, Position risk contribution, Portfolio quality attribution,
+   Portfolio valuation attribution) in two stacked `.two-col` rows meant
+   scrolling past the first pair to reach the second. Split into a new
+   secondary `.subtab-root#portfolio-attribution-detail` grouped by what
+   each pair actually answers: **Contribution** (how weight/risk is
+   distributed — sector contribution + position-level risk contribution)
+   and **Score Attribution** (which holdings drive the composite
+   quality/valuation reads — both already share the same `attributionList()`
+   renderer).
+3. **Market Intelligence → Sector Intelligence** (`sector-intelligence`): the
+   Sector rollups table (up to the full 36-sector taxonomy) and "Priority
+   sectors with no coverage" (a gap-disclosure list, a different concern
+   from sector performance data) shared one `.scroll-body`. Split into a new
+   secondary `.subtab-root#sector-intel-detail` (Sector Rollups / Coverage
+   Gaps); `#sector-intel-table` gained `.card-table-fill`+
+   `.sticky-thead-native` now that it's alone in its own subsection (it had
+   no sticky mechanism at all before, having been an explicit "bounded row
+   count" exception to the floating-clone rollout — no longer needed once it
+   is a single-table panel).
+4. **Market Intelligence → Earnings & Events** (`upcoming-earnings`): the
+   Earnings Intelligence table (one row per watchlist company), the
+   Portfolio Event Calendar (a separate, real-news list), and the "Data
+   policy" disclaimer shared one `.scroll-body`. The disclaimer was first
+   (incorrectly) hoisted to fixed intro text on the assumption it was a
+   short note; live measurement at a 1366×768 viewport caught this
+   immediately (`#main` overflowed 1716px vs. a 580px box) because
+   `#data-limitations` is actually `research.mjs`'s full `DATA_LIMITATIONS`
+   list — ~18 full-sentence disclosures, genuinely substantial, not a
+   footnote. Corrected to a third tab instead of a fixed element: split into
+   a secondary `.subtab-root#earnings-events-detail` with three tabs —
+   Earnings Intelligence / Event Calendar / Data Policy — each a
+   self-contained view. `#earnings-intel-table` migrated from
+   `thead-sticky-1` to `.card-table-fill`+`.sticky-thead-native` for the
+   same single-table-subsection reason as above.
+
+**General CSS fix required, not a per-panel patch**: case 3 above was the
+first place in the app where a `.grid` KPI summary (`#sector-intel-kpis`)
+sits directly beside a `.subtab-root` in the same `.subsection` — the exact
+"mixed panel" shape the `.card-table-fill` pass-through exclusion
+(`:not(:has(>.grid))`, documented above) already exists to protect against,
+but that exclusion had only ever been applied to `.card-table-fill`, not
+`.subtab-root`, since no prior panel combined the two. Generalized
+`styles.css`'s `.subsection:has(>.subtab-root)` pass-through selector to
+carry the identical `:not(:has(>.grid))` exclusion — verified against every
+existing `.subtab-root` parent in the app (none has a `.grid` sibling today)
+to confirm zero behavior change anywhere except this one new case.
+
+Every existing sub-tab elsewhere in the app that mixes a Level-4 KPI/context
+grid with Level-5 detail in one `.scroll-body` was re-examined against the
+same "is this a second distinct view, or one homogeneous table" test and
+deliberately left unsplit, per the brief's own "do not create arbitrary
+tabs" instruction: Watchlist Research → Risk & Opportunity → Risk overview's
+"Institutional risk view" card is one short methodology paragraph (`
+#risk-summary`, ~480 characters), not a second analytical view; Market
+Intelligence → Macro Intelligence's "Macro indicators"/"Not available"
+tables together total only 15 rows (6 fetched + 9 disclosed-unavailable, `
+data/providers/macroProvider.mjs`) and read as one available-vs-unavailable
+diagnostic; Dashboard's Portfolio Intelligence and Committee View
+sub-tabs are each an intentional single-scroll presentation roll-up (the
+tab's own intro text says so) rather than an accidental bundling; Company
+Research's one-scrolling-page-per-company architecture (§2.3 above) is a
+separate, deliberate design predating and independent of this pattern.
+
+Validated live (zero-dependency Chrome DevTools Protocol driver, Node 22's
+built-in `fetch`/`WebSocket`, driving the system's real installed Chrome
+headless against a scratch server on port 4321, never the user's own dev
+server on 4173): 35 functional assertions at a normal desktop viewport
+(default size) covering all 4 new `.subtab-root`s against the Asmita
+watchlist (30 companies, the largest saved watchlist) — each new tab shows
+the correct panel and hides its sibling(s) on click, every table/list still
+renders real data (30 valuation rows, 18 sector rows, 30 earnings rows, the
+full data-policy list, non-empty attribution/dispersion/coverage-gap
+content), `#main` never overflows, zero duplicate DOM ids, zero console
+errors/exceptions; a second pass at 1366×768 confirmed `#valuation-table`/
+`#sector-intel-table`/`#earnings-intel-table` all carry a real computed
+`position:sticky` header and column-sort still applies its indicator class
+post-migration from the floating-clone mechanism — this same pass is what
+caught and led to correcting the Data Policy defect above; a third pass
+covered 1280×700 (this app's own previously-documented "extreme, accepted
+edge case" viewport) and the 390px mobile breakpoint (document-scroll
+fallback, sidebar drawer) with no crash and no horizontal overflow, and
+reproduced the single ~4px `#main` overflow at 1280×700 already
+class-accepted elsewhere in this document (e.g. the Watchlists tab's 29px
+case at the same viewport) rather than a new defect. `node --check` clean on
+`script.js`/`server.mjs`; `node --test`: 109/109 unaffected (no
+analytics/scoring/decision/quant module touched — this pass is
+`index.html`/`styles.css` only). No mutating route was ever called against
+the scratch server (only page loads, watchlist switch via the existing
+`#watchlist-select`, tab/sub-tab clicks, and DOM measurement); `git diff` on
+`data/watchlists/`/`data/cache/` showed zero change after the run (the one
+watchlist-switch exercised, to Asmita, is a client-side selection change
+recorded server-side as an `activeWatchlist` pointer write — confirmed
+reverted to this session's pre-run value after finishing, per this
+document's own standing validation discipline for scratch-server runs).
+Files changed: `index.html`, `styles.css`.
+
 ### 2.4 Rendering pattern
 
 `render(data)` is the one function that sets `currentData = data` and cascades
