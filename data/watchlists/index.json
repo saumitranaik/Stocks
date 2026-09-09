@@ -1,5 +1,5 @@
 {
-  "activeWatchlist": "asmita",
+  "activeWatchlist": "sagar",
   "watchlists": [
     {
       "id": "core-portfolio",
@@ -77,7 +77,21 @@
       "file": "15-in1y.json",
       "companyCount": 5,
       "updatedAt": "2026-09-01T15:39:45.261Z"
+    },
+    {
+      "id": "sanaya",
+      "name": "Sanaya",
+      "file": "sanaya.json",
+      "companyCount": 1,
+      "updatedAt": "2026-09-07T12:20:27.030Z"
+    },
+    {
+      "id": "international",
+      "name": "International",
+      "file": "international.json",
+      "companyCount": 1,
+      "updatedAt": "2026-09-07T17:27:37.384Z"
     }
   ],
-  "updatedAt": "2026-09-07T08:07:09.902Z"
+  "updatedAt": "2026-09-08T07:35:41.139Z"
 }

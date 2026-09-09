@@ -34,16 +34,15 @@
      the 3 no-sub-nav tabs already use for their whole body) placed after the
      fixed KPI/context elements. See index.html's wr-overview/wr-risk-overview/
      portfolio overview/exposure-matrix/health-rebalancing, Dashboard's
-     portfolio-intelligence/committee-view, Market Intelligence's macro/
+     portfolio-intelligence/committee-view, Market Intelligence's
      sector-intelligence, and the Watchlists tab's Portfolio summary card for
      the pattern in use. */
   /* Unlike the .subtab-root/.card-table-fill cases below, .subsection:has(>
      .scroll-body) is deliberately left OFF this pass-through list -- the
      .subsection here keeps its own default overflow-y:auto. Confirmed live:
      when the fixed siblings before .scroll-body (a KPI grid, or a two-col
-     pair of cards, e.g. Portfolio Analysis's Health & Rebalancing, or Market
-     Intelligence's Market regime + Data Quality cards) are, combined, taller
-     than the subsection's own flex-allocated box -- which can happen at a
+     pair of cards, e.g. Portfolio Analysis's Health & Rebalancing) are,
+     combined, taller than the subsection's own flex-allocated box -- which can happen at a
      shorter desktop viewport height even when every individual card is a
      reasonable size -- .scroll-body (flex-shrink:1, min-height:0) correctly
      shrinks to its floor before anything else gives, but the fixed siblings
@@ -151,12 +150,14 @@
    nested scrollbars" the layout contract allows (same class of exception as
    a wide table). */
 #health-history{max-height:220px;overflow-y:auto}
-/* Market Intelligence -> Macro Intelligence -> Market regime card: its notes
-   list length is data-driven (0-5 sentences off live VIX/benchmark-trend/
-   yield/currency/crude conditions, data/decision/marketRegime.mjs) -- fine at
-   a normal viewport height but confirmed live to push #main into the same
-   leak-scroll failure mode as the health-history case above at a shorter
-   (~900px) desktop viewport height. Same fix, same reasoning. */
+/* Market Intelligence workspace -> its own "Market Intelligence" sub-tab ->
+   Market regime card: its notes list length is data-driven (0-5 sentences off
+   live VIX/benchmark-trend/yield/currency/crude conditions,
+   data/decision/marketRegime.mjs). Bounded defensively even though this card
+   now sits in a plain leaf .subsection (its own default overflow-y:auto
+   contains it) since the 2026-09-07 peer-tab split -- kept as a belt-and-
+   braces cap on an unbounded, data-driven list length, same reasoning as the
+   health-history case above. */
 #macro-regime ul{max-height:160px;overflow-y:auto}
 .news-item{align-items:flex-start}.news-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 @media(max-width:540px){.toolbar{flex-wrap:wrap}.toolbar select{flex-basis:100%}}
@@ -399,3 +400,18 @@ header .title h1{font-size:19px}
 .floating-thead{position:fixed;overflow:hidden;z-index:5;display:none;box-shadow:0 3px 8px rgba(0,0,0,.4)}
 .floating-thead.visible{display:block}
 .floating-thead table{margin:0}
+/* Macro Intelligence unified table (2026-09-08): the India/US Macro indicator
+   + trend-parameter tables were merged into one table per tab, so a plain
+   2-row <thead> (a colspan group row above the real column-header row) shows
+   the Indicator Details/Performance/Trend Parameters grouping the merge
+   brief asked for -- no new table-rendering mechanism, just semantic markup.
+   Column positions are fixed (14 columns: 3 Indicator Details + 5 Performance
+   + 6 Trend Parameters), so the group-boundary divider is a plain nth-child
+   rule against the real header/body rows -- zero JS, zero per-row markup
+   change needed in script.js's existing row-builder. These tables stay
+   un-sticky (no .sticky-thead-native/.floating-thead) matching this app's
+   own prior, still-valid exemption for macro's short (<=7 row) tables. */
+.table-group-row th{text-align:center;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--panel2);padding:6px 9px}
+.table-group-row th:nth-child(2),.table-group-row th:nth-child(3){border-left:2px solid var(--border)}
+.macro-unified-table th:nth-child(4),.macro-unified-table td:nth-child(4),
+.macro-unified-table th:nth-child(9),.macro-unified-table td:nth-child(9){border-left:2px solid var(--border)}

@@ -41,3 +41,9 @@ export const benchmarkCache = makeDiskCache('benchmarks');
 // natural gas, gold, India VIX -- see data/providers/macroProvider.mjs),
 // fetched independently of any watchlist's own refresh cycle.
 export const macroCache = makeDiskCache('macro');
+// MoSPI CPI/IIP data cache (data/integrations/mospiProvider.mjs) -- separate
+// namespace from macroCache above since it's on its own, much coarser TTL
+// (MoSPI datasets are monthly; see data/integrations/config.mjs's
+// dataCacheTtlMs) and is gated behind a credential the other macro
+// indicators never need.
+export const mospiCache = makeDiskCache('mospi');

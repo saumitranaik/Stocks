@@ -1,0 +1,21 @@
+{
+  "id": "sanaya",
+  "name": "Sanaya",
+  "createdAt": "2026-09-07T12:20:15.588Z",
+  "updatedAt": "2026-09-07T12:20:27.030Z",
+  "companies": [
+    {
+      "symbol": "HCLTECH.NS",
+      "name": "HCL Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Information Technology",
+      "industry": "Computers - Software & Consulting",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-07T12:20:26.406Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

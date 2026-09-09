@@ -11,6 +11,7 @@ import { buildPortfolioReviewPack } from './data/reporting/portfolioReviewPack.m
 import { buildMacroSnapshot } from './data/watchlist/macro.mjs';
 import { buildSectorIntelligence } from './data/watchlist/sectorIntelligence.mjs';
 import { buildCommitteePack } from './data/reporting/committeePack.mjs';
+import { getIntegrationStatus, registerAccount, connectWithCredentials, connectWithToken, disconnect, testConnection } from './data/integrations/mospiProvider.mjs';
 
 const port = process.env.PORT || 4173;
 const root = process.cwd();
@@ -45,6 +46,42 @@ const routes = [
   // own networkPass. Includes the Market Regime read (data/decision/
   // marketRegime.mjs) since both are market-wide, not per-watchlist.
   { method: 'GET', pattern: /^\/api\/macro$/, handler: async (req, res) => send(res, 200, await buildMacroSnapshot()) },
+  // Configuration → Integrations (2026-09-08): this app's first credentialed
+  // external source (data/integrations/, see config.mjs's top comment for
+  // why). CPI (a same-day follow-on task) turned out to work unauthenticated
+  // and no longer touches this credential lifecycle at all -- see
+  // data/integrations/mospiProvider.mjs's getCpiPublicSnapshot(), reached via
+  // GET /api/macro above, not any route below. IIP remains credentialed;
+  // these routes describe its lifecycle only. Route handlers below
+  // deliberately never log req bodies -- every one of them can carry a MoSPI
+  // account password, which must never reach this process's logs (the
+  // credential itself is never persisted by this app either; see
+  // credentialStore.mjs).
+  { method: 'GET', pattern: /^\/api\/integrations$/, handler: async (req, res) => send(res, 200, { integrations: [await getIntegrationStatus()] }) },
+  {
+    method: 'POST', pattern: /^\/api\/integrations\/mospi\/signup$/, handler: async (req, res) => {
+      const body = await readJsonBody(req);
+      const result = await registerAccount(body);
+      const status = result.success ? 200 : (result.alreadyExists ? 409 : 502);
+      send(res, status, result);
+    }
+  },
+  {
+    method: 'POST', pattern: /^\/api\/integrations\/mospi\/login$/, handler: async (req, res) => {
+      const body = await readJsonBody(req);
+      const result = await connectWithCredentials(body);
+      send(res, result.success ? 200 : 401, result);
+    }
+  },
+  {
+    method: 'POST', pattern: /^\/api\/integrations\/mospi\/token$/, handler: async (req, res) => {
+      const body = await readJsonBody(req);
+      if (!body.accessToken) return send(res, 400, { success: false, error: 'accessToken is required.' });
+      send(res, 200, await connectWithToken(body));
+    }
+  },
+  { method: 'POST', pattern: /^\/api\/integrations\/mospi\/test$/, handler: async (req, res) => send(res, 200, await testConnection()) },
+  { method: 'DELETE', pattern: /^\/api\/integrations\/mospi$/, handler: async (req, res) => send(res, 200, await disconnect()) },
   // Phase 6 Sector Intelligence: the one cross-watchlist read in this app --
   // cache-only across every saved watchlist (data/watchlist/
   // sectorIntelligence.mjs), never triggers a new fetch.

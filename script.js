@@ -2312,14 +2312,30 @@ async function loadMacroIntelligence() {
   renderMacroIntelligence();
   if (currentData) renderMorningBriefing(currentData); // Morning Briefing reuses macroData -- re-render once it lands, if the watchlist already rendered first
 }
-const MACRO_STATUS_CLASS = { Live: 'buy', Delayed: 'hold', Unavailable: 'sell', 'Future Integration': 'neutral' };
+const MACRO_STATUS_CLASS = { Live: 'buy', Delayed: 'hold', Unavailable: 'sell', 'Future Integration': 'neutral', 'Credentials Required': 'hold', 'Token Expired': 'hold', 'Authentication Failed': 'sell', Connected: 'buy', Configured: 'hold', 'Not Configured': 'neutral', 'Provider Unavailable': 'sell' };
 const MACRO_DIRECTION_CLASS = { Rising: 'positive', Falling: 'negative', Flat: '', 'N/A': '' };
+// Presentation-only geography split across Market Intelligence's peer India
+// Macro / US Macro sub-tabs -- keyed off macroProvider.mjs's own `key` field,
+// which every indicator (fetched or disclosed-unavailable) already carries.
+// India: the rupee rate, India VIX, India Gold (Gold BeES ETF), and every
+// disclosed-unavailable indicator (all India-specific by definition --
+// RBI/G-Sec/CPI/IIP/PMI/power/ethanol/defence/banking liquidity/crude/nat
+// gas). US: the remaining indicators, each sourced via a US-benchmark ticker
+// (US 10Y Treasury, WTI crude, Henry Hub gas, COMEX gold). No data/
+// calculation change -- purely which table a row renders into.
+const MACRO_US_KEYS = new Set(['usTreasury10y', 'crudeOilWti', 'naturalGas', 'gold']);
 function renderMacroIntelligence() {
-  $('#macro-methodology-info').innerHTML = infoIcon('macroIndicator');
+  $('#macro-methodology-info-india').innerHTML = infoIcon('macroIndicator');
+  $('#macro-cpi-methodology-info').innerHTML = infoIcon('mospiCpiIndicator');
+  $('#macro-configgated-info').innerHTML = infoIcon('mospiIndicator');
+  $('#macro-methodology-info-us').innerHTML = infoIcon('macroIndicator');
+  $('#macro-trend-methodology-info-india').innerHTML = infoIcon('macroTrend');
+  $('#macro-trend-methodology-info-us').innerHTML = infoIcon('macroTrend');
   if (!macroData) {
     $('#macro-regime').innerHTML = '<p class="small">Not available.</p>';
     $('#macro-data-quality').innerHTML = '';
-    $('#macro-indicators-table tbody').innerHTML = '<tr><td colspan="8" class="small">Not available.</td></tr>';
+    $('#macro-indicators-table-india tbody').innerHTML = '<tr><td colspan="14" class="small">Not available.</td></tr>';
+    $('#macro-indicators-table-us tbody').innerHTML = '<tr><td colspan="14" class="small">Not available.</td></tr>';
     $('#macro-unavailable-table tbody').innerHTML = '';
     return;
   }
@@ -2334,10 +2350,21 @@ function renderMacroIntelligence() {
     card('Live', dq.live ?? 0, 'Fetched within the last 30 minutes', 'positive'),
     card('Delayed', dq.delayed ?? 0, 'Serving a stale cached reading (fresh fetch failed)', dq.delayed ? 'amber' : ''),
     card('Unavailable', dq.unavailable ?? 0, 'Fetch failed and no cached reading exists', dq.unavailable ? 'amber' : ''),
-    card('Future Integration', dq.futureIntegration ?? 0, 'No data source configured for these indicators', 'neutral')
+    card('Future Integration', dq.futureIntegration ?? 0, 'No data source configured for these indicators', 'neutral'),
+    card('Credentials Required', dq.credentialsRequired ?? 0, 'A real provider exists (MoSPI IIP) but needs your own credential — see Configuration. CPI Inflation no longer needs one.', dq.credentialsRequired ? 'amber' : '')
   ].join('');
 
-  $('#macro-indicators-table tbody').innerHTML = (macroData.indicators || []).length ? macroData.indicators.map(ind => `
+  // Unified indicator + trend row (2026-09-08 merge): one row per indicator,
+  // Indicator Details/Performance columns unchanged, Trend Parameters columns
+  // appended on the same <tr> reusing the exact dmaCell()/dmaAlignmentLabel()
+  // helpers the Watchlist Research -> Technicals -> Trend table already uses
+  // for equities (script.js, ~line 1025) -- a macro indicator's `dma20/50/
+  // 100/200`/`price` fields are shaped identically to a stock's `twenty/
+  // fifty/hundred/twoHundred`/`price`, so the same alignment-counting/gap-%
+  // logic applies unchanged via this adapter, not a second implementation.
+  const indicatorRow = ind => {
+    const asStock = { price: ind.value, twenty: ind.dma20, fifty: ind.dma50, hundred: ind.dma100, twoHundred: ind.dma200 };
+    return `
     <tr>
       <td>${escape(ind.label)}</td>
       <td>${escape(ind.category)}</td>
@@ -2347,12 +2374,329 @@ function renderMacroIntelligence() {
       <td><span class="${MACRO_DIRECTION_CLASS[ind.direction] || ''}">${escape(ind.direction)}</span></td>
       <td><span class="tag ${MACRO_STATUS_CLASS[ind.status] || 'neutral'}">${escape(ind.status)}</span></td>
       <td>${ind.asOf ? new Date(ind.asOf).toLocaleString() : ''}</td>
-    </tr>`).join('') : '<tr><td colspan="8" class="small">Not available.</td></tr>';
+      <td>${escape(ind.trend || 'N/A')}</td>
+      <td class="num">${dmaCell(ind.value, ind.dma20)}</td>
+      <td class="num">${dmaCell(ind.value, ind.dma50)}</td>
+      <td class="num">${dmaCell(ind.value, ind.dma100)}</td>
+      <td class="num">${dmaCell(ind.value, ind.dma200)}</td>
+      <td>${dmaAlignmentLabel(asStock)}</td>
+    </tr>`;
+  };
+  const indicators = macroData.indicators || [];
+  const indiaIndicators = indicators.filter(ind => !MACRO_US_KEYS.has(ind.key));
+  const usIndicators = indicators.filter(ind => MACRO_US_KEYS.has(ind.key));
+  $('#macro-indicators-table-india tbody').innerHTML = indiaIndicators.length
+    ? indiaIndicators.map(indicatorRow).join('') : '<tr><td colspan="14" class="small">Not available.</td></tr>';
+  $('#macro-indicators-table-us tbody').innerHTML = usIndicators.length
+    ? usIndicators.map(indicatorRow).join('') : '<tr><td colspan="14" class="small">Not available.</td></tr>';
 
   $('#macro-unavailable-table tbody').innerHTML = (macroData.unavailable || []).map(ind =>
     `<tr><td>${escape(ind.label)}</td><td>${escape(ind.category)}</td><td><span class="tag neutral">${escape(ind.status)}</span></td></tr>`
   ).join('');
+
+  // MoSPI-backed IIP (2026-09-08; CPI moved off this credential-gated table
+  // the same day -- it now renders in the India indicators table above):
+  // period-over-period economic reading, not a priced instrument -- no
+  // changePct/DMA columns, per system.md §3.10.
+  const periodLabel = p => p?.year ? `${escape(String(p.month ?? ''))} ${escape(String(p.year))}`.trim() : '';
+  $('#macro-configgated-table tbody').innerHTML = (macroData.configGated || []).map(ind => `
+    <tr>
+      <td>${escape(ind.label)}</td>
+      <td>${escape(ind.category)}</td>
+      <td class="num">${ind.value == null ? '' : fmt(ind.value)}</td>
+      <td>${periodLabel(ind.period)}</td>
+      <td><span class="tag ${MACRO_STATUS_CLASS[ind.status] || 'neutral'}">${escape(ind.status)}</span></td>
+      <td>${ind.asOf ? new Date(ind.asOf).toLocaleString() : ''}</td>
+      <td><button type="button" class="icon-btn" data-jump-configuration="1">Configure</button></td>
+    </tr>`
+  ).join('') || '<tr><td colspan="7" class="small">Not available.</td></tr>';
 }
+// One-time delegated listeners for the two static jump-to-Configuration
+// affordances above -- the table/anchor elements themselves are static
+// (only their innerHTML is rebuilt by renderMacroIntelligence()), so a
+// single listener bound here survives every re-render, same pattern as
+// #wl-table tbody's own delegated click handler.
+$('#macro-configgated-jump')?.addEventListener('click', (e) => { e.preventDefault(); activateWorkspaceTab('configuration'); });
+$('#macro-configgated-table')?.addEventListener('click', (e) => {
+  if (e.target.closest('button[data-jump-configuration]')) activateWorkspaceTab('configuration');
+});
+
+// ---- Configuration -> Integrations (2026-09-08): this app's first
+// credentialed external source (data/integrations/, GET /api/integrations).
+// Watchlist-independent, fetched once at startup like macro/sector data
+// above. Every fetch/submit handler in this block is written to never
+// console.log a request body -- these forms can carry a MoSPI account
+// password, which must never reach the browser console either. ----
+let integrationsData = null;
+async function loadIntegrations() {
+  try { integrationsData = (await api('/api/integrations')).data; }
+  catch { integrationsData = null; }
+  renderIntegrations();
+}
+const fmtDateTime = iso => iso ? new Date(iso).toLocaleString() : '—';
+
+// The email pre-fill below is a UI convenience only (this is a single-user
+// local tool -- CLAUDE.md §4 -- with no accounts of its own), never a stored
+// credential; the field stays a plain editable text input and no password
+// field is ever pre-filled or retained.
+const MOSPI_PREFILL_EMAIL = 'saumitranaik@gmail.com';
+
+function integrationCard(integ) {
+  const statusClass = MACRO_STATUS_CLASS[integ.status] || 'neutral';
+  const allDatasets = integ.datasets || [];
+  const publicDatasets = allDatasets.filter(d => d.authRequired === false);
+  const credentialedDatasets = allDatasets.filter(d => d.authRequired !== false);
+  const datasetRow = d => `<tr><td>${escape(d.label)}</td><td>${d.lastSuccessfulFetch ? fmtDateTime(d.lastSuccessfulFetch) : 'Never'}</td><td>${d.hasCachedValue ? 'Yes' : 'No'}</td></tr>`;
+  const email = escape(integ.connectedEmail || MOSPI_PREFILL_EMAIL);
+  return `
+  <div class="card integration-card" data-provider="${escape(integ.providerId)}">
+    <div class="section-head">
+      <h3>${escape(integ.providerName)}</h3>
+      <span class="tag ${statusClass}">${escape(integ.status)}</span>
+    </div>
+    <p class="small">${escape(integ.providerDescription)}</p>
+
+    <h4 style="margin:14px 0 6px">Public data <span class="tag buy">No credentials required</span></h4>
+    <p class="small">Works automatically, with zero MoSPI account or token &mdash; MoSPI's own CPI API User Manual documents unauthenticated access as intentional platform behavior ("without access token the APIs will fetch only the first 10 records"), not a workaround this app relies on. See the India Macro tab for the live value.</p>
+    <table class="tech-table">
+      <thead><tr><th>Dataset</th><th>Last successful fetch</th><th>Cached value available</th></tr></thead>
+      <tbody>${publicDatasets.map(datasetRow).join('') || '<tr><td colspan="3" class="small">None.</td></tr>'}</tbody>
+    </table>
+
+    <h4 style="margin:18px 0 6px">Credential-gated data</h4>
+    <p class="small">The status badge above and the "Connection status"/Account/Token sections below describe this credentialed path only (currently: IIP) &mdash; they do not gate or affect the public CPI data above in any way.</p>
+    <table class="tech-table">
+      <thead><tr><th>Dataset</th><th>Last successful fetch</th><th>Cached value available</th></tr></thead>
+      <tbody>${credentialedDatasets.map(datasetRow).join('') || '<tr><td colspan="3" class="small">None.</td></tr>'}</tbody>
+    </table>
+
+    <h4 style="margin:18px 0 6px">Connection status</h4>
+    <table class="tech-table">
+      <tbody>
+        <tr><td>Credential status</td><td>${escape(integ.credentialStatus)}</td></tr>
+        <tr><td>Connected as</td><td>${integ.connectedEmail ? escape(integ.connectedEmail) : '—'}</td></tr>
+        <tr><td>Token</td><td>${integ.tokenPreview ? escape(integ.tokenPreview) : '—'}</td></tr>
+        <tr><td>Token expires</td><td>${fmtDateTime(integ.tokenExpiresAt)}</td></tr>
+        <tr><td>Last verified</td><td>${fmtDateTime(integ.lastVerifiedAt)}</td></tr>
+        ${integ.lastError ? `<tr><td>Last error</td><td class="small">${escape(integ.lastError)}</td></tr>` : ''}
+      </tbody>
+    </table>
+    <p class="small">MoSPI's own manuals document a 15-minute access-token lifetime with no refresh-token mechanism &mdash; this app never stores your MoSPI password to auto-renew it, so sustained Live data needs you to reconnect periodically rather than staying connected indefinitely. "Connected" above is only ever set by a real successful dataset fetch, never by saving a token alone. This entire Account/Token workflow is optional unless you want IIP too &mdash; CPI Inflation never needs it.</p>
+    <p class="small" data-integration-message></p>
+
+    <h4 style="margin:18px 0 6px">Account</h4>
+    <div class="subtabs" data-account-tabs role="tablist">
+      <button type="button" data-account-tab="register" class="active">Register</button>
+      <button type="button" data-account-tab="signin">Sign in</button>
+      <button type="button" data-account-tab="change-password">Change password</button>
+      <button type="button" data-account-tab="recovery">Password recovery</button>
+    </div>
+
+    <div data-account-panel="register">
+      <p class="small">Creates a MoSPI account (one-time per email; no special characters in username/organization). Your password is sent directly to MoSPI for this one request and is never stored by this app.</p>
+      <form data-form-id="signup">
+        <div class="manage-row">
+          <input name="username" placeholder="Username" autocomplete="username" required>
+          <input name="email" type="email" placeholder="Email" autocomplete="email" required value="${email}">
+          <input name="password" type="password" placeholder="Password" autocomplete="new-password" required>
+          <input name="password2" type="password" placeholder="Confirm password" autocomplete="new-password" required>
+          <input name="organization" placeholder="Organization" required>
+        </div>
+        <button type="submit">Register with MoSPI</button>
+        <p class="small" data-form-status></p>
+      </form>
+    </div>
+
+    <div data-account-panel="signin" hidden>
+      <p class="small">Signs in to MoSPI to obtain a fresh access token (documented lifetime: 15 minutes). Your password is used only for this one request and is never stored by this app. A successful sign-in automatically runs Test connection below.</p>
+      <form data-form-id="connect">
+        <div class="manage-row">
+          <input name="email" type="email" placeholder="Email" autocomplete="email" required value="${email}">
+          <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+        </div>
+        <button type="submit">Sign in</button>
+        <p class="small" data-form-status></p>
+      </form>
+    </div>
+
+    <div data-account-panel="change-password" hidden>
+      <p class="notice amber">MoSPI's published CPI and WPI API manuals document no password-change endpoint, so this app cannot change your MoSPI password on your own behalf &mdash; that would mean either faking the action or routing your password somewhere undocumented, neither of which this app does. Use the official MoSPI portal instead.</p>
+      <a href="${escape(integ.manageAccountUrl)}" target="_blank" rel="noopener">Open official MoSPI portal &#8599;</a>
+    </div>
+
+    <div data-account-panel="recovery" hidden>
+      <p class="notice amber">MoSPI's manuals document no API-based password reset/recovery endpoint. The Swagger UI at MoSPI's own API base URL is the one official surface this app's source audit found &mdash; use it to recover or manage your account directly with MoSPI.</p>
+      <a href="${escape(integ.manageAccountUrl)}" target="_blank" rel="noopener">Open official MoSPI account/recovery portal &#8599;</a>
+    </div>
+
+    <h4 style="margin:18px 0 6px">Token</h4>
+    <div class="manage-row">
+      <button type="button" class="icon-btn" data-action="test">Test connection</button>
+      <button type="button" class="icon-btn" data-action="disconnect">Disconnect</button>
+      <button type="button" class="icon-btn" data-action="toggle-form" data-form="token">Manual token entry (advanced)</button>
+    </div>
+    <form data-form-id="token" hidden>
+      <p class="small">Token normally arrives automatically via Sign in above. Already generated one yourself via MoSPI's own Postman/Swagger flow? Paste it here instead &mdash; this app can't see MoSPI's real issue time for a pasted token, so its expiry countdown is an estimate (15 minutes from now), not a value read from MoSPI.</p>
+      <div class="manage-row">
+        <input name="accessToken" type="password" placeholder="Access token" autocomplete="off" required>
+        <input name="email" type="email" placeholder="Email (optional, for display only)" autocomplete="email" value="${email}">
+      </div>
+      <button type="submit">Save token</button>
+      <p class="small" data-form-status></p>
+    </form>
+  </div>`;
+}
+
+function renderIntegrations() {
+  const container = $('#integrations-list');
+  if (!container) return;
+  if (!integrationsData?.integrations?.length) { container.innerHTML = '<p class="small">Not available.</p>'; return; }
+  container.innerHTML = integrationsData.integrations.map(integrationCard).join('');
+}
+
+function setFormStatus(form, message, isError) {
+  const el = form.querySelector('[data-form-status]');
+  if (el) { el.textContent = message; el.style.color = isError ? 'var(--red)' : 'var(--green)'; }
+}
+
+function setIntegrationMessage(card, message, isError) {
+  const el = card.querySelector('[data-integration-message]');
+  if (el) { el.textContent = message || ''; el.style.color = isError ? 'var(--red)' : 'var(--green)'; }
+}
+
+// Deliberately self-contained: reuses .subtabs' pill styling for visual
+// consistency with the rest of the app, but does NOT hook into the app-wide
+// .subtabs/initSubtabs mechanism (applySubtabState() above) -- that
+// mechanism is wired once, at page load, over static DOM, while this card's
+// markup is (re)built later from data-account-tab/data-account-panel
+// attributes it never looks for, so the two never collide.
+function showAccountPanel(card, panelName) {
+  card.querySelectorAll('[data-account-tab]').forEach(b => b.classList.toggle('active', b.dataset.accountTab === panelName));
+  card.querySelectorAll('[data-account-panel]').forEach(p => { p.hidden = p.dataset.accountPanel !== panelName; });
+}
+
+$('#integrations-list').addEventListener('click', (event) => {
+  const tabBtn = event.target.closest('button[data-account-tab]');
+  if (tabBtn) {
+    showAccountPanel(tabBtn.closest('.integration-card'), tabBtn.dataset.accountTab);
+    return;
+  }
+  const toggleBtn = event.target.closest('button[data-action="toggle-form"]');
+  if (toggleBtn) {
+    const card = toggleBtn.closest('.integration-card');
+    const target = card.querySelector(`form[data-form-id="${toggleBtn.dataset.form}"]`);
+    target.hidden = !target.hidden;
+    return;
+  }
+  const testBtn = event.target.closest('button[data-action="test"]');
+  if (testBtn) {
+    const card = testBtn.closest('.integration-card');
+    testBtn.disabled = true;
+    setIntegrationMessage(card, 'Testing connection…', false);
+    api('/api/integrations/mospi/test', { method: 'POST' })
+      .then(({ data }) => {
+        if (!data.success) throw new Error(data.error || 'Test failed.');
+        setIntegrationMessage(card, 'Connected — a real dataset fetch succeeded.', false);
+      })
+      .catch(err => setIntegrationMessage(card, err.message || 'Test connection failed — see Last error above.', true))
+      .finally(async () => { testBtn.disabled = false; await loadIntegrations(); await loadMacroIntelligence(); });
+    return;
+  }
+  const disconnectBtn = event.target.closest('button[data-action="disconnect"]');
+  if (disconnectBtn) {
+    disconnectBtn.disabled = true;
+    api('/api/integrations/mospi', { method: 'DELETE' })
+      .finally(async () => { disconnectBtn.disabled = false; await loadIntegrations(); await loadMacroIntelligence(); });
+  }
+});
+
+$('#integrations-list').addEventListener('submit', async (event) => {
+  const form = event.target.closest('form[data-form-id]');
+  if (!form) return;
+  event.preventDefault();
+  const formId = form.dataset.formId;
+  const card = form.closest('.integration-card');
+  const fields = Object.fromEntries(new FormData(form).entries());
+  const submitBtn = form.querySelector('button[type="submit"]');
+
+  // Local-only validation (never sent anywhere) before any network call.
+  if (formId === 'signup' && fields.password !== fields.password2) {
+    setFormStatus(form, 'Password and confirm password do not match.', true);
+    return;
+  }
+
+  submitBtn.disabled = true;
+  try {
+    let result;
+    if (formId === 'signup') {
+      const { password2, ...body } = fields;
+      // apiResult(), not api(): a 409 "account already exists" response
+      // needs its `alreadyExists` flag read from the body, which api()'s
+      // throw-on-non-2xx behavior would otherwise discard.
+      result = (await apiResult('/api/integrations/mospi/signup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })).data;
+      if (result?.success === false) {
+        if (result.alreadyExists) {
+          setFormStatus(form, 'An account with this email already exists on MoSPI. Use Sign in, or Password recovery if you forgot your password.', true);
+          showAccountPanel(card, 'signin');
+          const signinEmail = card.querySelector('[data-account-panel="signin"] input[name="email"]');
+          if (signinEmail) signinEmail.value = fields.email;
+          return;
+        }
+        throw new Error(result.error || 'Registration failed.');
+      }
+      setFormStatus(form, 'Account created — sign in below to connect.', false);
+      form.reset();
+      showAccountPanel(card, 'signin');
+      const signinEmail = card.querySelector('[data-account-panel="signin"] input[name="email"]');
+      if (signinEmail) signinEmail.value = fields.email;
+      // Deliberately no loadIntegrations() reload here -- registration alone
+      // doesn't change credential status (still Not Configured until sign-
+      // in), and reloading would re-render the card from scratch, wiping out
+      // the panel switch/prefill above.
+      return;
+    }
+    if (formId === 'connect') {
+      const providerId = card.dataset.provider;
+      result = (await api('/api/integrations/mospi/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(fields) })).data;
+      if (result?.success === false) throw new Error(result.error || 'Sign-in failed.');
+      form.reset();
+      // Auto-offer/perform Test Connection right after a successful sign-in,
+      // per the Configuration page's own workflow (Register → Sign in →
+      // Connected → Fetch data) -- a token alone never implies "Connected".
+      // Reload happens before AND after the test call, so `card` above is
+      // never read again once stale -- the message below is applied to the
+      // freshly re-rendered card, found by provider id, not the old node.
+      await loadIntegrations();
+      await loadMacroIntelligence();
+      let testMessage, testFailed;
+      try {
+        const test = (await api('/api/integrations/mospi/test', { method: 'POST' })).data;
+        testFailed = !test.success;
+        testMessage = test.success ? 'Signed in and connected — a real dataset fetch succeeded.' : `Signed in, but the connection test failed: ${test.error || 'unknown error'}`;
+      } catch (err) {
+        testFailed = true;
+        testMessage = `Signed in, but the connection test failed: ${err.message || 'unknown error'}`;
+      }
+      await loadIntegrations();
+      await loadMacroIntelligence();
+      const freshCard = document.querySelector(`.integration-card[data-provider="${providerId}"]`);
+      if (freshCard) setIntegrationMessage(freshCard, testMessage, testFailed);
+      return;
+    }
+    if (formId === 'token') {
+      result = (await api('/api/integrations/mospi/token', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(fields) })).data;
+      if (result?.success === false) throw new Error(result.error || 'Request failed.');
+      setFormStatus(form, 'Token saved — use Test connection to confirm it actually works.', false);
+      form.reset();
+      await loadIntegrations();
+      await loadMacroIntelligence();
+    }
+  } catch (err) {
+    setFormStatus(form, err.message || 'Request failed.', true);
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
 
 // ---- Phase 6 Sector Intelligence: cross-watchlist (data/watchlist/
 // sectorIntelligence.mjs, GET /api/sector-intelligence) -- watchlist-
@@ -2568,6 +2912,15 @@ async function api(path, options) {
   if (!res.ok) throw new Error(data.error || `Request to ${path} failed.`);
   return { data };
 }
+// Like api(), but never throws on a non-2xx response -- for the rare caller
+// that needs a field from an *error* body (e.g. MoSPI signup's 409 response
+// carries `alreadyExists`, not just a message) rather than just the thrown
+// Error's text api() gives everyone else.
+async function apiResult(path, options) {
+  const res = await fetch(path, options);
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
 function renderWatchlistSelect() {
   const options = watchlistIndex.watchlists.map(w =>
     `<option value="${escape(w.id)}" ${w.id === watchlistIndex.activeWatchlist ? 'selected' : ''}>${escape(w.name)} (${w.companyCount})</option>`
@@ -2777,6 +3130,7 @@ async function loadWatchlist(id, initialData) {
 async function start() {
   loadCompanySearchIndex(); // fire-and-forget -- runs concurrently with the research load below, not on its critical path
   loadMacroIntelligence(); // fire-and-forget -- watchlist-independent (Phase 6), not on the research load's critical path either
+  loadIntegrations(); // fire-and-forget -- watchlist-independent, same as macro/sector intelligence above
   loadSectorIntelligence(); // fire-and-forget -- cross-watchlist (Phase 6), same rationale
   try {
     watchlistIndex = (await api('/api/watchlists')).data;

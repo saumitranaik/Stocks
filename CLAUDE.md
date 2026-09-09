@@ -108,6 +108,14 @@ rule, read on demand only.
   (`docs/governance/roadmap.md` 07.6). Do not add network-exposed
   functionality without first flagging the security gap — it's a hard gate,
   not a nice-to-have.
+- **No credentialed integrations without explicit user approval.** Every
+  `data/providers/` source is free and unauthenticated by design (`system.md`
+  §1.2). `data/integrations/` (added 2026-09-08 for MoSPI CPI/IIP, see
+  `system.md` §3.10) is the one approved exception — do not add another API
+  key/OAuth/paid-vendor integration, or weaken TLS verification to work
+  around a misconfigured upstream server, without asking first and getting
+  explicit sign-off the same way. A credential is never hardcoded, never
+  committed, never logged, and never displayed in full once saved.
 
 ## 5. Repository map
 
@@ -127,7 +135,9 @@ data/scoring/        — the unified recommendation/rating engine
 data/decision/         — Portfolio Action Score, alerts, health, rebalancing (pure composition, own config.mjs)
 data/quant/              — Phase 7 quantitative research domain: factor engine (Stage 1), benchmark & performance engine (Stage 2) (pure composition, own config.mjs)
 data/reporting/       — per-company report model (derives from research, computes nothing new)
-data/providers/        — external data source abstraction (Yahoo, Screener.in)
+data/providers/        — external data source abstraction (Yahoo, Screener.in) — unauthenticated only
+data/integrations/        — credentialed external integrations (currently MoSPI CPI/IIP) — see system.md §3.10
+data/config/                — local credential store (gitignored), not user watchlist data
 data/parse/              — Screener.in HTML parsing
 data/news/                — company news fetch + classification
 data/metadata/              — metricRegistry.mjs (Sourced/Calculated/Heuristic tiers)

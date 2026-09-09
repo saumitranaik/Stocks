@@ -21,6 +21,7 @@
       <button type="button" class="sidebar-item" data-tab="market-intelligence" title="Market Intelligence"><span class="sidebar-mono">Mi</span><span class="sidebar-label">Market Intelligence</span></button>
       <button type="button" class="sidebar-item" data-tab="compare" title="Compare"><span class="sidebar-mono">Cm</span><span class="sidebar-label">Compare</span></button>
       <button type="button" class="sidebar-item sidebar-item-disabled" disabled title="Sector Research — deferred until a market-wide security universe and classification source exists (see docs/governance/roadmap.md TD-10/03.8). Not implemented."><span class="sidebar-mono">Sr</span><span class="sidebar-label">Sector Research <span class="sidebar-soon">Soon</span></span></button>
+      <button type="button" class="sidebar-item" data-tab="configuration" title="Configuration — manage external data-provider integrations"><span class="sidebar-mono">Cf</span><span class="sidebar-label">Configuration</span></button>
     </div>
     <button type="button" id="sidebar-collapse-toggle" class="sidebar-collapse-toggle" aria-label="Collapse sidebar" aria-pressed="false">
       <span class="sidebar-mono">&laquo;</span><span class="sidebar-label">Collapse</span>
@@ -841,7 +842,9 @@
     <h2 class="workspace-title">Market Intelligence</h2>
     <p class="small"><b>Indian Equity Market</b> — macro, sector, earnings and news context, independent of any single company or watchlist selection.</p>
     <nav class="subtabs" role="tablist" aria-label="Market Intelligence sections">
-      <button type="button" role="tab" data-subtab="macro-intelligence">Macro Intelligence</button>
+      <button type="button" role="tab" data-subtab="macro-intelligence">Market Intelligence</button>
+      <button type="button" role="tab" data-subtab="macro-india">India Macro</button>
+      <button type="button" role="tab" data-subtab="macro-us">US Macro</button>
       <button type="button" role="tab" data-subtab="sector-intelligence">Sector Intelligence</button>
       <button type="button" role="tab" data-subtab="upcoming-earnings">Earnings &amp; Events</button>
       <button type="button" role="tab" data-subtab="news-catalysts">News &amp; Catalysts</button>
@@ -849,7 +852,7 @@
     <p class="small">External market/event context layered over the existing research platform &mdash; every figure below is either a real fetched indicator or a disclosed rule-based read over already-computed analytics, never a new calculation engine.</p>
 
     <div class="subsection" data-subtab="macro-intelligence" role="tabpanel">
-      <p class="small">Watchlist-independent: macro indicators are fetched from Yahoo Finance's public chart feed on their own schedule, not tied to any watchlist's refresh. Indicators with no free public data source render an explicit "Future Integration" status rather than an estimate &mdash; see <span id="macro-methodology-info"></span>.</p>
+      <p class="small">Market-wide regime read and macro data-feed health &mdash; independent of any single indicator. See India Macro / US Macro for the underlying indicator values.</p>
       <article class="card">
         <div class="section-head">
           <h3>Market regime</h3>
@@ -858,14 +861,33 @@
       </article>
       <article class="card">
         <h3>Data Quality</h3>
-        <div class="grid four" id="macro-data-quality"></div>
+        <div class="grid five" id="macro-data-quality"></div>
       </article>
-      <div class="scroll-body">
+    </div>
+
+    <div class="subsection" data-subtab="macro-india" role="tabpanel">
+      <p class="small">Watchlist-independent: macro indicators are fetched from Yahoo Finance's public chart/quote feed on their own schedule, not tied to any watchlist's refresh. Indicators with no free public data source render an explicit "Future Integration" status rather than an estimate &mdash; see <span id="macro-methodology-info-india"></span>. Trend/moving-average columns reuse the same real trailing daily-close history and calculation this app already uses for every equity &mdash; see <span id="macro-trend-methodology-info-india"></span>. CPI Inflation is a public, unauthenticated MoSPI reading (no daily change/DMA &mdash; a monthly index, not a priced instrument) &mdash; see <span id="macro-cpi-methodology-info"></span>.</p>
       <article class="card">
-        <h3>Macro indicators</h3>
+        <h3>India macro indicators</h3>
         <div class="scroll">
-          <table id="macro-indicators-table" class="tech-table">
-            <thead><tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th class="num">Change</th><th class="num">1Y change</th><th>Direction</th><th>Status</th><th>As of</th></tr></thead>
+          <table id="macro-indicators-table-india" class="tech-table macro-unified-table">
+            <thead>
+              <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+              <tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th class="num">Change</th><th class="num">1Y change</th><th>Direction</th><th>Status</th><th>As of</th><th>Trend</th><th class="num">20 DMA</th><th class="num">50 DMA</th><th class="num">100 DMA</th><th class="num">200 DMA</th><th title="How many of the 4 DMAs price currently sits above">DMA Alignment</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="card">
+        <div class="section-head">
+          <h3>Economic indicators (credential-gated) <span id="macro-configgated-info"></span></h3>
+          <a href="#" id="macro-configgated-jump">Manage in Configuration &rarr;</a>
+        </div>
+        <p class="small">CPI Inflation is now a public, unauthenticated indicator &mdash; see the India macro indicators table above (Category: Inflation). Index of Industrial Production (IIP) has a real, working provider (MoSPI's official eSankhyiki API) that still needs your own credential to start returning data &mdash; a period-over-period economic reading, not a priced instrument, so no daily change/DMA columns apply here. See <a href="https://www.mospi.gov.in/" target="_blank" rel="noopener">MoSPI</a>.</p>
+        <div class="scroll">
+          <table id="macro-configgated-table" class="tech-table">
+            <thead><tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th>Period</th><th>Status</th><th>As of</th><th>Action</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -880,7 +902,22 @@
           </table>
         </div>
       </article>
-      </div>
+    </div>
+
+    <div class="subsection" data-subtab="macro-us" role="tabpanel">
+      <p class="small">US-benchmarked and globally-priced indicators (USD-denominated rates/commodities that move Indian equities via import costs, capital flows and rate differentials) &mdash; see <span id="macro-methodology-info-us"></span>. Trend/moving-average columns reuse the same real trailing daily-close history and calculation this app already uses for every equity &mdash; see <span id="macro-trend-methodology-info-us"></span>.</p>
+      <article class="card">
+        <h3>US macro indicators</h3>
+        <div class="scroll">
+          <table id="macro-indicators-table-us" class="tech-table macro-unified-table">
+            <thead>
+              <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+              <tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th class="num">Change</th><th class="num">1Y change</th><th>Direction</th><th>Status</th><th>As of</th><th>Trend</th><th class="num">20 DMA</th><th class="num">50 DMA</th><th class="num">100 DMA</th><th class="num">200 DMA</th><th title="How many of the 4 DMAs price currently sits above">DMA Alignment</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
     </div>
 
     <div class="subsection" data-subtab="sector-intelligence" role="tabpanel">
@@ -977,6 +1014,21 @@
     <div class="subsection" data-subtab="compare-valuation" role="tabpanel" id="compare-valuation"></div>
     <div class="subsection" data-subtab="compare-technical" role="tabpanel" id="compare-technical"></div>
     <div class="subsection" data-subtab="compare-risk" role="tabpanel" id="compare-risk"></div>
+  </section>
+
+  <section class="tab" id="configuration">
+    <div class="title">
+      <div>
+        <h1>Configuration</h1>
+        <p class="small">External data-provider integrations this app uses beyond its default, free, unauthenticated sources. Everything here is local to this machine: credentials are never committed to Git, never logged, and never displayed in full once saved.</p>
+      </div>
+    </div>
+    <article class="card">
+      <div class="section-head">
+        <h3>Integrations</h3>
+      </div>
+      <div id="integrations-list"><p class="small">Loading&hellip;</p></div>
+    </article>
   </section>
 </main>
   </div>

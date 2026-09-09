@@ -1,3 +1,9 @@
 # Generated market and analytics cache — regenerable from providers on
 # demand; the app degrades gracefully when these files are missing.
 data/cache/
+
+# Local credential store for credentialed integrations (data/integrations/,
+# e.g. the MoSPI eSankhyiki access token) — plaintext on local disk by
+# design for this single-user, local-only tool (see
+# data/integrations/credentialStore.mjs). Never committed.
+data/config/*.local.json

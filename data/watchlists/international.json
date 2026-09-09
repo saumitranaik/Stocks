@@ -1,0 +1,21 @@
+{
+  "id": "international",
+  "name": "International",
+  "createdAt": "2026-09-07T17:27:30.360Z",
+  "updatedAt": "2026-09-07T17:27:37.384Z",
+  "companies": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "exchange": "NASDAQ",
+      "market": "United States",
+      "sector": null,
+      "industry": null,
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-07T17:27:37.384Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

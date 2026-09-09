@@ -43,15 +43,19 @@ multi-tenant service.
   (`currentData` in the frontend) — no tab recomputes analytics, and no
   analytic is computed twice.
 - **External dependencies**: three public, unauthenticated data sources
-  (Yahoo Finance chart feed, Screener.in, Google News RSS — §4.1). No API
-  keys, no paid vendor integration exists yet.
+  (Yahoo Finance chart feed, Screener.in, Google News RSS — §4.1), MoSPI's
+  eSankhyiki API for CPI inflation (public/unauthenticated, confirmed
+  2026-09-08 — §3.10), plus one credentialed exception approved 2026-09-08
+  (the same MoSPI eSankhyiki API, for IIP only — §3.10). No other API keys or
+  paid vendor integration exists.
 
 ### 1.3 Major modules
 
 | Module | Responsibility |
 |---|---|
 | `server.mjs` | HTTP server, static file serving, the full API route table |
-| `data/providers/` | External data source abstraction (fundamentals, quotes) |
+| `data/providers/` | External data source abstraction (fundamentals, quotes) — unauthenticated only |
+| `data/integrations/` | The MoSPI eSankhyiki integration — one public/unauthenticated dataset (CPI, since 2026-09-08) and one credentialed dataset (IIP), sharing config/client code for the one upstream provider — credential lifecycle + fetch, own local credential store (§3.10) |
 | `data/parse/` | Screener.in HTML → normalized fundamentals parsing |
 | `data/watchlist/` | Watchlist persistence, research orchestration, caching, symbol search |
 | `data/analytics/` | Pure calculation modules (valuation, technical, portfolio, risk, series math) |
@@ -1417,6 +1421,361 @@ reverted to this session's pre-run value after finishing, per this
 document's own standing validation discipline for scratch-server runs).
 Files changed: `index.html`, `styles.css`.
 
+**Macro Intelligence — India Macro / US Macro geography split** (2026-09-07,
+same-day follow-on to the "Below-the-yellow-divider" split immediately above):
+that entry deliberately left Macro Intelligence's "Macro indicators"/"Not
+available" table pair unsplit, since together they read as one available-vs-
+unavailable diagnostic, not two distinct analytical views. A separate,
+narrower brief asked for a different split of the same below-the-divider
+content — by geography, not by availability — so India-specific and
+US-specific/global-US-driven indicators are each on their own screen. Added
+a second-level `.subtab-root#macro-geography-detail` (India Macro / US Macro,
+`.subtabs-secondary`) below the still-unchanged Market regime/Data Quality
+cards, reusing the exact nested-subtab mechanism the entry above already
+established for Sector Intelligence/Earnings & Events — no new nav component.
+Geography is a client-side lookup keyed off each indicator's own `key` field
+(already present on every `macroProvider.mjs` indicator, fetched or
+disclosed-unavailable) — zero backend/data/calculation change, purely which
+of two tables (`#macro-indicators-table-india`/`-us`) a row's markup goes
+into: **India Macro** gets USD/INR and India VIX (the 2 India-relevant
+fetched indicators) plus all 9 disclosed-unavailable indicators (every one is
+India-specific by definition — RBI/G-Sec/CPI/IIP/PMI/power/ethanol/defence/
+banking liquidity); **US Macro** gets the other 4 fetched indicators, each
+sourced via a US-benchmark ticker (US 10Y Treasury yield, WTI crude, Henry
+Hub natural gas, COMEX gold). No indicator appears in both tabs. India Macro
+is the default tab, matching the workspace's own "Indian Equity Market"
+framing (`#market-intelligence`'s own intro line).
+
+One CSS-architecture interaction required deliberate handling, not a direct
+substitution: the generic `.subsection:has(>.subtab-root):not(:has(>.grid))`
+pass-through (§2.3 above, "Below-the-yellow-divider" entry) would otherwise
+apply here too, since macro's fixed siblings before the new `.subtab-root`
+(Market regime, Data Quality) are plain `.card` elements, not a `.grid` — the
+one structural signal that rule currently keys off. But this exact panel is
+the one `system.md` already names, twice (the "Global scrolling/width audit
+round 2" and "Fixed-context regression fix" entries above), as the specific
+case where those two fixed cards, combined, can exceed the subsection's own
+box at a short viewport — which is why `.subsection:has(>.scroll-body)` was
+deliberately left off the pass-through list in the first place. Picking up
+the pass-through here via `.subtab-root` would reintroduce that exact,
+already-fixed overflow-to-`#main` leak. Fixed with one higher-specificity,
+ID-scoped override rather than broadening the general `.grid` signal (which
+would need to also match "two-or-more-cards" generically, a shape CSS can't
+reliably detect): `.subsection:has(>#macro-geography-detail){overflow-y:auto}`
+— the outer subsection keeps its already-validated contained-fallback
+behavior exactly as before; the `.subtab-root` itself still renders correctly
+(its own nav bar fixed, each India/US panel wrapped in its own genuinely
+bounded/scrolling `.scroll-body`, same shape the original combined panel
+already used). Files changed: `index.html`, `script.js`, `styles.css`.
+
+Validated live (zero-dependency Chrome DevTools Protocol driver, Node 22's
+built-in `fetch`/`WebSocket`, real installed Chrome headless, scratch server
+port 4321, never the user's own dev server on 4173) against real cached macro
+data (`GET /api/macro` read directly first: 6 Live indicators, 9 Future
+Integration, confirmed before any UI check). 16 scripted assertions passed at
+each of 4 viewports — 1600×1000, 1366×768, 1280×700 (the exact short-height
+case the CSS override protects), and 900×700 — covering: nav order/labels,
+India Macro as the default active tab on a fresh session (localStorage's
+`subtab:macro-geography-detail` cleared first, to rule out a prior run's
+persisted selection carrying over), India Macro's indicator table showing
+exactly USD/INR + India VIX and its unavailable table showing exactly the 9
+disclosed indicators, switching to US Macro showing exactly the 4 expected
+indicators, 15 total rows with zero duplication, the Market regime/Data
+Quality cards rendering unchanged, zero `#main` overflow, India Macro's own
+`.scroll-body` genuinely bounded/scrolling while its sub-tab nav bar stays
+pixel-fixed during that scroll, and zero console errors (excluding the
+pre-existing, already-disclosed `favicon.ico` 404 this document records at
+every prior pass). At 390×844 (mobile, <900px) the existing documented
+document-scroll fallback engaged correctly (not a regression) — `#main`
+overflow 0, no horizontal overflow at any tested width, same 16/16 functional
+assertions pass. A full 8-workspace click-through (every sidebar tab, both new
+India/US Macro states) found zero duplicate DOM ids and zero console errors
+app-wide, confirming the new `#macro-geography-detail`/`#macro-indicators-
+table-india`/`#macro-indicators-table-us` ids introduced no collision. `node
+--check` clean on `script.js`/`server.mjs`; `node --test`: 109/109 unaffected
+(no analytics/scoring/decision/quant/provider module touched). No mutating
+route was ever called against the scratch server; `git diff` on
+`data/watchlists/`/`data/cache/` after the session matched the pre-existing
+uncommitted state from the user's own prior activity (unrelated, predating
+this session, confirmed via timestamp). Scratch Chrome and the scratch server
+were both terminated, and the scratch Chrome profile directory deleted,
+before finishing.
+
+**Macro Intelligence — India/US Macro promoted to peer-level tabs, supersedes
+the nested geography split above; India Gold Rate integrated** (2026-09-07,
+same-day follow-on): a further brief required India Macro/US Macro to behave
+as fully independent views rather than a nested sub-tab pair sitting below
+always-visible Market regime/Data Quality cards — clicking Market Intelligence
+must show *only* Market regime + Data Quality, clicking India Macro must hide
+those entirely, and clicking US Macro must hide both those and every India
+indicator. The nested `#macro-geography-detail` `.subtab-root` built in the
+entry immediately above is removed outright (not deprecated in place): India
+Macro and US Macro are now two more buttons in `#market-intelligence`'s own
+primary `.subtabs` bar, siblings of Sector Intelligence/Earnings & Events/News
+& Catalysts, each backed by its own top-level `.subsection` — exactly the same
+`applySubtabState()`/`initSubtabs()` mechanism every other primary-level
+workspace nav already uses, zero new JS. What was the "Macro Intelligence"
+button is relabeled **"Market Intelligence"** (`data-subtab="macro-intelligence"`
+value kept unchanged, so no other reference — Quick Jump, `localStorage`
+persistence — needed updating) and now contains *only* the Market regime and
+Data Quality cards, nothing else. Market regime/Data Quality cards, the India
+indicators + Future-Integration tables, and the US indicators table all keep
+their exact element ids (`#macro-regime`, `#macro-data-quality`,
+`#macro-indicators-table-india`, `#macro-unavailable-table`,
+`#macro-indicators-table-us`) — only DOM parent/nav position moved, same
+technique as every prior IA relocation in this app. One CSS simplification
+falls out of this for free: the ID-scoped `.subsection:has(>#macro-geography-
+detail){overflow-y:auto}` override the prior entry needed (to counteract the
+generic `.subtab-root` pass-through rule) is deleted — the "Market
+Intelligence" tab is now a plain leaf `.subsection` with no nested
+`.subtab-root` and no `.grid` sibling, so the *default* `.subsection{overflow-
+y:auto}` rule already bounds it correctly with zero special-casing; likewise
+the `.scroll-body` wrapper the India/US panels previously needed (to get their
+own bounded scroll region one level inside the now-removed nested root) is
+gone — each is now a leaf-level `.subsection` under `.tab.active` directly,
+which is already its own scroll owner by the architecture's own "default case"
+(§2.3 above, "App-wide bounded-viewport shell").
+
+**India Gold Rate** (`data/providers/macroProvider.mjs`) is a new, genuinely
+real 7th `MACRO_INDICATORS` entry: `GOLDBEES.NS` (Nippon India ETF Gold BeES),
+fetched via the exact same `fetchQuote()`/`.NS`-ticker path every equity price
+in this app already uses — a real, unmodified, NSE-listed market price, not a
+converted or estimated figure, so it is tagged `sourced`/High confidence in
+`metricRegistry.mjs`'s existing `macroIndicator` entry (extended, not
+duplicated — the same one entry already covering the other 6 indicators) and
+renders in the India Macro table alongside USD/INR and India VIX (all three
+excluded from `MACRO_US_KEYS`, so the existing India/US filter in
+`renderMacroIntelligence()` needed zero logic change — the new indicator just
+falls out of the same key-based split). **India Crude Oil** and **India
+Natural Gas** were evaluated for the same brief and added to
+`UNAVAILABLE_MACRO_INDICATORS` instead of integrated: no NSE-listed ETF (unlike
+gold) or other free, unauthenticated, machine-readable India-specific proxy
+exists for either — MCX futures data requires a paid/authenticated feed this
+app does not have, and approximating from the existing USD-denominated
+WTI/Henry-Hub tickers under an "India" label was rejected as exactly the kind
+of substitution CLAUDE.md's data policy prohibits. The brief's own explicit
+allowance for *authenticated* sources this time was deliberately not exercised
+in this pass: this app manages no API-key/secrets infrastructure today, and
+none could be provisioned without the user registering for one; a real,
+unauthenticated alternative was investigated instead. The pre-existing 9
+Future Integration indicators (RBI repo rate, India G-Sec yield, CPI, IIP,
+PMI, power demand, ethanol policy, defence budget, banking liquidity) were
+re-evaluated the same way: FRED's `fredgraph.csv` endpoint (St. Louis Fed) is
+free, unauthenticated and does carry India-tagged OECD series, confirmed
+directly reachable and returning real CSV data in this session — but every
+candidate series checked failed this app's own Live/Delayed data-quality bar:
+`INDIR3TIB01STM` is a market-determined 3-month interbank rate, not the RBI's
+own policy repo rate (the two move together but are not the same measure, and
+mislabeling one as the other was rejected); `INDCPIALLMINMEI` (CPI) and
+`INDPROINDMISMEI` (IIP) returned real series but 18 and 31 months stale
+respectively as of this session — far beyond what this app's "Delayed" status
+already means elsewhere (a fresh fetch failing but a recent cached reading
+still showing), so presenting either would misrepresent the status model
+rather than extend it honestly. All 9 remain Future Integration, plus the 2
+new India Crude Oil/Natural Gas entries (11 total) — `macroProvider.mjs`'s own
+top-of-file comment now discloses this FRED investigation and its outcome
+directly, so a future pass doesn't have to re-discover it from scratch.
+
+Validated live (zero-dependency Chrome DevTools Protocol driver, Node 22's
+built-in `fetch`/`WebSocket`, real installed Chrome headless, a scratch server
+on port 4322, never the user's own dev server on 4173): `GET /api/macro` read
+directly first — confirmed all 7 indicators (including the new India Gold
+Rate) returned `"status":"Live"` with a real fetched value against the real
+Yahoo endpoint (`goldIndia` = ₹125.58/unit at fetch time), and 11 Future
+Integration entries including the 2 new India Crude Oil/Natural Gas rows. 34
+scripted assertions passed: primary nav order/labels exactly `Market
+Intelligence | India Macro | US Macro | Sector Intelligence | Earnings &
+Events | News & Catalysts`; clicking Market Intelligence shows only that
+panel (India/US hidden) with Market regime + Data Quality populated and
+`#macro-geography-detail` confirmed absent from the DOM; clicking India Macro
+shows only that panel with exactly 3 rows (USD/INR, India Gold Rate, India
+VIX) in the indicators table and exactly 11 in the Future-Integration table;
+clicking US Macro shows only that panel with exactly 4 rows and zero
+India-labeled rows; zero duplicate DOM ids app-wide; zero horizontal overflow
+and zero `#main` vertical overflow at 1600×1000, 1366×768 and 1280×700 (this
+app's own previously-documented short-viewport edge case) across all three
+macro tabs; the 390px mobile breakpoint showed zero horizontal overflow across
+all three tabs; the 3 unaffected sibling tabs (Sector Intelligence, Earnings &
+Events, News & Catalysts) each still show only their own panel with all 3
+macro panels hidden; the India indicators table's `.scroll` wrapper still
+carries `overflow-x:auto` (horizontal table scroll preserved); Watchlist
+Research's `#wr-overview-table` (a genuinely unrelated, untouched workspace)
+still rendered correctly, confirming no app-wide regression; zero console
+errors/exceptions (the sole exception, `favicon.ico` 404, is the same
+pre-existing, disclosed non-issue every prior validation note in this app
+records). `node --check` clean on every changed `.mjs`/`.js` file plus a full
+repo-wide sweep (`git ls-files "*.mjs" "*.js"`, matching the CI gate exactly);
+`node --test`: all 109 tests/36 suites pass (no analytics/scoring/decision/
+quant module touched — this pass is `index.html`/`script.js`/`styles.css`/
+`data/providers/macroProvider.mjs`/`data/watchlist/macro.mjs`/
+`data/metadata/metricRegistry.mjs` only). No mutating route was ever called
+against the scratch server (only page loads, sidebar/sub-tab clicks, and a
+direct `GET /api/macro`); `git diff` on `data/watchlists/` after the session
+showed only the pre-existing uncommitted state already present before this
+session began (confirmed against the session's own starting `git status`, not
+caused by this pass); `data/cache/` gained a new, expected, regenerable
+`goldIndia` cache entry from the real Yahoo fetch above. Scratch Chrome and
+the scratch server were both terminated, and both scratch Chrome profile
+directories deleted, before finishing. Files changed: `index.html`,
+`script.js`, `styles.css`, `data/providers/macroProvider.mjs`,
+`data/watchlist/macro.mjs`, `data/metadata/metricRegistry.mjs`.
+
+**Macro Intelligence — Trend Parameters (20/50/100/200 DMA, trend, DMA
+alignment) added to India Macro / US Macro** (2026-09-07, same-day follow-on
+to the India Gold Rate pass above): a further brief required every live,
+market-price-based macro indicator to carry the same Trend/20 DMA/50 DMA/100
+DMA/200 DMA/DMA Alignment presentation the equity Technicals → Trend table
+(`#technical-table-trend`, `script.js`'s `dmaCell()`/`dmaAlignmentLabel()`)
+already established. Per the brief's own "reuse, don't duplicate" constraint,
+this is wired entirely through the existing calculation path, not a second
+technical-analysis engine: `yahooQuoteProvider.mjs`'s `fetchQuote()` already
+computes `twentyDayAverage`/`fiftyDayAverage`/`hundredDayAverage`/
+`twoHundredDayAverage` (simple moving averages of the real trailing daily-
+close history the Yahoo chart endpoint returns) and `trendLabel()` for *any*
+symbol, equity or otherwise — `macroProvider.mjs`'s `fetchMacroQuote()`
+previously narrowed that response down to `price`/`changePct`/
+`oneYearChangePct`/`fiftyDayAverage`/`twoHundredDayAverage` only (a deliberate
+narrowing, per its own comment, since a macro card didn't need the rest yet);
+it now also passes through `twentyDayAverage`/`hundredDayAverage` and calls
+the same `trendLabel(price, fifty, twoHundred)` used everywhere else. `data/
+watchlist/macro.mjs`'s `toIndicator()` widened to expose `trend`/`dma20`/
+`dma50`/`dma100`/`dma200` on every indicator object (all `null`/`'N/A'` until
+`fetchQuote()` itself has enough trading days for a given period — never
+fabricated, same "blank until real" convention the equity table already
+follows). `renderMacroIntelligence()` (`script.js`) builds each Trend row via
+a small adapter object (`{ price: ind.value, twenty: ind.dma20, fifty:
+ind.dma50, hundred: ind.dma100, twoHundred: ind.dma200 }`) passed straight
+into the existing `dmaCell()`/`dmaAlignmentLabel()` — the exact same
+functions, not a reimplementation, since a macro indicator's shape maps onto
+a stock's DMA fields one-to-one.
+
+**UI**: a new "Trend" `article.card` (`#macro-trend-table-india`/`-us`) sits
+directly below each existing indicator table (India macro indicators / US
+macro indicators), inside the same `.scroll` + `.tech-table` wrapper every
+macro table already uses — no new scroll mechanism, no sticky-header
+treatment (these tables are 3-7 rows, the same "too short to matter" class
+`system.md`'s own prior audit already exempted the other macro tables from).
+Only the 7 fetched indicators (India: USD/INR, India Gold Rate, India VIX; US:
+US 10Y Treasury yield, WTI crude, Henry Hub gas, Gold) get a Trend row — the
+11 Future Integration indicators have no price series to compute a trend
+from and are correctly left out of this table entirely, not shown with
+fabricated blanks. One new `metricRegistry.mjs` entry, `macroTrend`,
+discloses the reused-calculation methodology and is surfaced via a new
+`infoIcon('macroTrend')` next to each Trend card heading (`#macro-trend-
+methodology-info-india`/`-us`), same `infoIcon()` component the existing
+`macroIndicator` disclosure already uses.
+
+Validated live (zero-dependency Chrome DevTools Protocol driver, Node 22's
+built-in `fetch`/`WebSocket`, real installed Chrome headless, a scratch
+server on port 4501, never the user's own dev server): the shared `data/
+cache/macro/*.json` bundles predated this change (written before `dma20`/
+`dma100`/`trend` existed on the quote shape), so they were cleared first to
+force a real fetch — regenerable cache, not source, same as every prior
+macro pass's disclosed cache handling — and `GET /api/macro` confirmed all 7
+indicators returned real, distinct DMA values and a trend label consistent
+with the DMA relationship (e.g. US 10Y Treasury yield: price 4.784 > 50 DMA
+4.6334 > 200 DMA 4.3596 → "Uptrend"; India VIX: price 11.16 < 50 DMA 12.1192
+< 200 DMA 14.4937 → "Downtrend"; USD/INR: price below its 50 DMA but that 50
+DMA above its 200 DMA → neither condition holds → "Sideways" — the disclosed
+non-monotonic case, not a bug). A DOM-level check at 4 viewports (1600×1000
+default desktop, 1366×768, 1280×700, 390×844 mobile) confirmed: both Trend
+tables render the exact 7-column header (Indicator/Trend/20 DMA/50 DMA/100
+DMA/200 DMA/DMA Alignment); India shows exactly its 3 indicators and US
+exactly its 4, with zero label overlap between the two; DMA Alignment counts
+matched a manual recomputation off the same row's own DMA values (e.g. WTI
+crude 4/4 above, India VIX 0/4 above); zero duplicate DOM ids app-wide; zero
+console errors/exceptions; `document.documentElement` and `#main` showed zero
+horizontal or vertical overflow at every viewport, including mobile where the
+new table's own `.scroll` wrapper (not the page) carried the horizontal
+overflow (487px measured directly), confirming the required page-contained-
+horizontal-scroll behavior. `node --check` clean on every changed `.mjs`/
+`.js` file plus a full repo-wide sweep matching the CI gate; `node --test`:
+all 109 tests/36 suites pass (no analytics/scoring/decision/quant module
+touched — this pass is `index.html`/`script.js`/`data/providers/
+macroProvider.mjs`/`data/watchlist/macro.mjs`/`data/metadata/
+metricRegistry.mjs` only). No mutating route was ever called against the
+scratch server; `git diff` on `data/watchlists/` showed only the pre-existing
+uncommitted state already present before this session began. The cleared
+`data/cache/macro/*.json` files regenerated with the new, complete field set
+from real Yahoo fetches — an intentional, expected refresh of regenerable
+cache, not a data-loss concern. Scratch Chrome and the scratch server were
+both terminated before finishing. Files changed: `index.html`, `script.js`,
+`data/providers/macroProvider.mjs`, `data/watchlist/macro.mjs`, `data/
+metadata/metricRegistry.mjs`.
+
+**Macro Intelligence — India Macro / US Macro indicator + Trend tables merged
+into one unified table per tab** (2026-09-08, same-day follow-on to the Trend
+Parameters pass above): a further brief required the indicator table and the
+Trend table under each of India Macro/US Macro to become one table, with the
+14 columns visually grouped under 3 headers (Indicator Details / Performance
+/ Trend Parameters (Moving Averages)) rather than presented as two tables.
+This is purely a presentation merge — `renderMacroIntelligence()`'s
+`indicatorRow()` builder (`script.js`) now appends the same `dmaCell()`/
+`dmaAlignmentLabel()` trend cells it previously wrote to a second `<tbody>`
+onto the same `<tr>` as the existing Indicator/Category/Value/Change/1Y
+change/Direction/Status/As of cells; the separate `macroTrendRow()` builder
+and both `#macro-trend-table-india`/`-us` `<table>`s are removed outright.
+`#macro-indicators-table-india`/`-us` keep their existing element ids
+unchanged (only their column count and `<thead>` grew) — no route, no
+fetch, no calculation changed. The grouped header is plain semantic HTML, not
+a new table-rendering mechanism: a 2-row `<thead>` where row 1 is 3 `<th>`
+elements with `colspan="3"/"5"/"6"` (summing to the fixed 14-column layout)
+and row 2 is the real per-column headers; a new `.table-group-row`/
+`.macro-unified-table` CSS pair (`styles.css`) styles the group row
+(centered, uppercase, `--panel2` background) and draws a `border-left`
+divider at the fixed column positions where a new group starts (col 4 =
+Performance, col 9 = Trend Parameters) via plain `nth-child` selectors on
+both header rows and every body row — zero JS, zero per-cell markup change,
+since the column order was already fixed. India Macro's "Not available
+(Future Integration)" table is untouched and stays a separate card below the
+unified table (the brief's own scope was the indicator+trend merge only; the
+11 Future-Integration indicators have no price series to merge a trend
+column into and would misrepresent status if forced into the same table).
+Neither table gained `.sticky-thead-native`/`.floating-thead` — both remain
+un-sticky, consistent with this app's own prior, still-valid "too short to
+matter" exemption for macro's <=7-row tables (§2.3 above, "App-wide bounded-
+viewport shell"); the brief's own "do not create a second floating/sticky
+header implementation" instruction is satisfied by not touching either
+mechanism at all.
+
+Validated live (zero-dependency Chrome DevTools Protocol driver, Node 22's
+built-in `fetch`/`WebSocket`, real installed Chrome headless, a scratch
+server on port 4502, never the user's own dev server): `#macro-trend-table-
+india`/`-us` confirmed absent from the DOM entirely (not just hidden) —
+exactly one table per tab. Both `#macro-indicators-table-india`/`-us`
+rendered the correct 3-group header (`colspan` 3/5/6 summing to all 14
+columns) and 14 real per-column headers; India showed exactly its 3
+indicators (USD/INR, India Gold Rate, India VIX) and US exactly its 4 (US
+10Y Treasury yield, WTI crude, Henry Hub gas, Gold), each indicator's
+Performance and Trend cells confirmed on the same `<tr>` (not a second,
+separately-keyed row) by reading `tr.children` directly. DMA Alignment and
+Trend classification were independently recomputed from each row's own
+displayed DMA values and confirmed mathematically consistent (e.g. USD/INR:
+price 94.67 below its 20/50/100 DMA but above its 200 DMA → "1/4 above",
+Sideways since the 50 DMA sits above the 200 DMA; India VIX: price below all
+4 DMAs → "0/4 above", Downtrend; Crude WTI: price above all 4 DMAs → "4/4
+above", Uptrend). Tab independence reconfirmed with the merged markup: on
+first load only the `macro-intelligence` subsection is visible (`macro-india`/
+`macro-us` both `hidden`); clicking India Macro shows only `macro-india`
+(`macro-intelligence`/`macro-us` hidden); clicking US Macro shows only
+`macro-us` — no cross-tab bleed introduced by the merge. A 4-viewport sweep
+(1600×1000 default desktop, 1366×768, 1280×700, 390×844 mobile) found zero
+`document.documentElement`/`#main` horizontal or vertical overflow at every
+size, while the unified table's own `.scroll` wrapper correctly carried
+increasing horizontal overflow as the viewport narrowed (90px at 1600px wide
+down to 1057px at 390px) — confirming the wider merged table scrolls within
+its own bounded container, never the page. Zero duplicate DOM ids app-wide;
+zero console errors/exceptions. `node --check` clean on `script.js` plus a
+full repo-wide sweep (`git ls-files "*.mjs" "*.js"`) matching the CI gate;
+`node --test`: all 109 tests/36 suites pass (no analytics/scoring/decision/
+quant/provider module touched — this pass is `index.html`/`script.js`/
+`styles.css` only). No mutating route was ever called against the scratch
+server (only page loads and sidebar/sub-tab clicks); `git diff` on `data/
+watchlists/` after the session showed only the pre-existing uncommitted
+state already present before this session began. Scratch Chrome and the
+scratch server were both terminated before finishing. Files changed:
+`index.html`, `script.js`, `styles.css`.
+
 ### 2.4 Rendering pattern
 
 `render(data)` is the one function that sets `currentData = data` and cascades
@@ -1519,6 +1878,12 @@ race it).
 | GET | `/api/watchlists/:id/committee-pack` | Weekly Investment Committee Pack (Phase 6, §3.8) — watchlist half cache-only; macro/sector halves may trigger their own cache-first fetch on their own TTL |
 | GET | `/api/macro` | Macro Intelligence snapshot + Market Regime (Phase 6, §3.8) — watchlist-independent, cache-first on its own 30min TTL |
 | GET | `/api/sector-intelligence` | Sector Intelligence rollup across every saved watchlist (Phase 6, §3.8) — cache-only, the one cross-watchlist read in this app |
+| GET | `/api/integrations` | Status of every credentialed integration (§3.10) — currently just MoSPI |
+| POST | `/api/integrations/mospi/signup` | Create a MoSPI account (password used once, never persisted); 409 + `alreadyExists:true` when the account already exists (best-effort detection, §3.10) |
+| POST | `/api/integrations/mospi/login` | Obtain a MoSPI access token (password used once, never persisted) |
+| POST | `/api/integrations/mospi/token` | Save a manually-obtained MoSPI access token |
+| POST | `/api/integrations/mospi/test` | Test the stored MoSPI credential against a real dataset fetch |
+| DELETE | `/api/integrations/mospi` | Disconnect (clear the stored MoSPI credential) |
 | POST | `/api/watchlists/:id/refresh` | Refresh (`force` = full refetch; `symbols[]` = targeted refetch; else incremental) |
 | POST | `/api/watchlists/import` | Import a watchlist (same shape Export produces) |
 | PUT | `/api/watchlists/:id/cash-target` | Set the watchlist's cash allocation target % |
@@ -1744,18 +2109,26 @@ genuinely new capability (cross-watchlist reads); everything else is pure
 composition over data already fetched/computed elsewhere.
 
 - **Macro Intelligence** (`data/providers/macroProvider.mjs`,
-  `data/watchlist/macro.mjs`, `GET /api/macro`) — 6 real indicators sourced
+  `data/watchlist/macro.mjs`, `GET /api/macro`) — 7 real indicators sourced
   via Yahoo Finance tickers (USD/INR, US 10-Year Treasury yield, WTI crude,
-  natural gas, gold, India VIX), cached on their own namespace
-  (`data/cache/macro/`) and TTL (30min), independent of any watchlist's own
-  refresh cycle. Every other macro indicator the Phase 6 brief named (RBI
-  policy repo rate, India G-Sec yield, CPI, IIP, PMI, power demand, ethanol
-  policy, defence budget, banking liquidity) has no free, unauthenticated,
-  machine-readable public source this app can reach — each renders an
-  explicit **Future Integration** status (a Data Quality panel shows
-  Live/Delayed/Unavailable/Future Integration per indicator) rather than
-  being estimated or fabricated, the same posture as TD-10's market-wide peer
-  database. **Market Regime** (`data/decision/marketRegime.mjs`) is a
+  natural gas, gold, India Gold Rate via GOLDBEES.NS, India VIX), cached on
+  their own namespace (`data/cache/macro/`) and TTL (30min), independent of
+  any watchlist's own refresh cycle. A 2026-09-08 feasibility audit
+  re-verified every remaining indicator the Phase 6 brief named: RBI policy
+  repo rate, India G-Sec yield, PMI, power demand, ethanol policy, defence
+  budget and banking liquidity still have no free, unauthenticated,
+  machine-readable public source this app can reach — official sources exist
+  for all seven (RBI, CCIL/FBIL, Grid-India/NPP, PIB, indiabudget.gov.in) but
+  publish only HTML press pages or PDF/Excel reports, CCIL's own site
+  additionally prohibits automated/commercial use without written
+  permission, and PMI has no government source at all (S&P Global, a paid
+  commercial product) — each still renders an explicit **Future Integration**
+  status rather than being estimated or fabricated, the same posture as
+  TD-10's market-wide peer database. CPI inflation and IIP are the one
+  exception the audit found — see §3.10, a credentialed integration, not a
+  Yahoo Finance ticker. The Data Quality panel now shows
+  Live/Delayed/Unavailable/Future Integration/**Credentials Required** counts
+  per indicator. **Market Regime** (`data/decision/marketRegime.mjs`) is a
   disclosed rule-based classification (Risk-on/Risk-off/tightening-or-easing
   bias) blending India VIX level, the Nifty 50 benchmark's own already-
   computed trend (reused from `benchmarkCache`, never refetched) and US 10Y
@@ -1900,6 +2273,331 @@ risk-budget/attribution modules are later stages, not yet built (see
   Portfolio Action Score (§3.7) or the unified recommendation engine (§4.2),
   which remain this app's primary decision-layer signals. A later UI stage
   surfaces a disagreement between them, rather than blending it away.
+
+### 3.10 The MoSPI integration (`data/integrations/`, 2026-09-08; CPI moved to a public/unauthenticated path the same day — see the dated follow-on entry at the end of this section)
+
+This app's **first** credentialed external source — every other provider in
+`data/providers/` is free and unauthenticated (§1.2). A 2026-09-08 feasibility
+audit of the Phase 6 Future Integration list found one genuine exception:
+MoSPI (Ministry of Statistics and Programme Implementation)'s official
+**eSankhyiki API** (`api.mospi.gov.in`) covers CPI inflation and IIP with a
+real, documented REST API — gated behind user signup and a 15-minute access
+token. The user explicitly approved crossing the "no API keys" boundary for
+this one case after being shown the trade-off, rather than this being decided
+unilaterally.
+
+- **Module** (`data/integrations/`): `config.mjs` (endpoints and every source
+  citation — MoSPI's own published "CPI API User Manual" and "WPI API User
+  Manual" PDFs, plus the official `nso-india` GitHub organization's
+  open-source client, which corroborates IIP's endpoint path even though no
+  dedicated IIP manual was found), `credentialStore.mjs` (local-disk
+  credential persistence), `mospiClient.mjs` (raw HTTP layer, standard
+  fully-verified TLS), `mospiProvider.mjs` (status/fetch orchestration,
+  consumed by both the Configuration page and `data/watchlist/macro.mjs`).
+- **Credential lifecycle**: signup (`POST /api/integrations/mospi/signup`)
+  and login (`POST /api/integrations/mospi/login`) each use the user's MoSPI
+  password for exactly one upstream HTTP call and never persist it — only the
+  resulting access token, its expiry, and the email (for display) are written
+  to `data/config/mospi.local.json` (gitignored, plaintext — this is a
+  single-user local tool with no OS keychain/secrets-vault integration, the
+  same disclosed limitation as any local dev credential file). A manual
+  "paste an existing token" path (`POST /api/integrations/mospi/token`) is
+  also supported for a token generated via MoSPI's own documented
+  Postman/Swagger flow. Integration status is a 7-state model: **Not
+  Configured → Configured** (token stored, unverified) **→ Connected** (a
+  real dataset fetch has succeeded) **→ Token Expired / Authentication
+  Failed / Provider Unavailable**, surfaced on the new **Configuration →
+  Integrations** page (`#configuration` tab, `GET /api/integrations`).
+- **No refresh-token mechanism is documented anywhere in MoSPI's own
+  manuals** — the 15-minute token cannot be silently renewed without storing
+  the account password, which this app does not do. Sustained Live CPI/IIP
+  data therefore requires the user to periodically reconnect; a token past
+  its expiry reads **Token Expired**, never a silently stale "Live" reading.
+- **Response shape caveat**: MoSPI's manuals document request parameters
+  exhaustively but never show the response body's field names as text (only
+  screenshots this audit could not extract). `mospiProvider.mjs`'s
+  `parseMospiSeries()` is therefore shape-detecting (a few plausible
+  top-level/field-name candidates) rather than hardcoded to guessed names —
+  it returns nothing, rather than a wrong number, when the shape isn't
+  recognized. This must be confirmed against a real authenticated response
+  before the integration can be trusted end-to-end (see the roadmap's
+  completed-work ledger for this audit's own disclosed validation limits).
+- **A real, live-confirmed caveat, not a hypothetical one**: a direct `fetch`
+  to `api.mospi.gov.in` from this app's own runtime fails with
+  `ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED` under standard Node.js TLS
+  settings — matching the official `nso-india` reference client's own code,
+  which disables certificate verification and enables legacy SSL
+  renegotiation to work around exactly this. This app deliberately does
+  **not** replicate that workaround; a live call against a misconfigured
+  upstream surfaces as **Provider Unavailable**, not as a weakened TLS
+  posture in this codebase. Until MoSPI's server accepts standard modern TLS
+  (or a documented alternative is found), a real access token may still not
+  be sufficient to reach **Live** status for CPI/IIP — this is disclosed
+  directly in the Configuration page copy, not hidden behind a generic error.
+- **India Macro UI**: CPI/IIP render in their own "Economic indicators
+  (configuration-gated)" table on the India Macro sub-tab — deliberately
+  *not* the market-style DMA/Trend-Parameters table (§2.3's "no meaningless
+  DMA columns" instruction) — a period-over-period reading (value + Year/
+  Month), not a priced instrument.
+- **Account-management workflow completion** (2026-09-08, same-day follow-on):
+  the Configuration → Integrations card was reorganized into the 4-section
+  workflow this feature's own brief specified — Connection status / Account /
+  Token / Datasets — with the Account section split into 4 click-to-switch
+  panels (Register, Sign in, Change password, Password recovery) so only one
+  form is ever visible at once, reusing `.subtabs`' pill styling for visual
+  consistency but deliberately **not** wired into the app-wide `initSubtabs()`
+  mechanism (that mechanism is initialized once, at page load, over static
+  DOM; this card's markup is rebuilt later from `data-account-tab`/
+  `data-account-panel` attributes it never looks for — a self-contained
+  delegated listener on `#integrations-list` owns this instead, so the two
+  never collide). A second source pass (re-checking `config.mjs`'s own
+  citations, confirmed still current live against `api.mospi.gov.in` — see
+  the validation note below) reconfirmed neither manual documents a
+  password-change or password-reset/recovery API: **Change password** and
+  **Password recovery** are therefore not forms — each is a static notice
+  plus a link to the one official surface found (`MOSPI.manageAccountUrl`,
+  the Swagger UI at the API base URL), exactly the "don't fake a reset
+  feature" rule this feature's brief stated explicitly. Registration gained a
+  client-side (never transmitted) confirm-password check and a new
+  `isAlreadyExistsError()` pure helper (`mospiProvider.mjs`, covered by
+  `test/mospiIntegration.test.mjs`) that reads a signup failure's HTTP status/
+  message for a 409 or an "already exists/registered/duplicate" phrase —
+  disclosed in its own code comment as a heuristic, since neither manual
+  shows an error-response body's exact wording — and on a match switches the
+  UI straight to the Sign-in panel with the email carried over, instead of a
+  generic failure message. A successful sign-in now automatically calls
+  `POST /api/integrations/mospi/test` (no extra click) and reports the
+  combined outcome, per the "Sign in → auto-offer Test Connection" workflow
+  requirement; "Connected" is still set only by `markVerified()` inside that
+  real dataset fetch, never by sign-in alone. The MoSPI email
+  (`saumitranaik@gmail.com`, supplied by the user for this account) is
+  pre-filled as an editable convenience default into the Register/Sign-in/
+  manual-token email fields — never a password field, and never persisted;
+  this is a plain UI default for a single-user local tool, not a stored
+  credential. Files changed: `index.html` (no structural change — the
+  `#integrations-list` container is unchanged), `script.js`,
+  `server.mjs` (signup's failure status is now 409 when `alreadyExists` is
+  set, 502 otherwise, instead of always 502), `data/integrations/
+  mospiProvider.mjs`, `test/mospiIntegration.test.mjs`.
+
+  **What this pass did *not* implement, and why**: an actual password change
+  or reset/recovery API call — neither exists in MoSPI's published material,
+  confirmed again in this pass (see below), so building one would mean
+  inventing an undocumented endpoint or faking success, both explicitly
+  disallowed. **Real live registration/sign-in against the actual MoSPI
+  service was deliberately not performed** in this pass either: only an
+  email was supplied for this task, never a password (correctly withheld
+  from the conversation per the task's own instruction not to expose/log/
+  display it) — submitting a real signup or login therefore was not this
+  session's action to take; the user performs that step directly in the
+  browser, where the password never has to pass through anything but the
+  masked input field itself.
+
+  **Validation**: `node --check` clean on every changed file individually
+  and via the full repo-wide sweep (matching the CI gate); `node --test`:
+  121/121 tests / 40 suites pass (118 pre-existing + 3 new covering
+  `isAlreadyExistsError()`'s 409/phrase-match/no-false-positive cases). Live
+  validation against a scratch server (port 4188, a scratch headless Chrome
+  instance on its own profile/port, port 9333 — neither ever the user's own
+  dev server or browser session; both torn down at the end, confirmed
+  unreachable after teardown): `GET /api/integrations` showed the correct
+  "Not Configured" default with no credential file present; saving a
+  deliberately fake manual token correctly read "Configured" (never
+  "Connected") with `lastVerifiedAt` null; calling Test Connection with that
+  fake token made a real, live GET request to `api.mospi.gov.in` (read-only,
+  non-mutating, safe to run without a real account) which failed at the TLS
+  layer with the exact same `ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED`
+  error this document's TLS-caveat paragraph above already discloses —
+  reconfirming that caveat is still live and current today, not stale — and
+  the integration status correctly read "Provider Unavailable" with the real
+  error text, never a fabricated success; Disconnect correctly cleared the
+  credential file back to "Not Configured" with the file removed from disk.
+  A CDP-driven headless-Chrome walkthrough (zero-dependency, Node 22's own
+  `fetch`/`WebSocket`, same technique this document's earlier Watchlist
+  Research passes established) confirmed: zero duplicate DOM ids app-wide;
+  exactly one Account panel visible at a time across all 4 tabs, correctly
+  switching; every password/confirm-password/access-token input rendered as
+  `type="password"`; the email pre-fill appearing in all 3 forms; the status
+  tag reading "Not Configured" (never fabricated); Change password/Password
+  recovery each rendering their notice + portal link with no form present;
+  the client-side password-mismatch check firing with no network call; zero
+  console errors and zero page exceptions; no horizontal or vertical
+  document overflow at 1400×900 desktop or 390×844 mobile, with the
+  Configuration tab and its integration card both rendering correctly on the
+  mobile viewport. No incidental writes to `data/watchlists/`/`data/config/`
+  — confirmed via `git status`/`git diff` before and after (only this
+  session's own already-in-progress uncommitted state was present, unchanged)
+  and by listing `data/config/` directly (empty both before and after).
+
+**CPI moved to a public, unauthenticated path — IIP unchanged (2026-09-08,
+same-day follow-on)**: a task specifically asked to re-verify, live, whether
+CPI genuinely needs the credential lifecycle above at all, rather than assume
+the original audit's conclusion. It did not — MoSPI's own **CPI API User
+Manual** documents, in its execution-process section (§1.5.2/§1.7): *"Without
+access token the APIs will fetch only the first 10 records"* — intentional
+platform behavior, not an error condition or a bug this app exploits. A plain
+unauthenticated `curl` against `GET https://api.mospi.gov.in/api/cpi/
+getCPIIndex` (this app's existing, already-correct endpoint — the
+`getCPIData`/`Level`-parameter endpoint shown in an earlier Swagger
+screenshot this task was given was tried and confirmed to be a *different,
+non-functional* endpoint: it always returns `{"error":"Please check the input
+parameters passed"}` regardless of parameter combination) returned real,
+current JSON records with zero `Authorization` header, live-confirmed during
+this task.
+
+- **Two real, independent constraints found by the same live testing, both
+  now designed around rather than ignored**:
+  1. **Every documented query filter is silently ignored for anonymous
+     callers** — `Year`, `Month`, `Group_code`, `Subgroup_code`, `Sector`,
+     `State_code` all produced byte-identical output regardless of what was
+     sent. MoSPI serves a fixed ~10-record unfiltered slice to anonymous
+     requests (their own documented "first 10 records" behavior). This means
+     the credentialed path's ability to *select* the headline "General"
+     (all-India, all-groups) CPI figure has no unauthenticated equivalent —
+     this app cannot ask for that specific series without a token. Across
+     repeated live calls, that fixed slice consistently carried the
+     **Consumer Food Price Index** ("Consumer Food Price" group, an
+     "…-Overall" subgroup) — the one complete, officially-labeled series
+     present — so that is what "CPI Inflation" means in this app today,
+     labeled everywhere as **"CPI Inflation (Consumer Food Price Index)"**,
+     never bare "CPI Inflation", so nothing is misrepresented as the headline
+     figure. This was an explicit, informed product decision (the user chose
+     this over gating headline CPI behind the very credential this task set
+     out to remove), not a silent substitution.
+  2. **MoSPI's server has a live-confirmed TLS defect independent of the
+     credential question**: a request from this app's actual runtime (Node's
+     `fetch`, and plain `https.request` under standard settings) fails with
+     `ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED` — MoSPI's server requires
+     legacy/unsafe TLS renegotiation support (RFC 5746), which Node refuses
+     by default because a server that never adopted secure renegotiation is
+     vulnerable to a MITM plaintext-injection attack during renegotiation.
+     `curl` in this task's own environment succeeds against the same host
+     because its TLS stack permits legacy renegotiation by default — Node's
+     does not. Per CLAUDE.md's hard gate ("do not weaken TLS verification to
+     work around a misconfigured upstream server... without asking first"),
+     this was put to the user explicitly, with the trade-off shown, before
+     any code changed — the user approved a **narrow, scoped** exception:
+     `data/integrations/mospiClient.mjs`'s `fetchCpiPublic()` uses a
+     dedicated `https.Agent({ secureOptions:
+     crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT })`, applied to **that one
+     function only**. Certificate verification is not touched
+     (`rejectUnauthorized` stays at its default `true`) — only the
+     renegotiation policy is relaxed, and only for this one host. The
+     existing shared `request()` helper in the same file (used by login,
+     signup, and `fetchIipMonthly`) is completely untouched and still fails
+     exactly as before — **IIP's own credentialed path was deliberately not
+     re-tested or changed**, per this task's explicit instruction not to
+     automatically extend the same conclusion to it without separate
+     verification.
+
+- **Architecture**: `data/integrations/` keeps housing both datasets — CPI's
+  own config (base URL, endpoint path, citations) already lived in
+  `config.mjs`/`mospiClient.mjs` alongside IIP's, and splitting them across
+  `data/providers/` (unauthenticated) and `data/integrations/`
+  (credentialed) purely to satisfy that boundary label would have meant
+  duplicating the MoSPI base-URL/endpoint/citation config across two folders
+  for one external source — worse than the alternative. This is a
+  deliberate, disclosed exception to system.md §1.3's module table (updated
+  above), not an oversight: `data/integrations/` today holds one
+  unauthenticated dataset (CPI) and one credentialed dataset (IIP) for the
+  same upstream provider.
+  - `mospiClient.mjs`: new `fetchCpiPublic()` (the scoped-TLS, no-token GET
+    described above), alongside the unchanged `request()`/`signup()`/
+    `login()`/`fetchIipMonthly()`.
+  - `mospiProvider.mjs`: new `findCpiRecord()` (defensive, case-insensitive
+    search for the Consumer Food Price/…-Overall record — returns `null`,
+    never a guess, when the current unfiltered slice doesn't contain it —
+    caught a real bug in its own first draft: `Number(null) === 0`, not
+    `NaN`, so a genuinely-missing `index`/`inflation` field would have
+    silently read as a real zero without an explicit `!= null` guard,
+    fixed and covered by a dedicated regression test) and
+    `getCpiPublicSnapshot()` (cache-first over the `mospiCache` namespace,
+    same TTL/shape discipline as every other cached fetch in this app —
+    never reads `readCredential()` at all). `PUBLIC_DATASETS`/
+    `CREDENTIALED_DATASETS` replace the old single `DATASETS` list so a
+    future reader can't miss that the public path never touches the
+    credential lifecycle; `getIntegrationStatus()`'s per-dataset rows now
+    carry `authRequired: true/false` so the Configuration UI can render the
+    two kinds distinctly. `testConnection()` now exercises **IIP** (was CPI)
+    — testing CPI would no longer prove anything about a stored token, since
+    `getCpiPublicSnapshot()` never reads one.
+  - `data/providers/macroProvider.mjs`: `MOSPI_MACRO_INDICATORS` (the
+    credential-gated list `data/watchlist/macro.mjs` iterates) now lists IIP
+    only; CPI's label/category live directly in `macro.mjs`'s own new
+    `loadCpiIndicator()`.
+  - `data/watchlist/macro.mjs`: new `loadCpiIndicator()` merges CPI directly
+    into the main, always-on `indicators` array (`buildMacroSnapshot()`) —
+    **not** the `configGated` array IIP still uses — so it renders in the
+    same "India macro indicators" table, same Indicator/Category/Value/
+    Change/1Y change/Direction/Status/As of/Trend columns every other India
+    indicator uses, per this task's own explicit requirement. Two fields are
+    honestly left blank rather than fabricated, both already-established
+    conventions elsewhere in this app: `changePct` (no second data point is
+    retrievable from the filter-less unauthenticated response) and `trend`/
+    the 4 DMA columns (a single period-over-period reading has no daily
+    price series to average — same disclosed limitation IIP's own row
+    already carried). `oneYearChangePct` is MoSPI's own directly-supplied
+    Year-on-Year `inflation` field, used as-is rather than recomputed — this
+    app has no way to independently reconstruct a 12-months-prior data point
+    from a filter-less response, and MoSPI's own manual/press-release
+    convention for this field is Year-on-Year, not month-on-month.
+- **India Macro UI**: the former single "Economic indicators
+  (configuration-gated)" table is now IIP-only, retitled "Economic
+  indicators (credential-gated)" — CPI Inflation appears in the main India
+  indicators table above it instead (with blank Change/Trend/DMA cells, per
+  the above). Configuration → Integrations' MoSPI card now renders two
+  visually distinct dataset tables — **"Public data" (green "No credentials
+  required" badge)** listing CPI, and **"Credential-gated data"** listing IIP
+  — with explicit copy stating the credential-status badge and Account/Token
+  sections describe the IIP path only and do not gate the public data above.
+  The Account/Token/Connection-status workflow (signup, sign-in, manual
+  token) is completely unchanged — still there for IIP, or any future
+  credentialed MoSPI dataset.
+- **`metricRegistry.mjs`**: `macroIndicator` updated to mention CPI is now
+  part of its table; new `mospiCpiIndicator` entry (Sourced/Medium — Medium
+  rather than High because of the sector/series-selection limitation and
+  because the unauthenticated response shape was confirmed only via this
+  task's own live testing, not a published schema); `mospiIndicator`
+  narrowed to describe IIP only; `mospiCredential`/`macroDataQuality`
+  reworded to state they describe the IIP-only credential path.
+- **Validation**: `node --check` clean on every changed file individually and
+  via the full repo-wide sweep (`git ls-files "*.mjs" "*.js" | xargs -n1 node
+  --check`), matching the CI gate. `node --test`: 127/127 tests / 43 suites
+  pass (121 pre-existing + 6 new in `test/mospiIntegration.test.mjs`
+  covering `findCpiRecord()` — a real, live-shaped fixture captured during
+  this task's own verification `curl` calls; case-insensitive/substring
+  matching; a genuine "No Data Found"/empty-`data` response; a matched
+  record with a `null` index/inflation, which is what caught the
+  `Number(null)` bug above; a record resolving only one of index/inflation).
+  Live validation, all against a scratch server (port 4193) and a scratch
+  headless Chrome (CDP, port 9345), neither ever the user's own dev
+  server/browser session: `buildMacroSnapshot()` called directly confirmed
+  `cpiInflation` reads `status: "Live"`, real `value`/`oneYearChangePct`,
+  with **zero** MoSPI credential file present (`data/config/mospi.local.json`
+  showed `accessToken: null` throughout) — the explicit "works with zero
+  MoSPI credentials configured" requirement, confirmed directly, not
+  inferred. `GET /api/integrations` confirmed the `datasets` array carries
+  `cpiInflation` (`authRequired:false`, a real cached-fetch timestamp) and
+  `iip` (`authRequired:true`, never fetched) as two distinct entries. A full
+  browser walkthrough confirmed: the India Macro table shows a "CPI Inflation
+  (Consumer Food Price Index)" row (Category "Inflation", value/1Y-change/
+  direction/status/as-of all populated, Change/Trend/DMA cells correctly
+  blank) alongside the 7 real market indicators; the credential-gated table
+  shows IIP only, no CPI; the Configuration card renders the Public
+  data/Credential-gated data split exactly as designed; zero duplicate DOM
+  ids app-wide; zero console errors/exceptions; no horizontal or vertical
+  overflow at 1600×1000, 1366×768, 1280×700, or 390×844 mobile (`document
+  .documentElement.scrollWidth === clientWidth` and `#main`'s own scrollWidth
+  === clientWidth at every size). No incidental writes to `data/watchlists/`
+  (confirmed via `git status` before/after — the file this repo already had
+  modified going into this task was untouched by it) — `data/cache/mospi/
+  cpiInflation.json` gained a real cache entry, which is the intended,
+  correct effect of this feature actually working, not an incidental
+  mutation. Files changed: `data/integrations/config.mjs`,
+  `data/integrations/mospiClient.mjs`, `data/integrations/mospiProvider.mjs`,
+  `data/providers/macroProvider.mjs`, `data/watchlist/macro.mjs`,
+  `data/metadata/metricRegistry.mjs`, `index.html`, `script.js`,
+  `server.mjs` (comment only), `test/mospiIntegration.test.mjs`.
 
 ---
 
@@ -2219,6 +2917,8 @@ Stocks/
 │   ├── quant/                     — Phase 7 quantitative research domain: config.mjs, factorEngine.mjs (Stage 1), performanceEngine.mjs (Stage 2) (§3.9)
 │   ├── reporting/                — per-company report, Portfolio Review Pack, Weekly Investment Committee Pack model builders (§3.6, §3.8)
 │   ├── providers/                — external data source abstraction (§3.3), including Phase 6's macroProvider.mjs
+│   ├── integrations/              — the MoSPI integration (§3.10): config.mjs, credentialStore.mjs, mospiClient.mjs, mospiProvider.mjs — one public/unauthenticated dataset (CPI) + one credentialed dataset (IIP)
+│   ├── config/                    — local credential store (gitignored, e.g. mospi.local.json — §3.10); not user watchlist data
 │   ├── parse/                    — Screener.in HTML parsing (feeds screenerProvider)
 │   ├── news/                     — company news fetch + classification (+ Phase 6 sentiment/affected-thesis-driver)
 │   ├── metadata/                 — metricRegistry.mjs, the tier registry (§6); evidenceHierarchy.mjs, the A–F provenance layer (§4.6)
@@ -2249,6 +2949,12 @@ Stocks/
   → `data/quant/` (§3.9), same pure-composition-over-already-computed-output
   pattern as `data/decision/`, own `config.mjs` — never a second valuation,
   technical, risk or recommendation calculation.
+- A new **credentialed** external source (requires signup/API key/OAuth) →
+  `data/integrations/` (§3.10), never `data/providers/` (that stays
+  unauthenticated-only, per §1.2). Requires explicit user approval before
+  starting — this app's default posture is "no API keys" and that boundary
+  is not crossed unilaterally. The credential itself goes in `data/config/`
+  (gitignored), never in `data/watchlists/`, never hardcoded, never logged.
 - A new external data source → implement the shape `data/providers/index.mjs`
   expects, register it there; never call an external API directly from
   `server.mjs`, `data/watchlist/research.mjs`, or the frontend.
