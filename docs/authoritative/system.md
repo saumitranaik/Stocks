@@ -43,11 +43,15 @@ multi-tenant service.
   (`currentData` in the frontend) — no tab recomputes analytics, and no
   analytic is computed twice.
 - **External dependencies**: three public, unauthenticated data sources
-  (Yahoo Finance chart feed, Screener.in, Google News RSS — §4.1), MoSPI's
-  eSankhyiki API for CPI inflation (public/unauthenticated, confirmed
-  2026-09-08 — §3.10), plus one credentialed exception approved 2026-09-08
-  (the same MoSPI eSankhyiki API, for IIP only — §3.10). No other API keys or
-  paid vendor integration exists.
+  (Yahoo Finance chart feed, Screener.in, Google News RSS — §4.1), plus
+  MoSPI's eSankhyiki API for CPI inflation and IIP, both public/
+  unauthenticated (CPI confirmed 2026-09-08, IIP independently confirmed
+  2026-09-09 — §3.10). A credentialed exception was approved 2026-09-08 for
+  this same MoSPI API when IIP was still assumed to need one; both datasets
+  turned out not to, so the credential lifecycle is currently unpopulated —
+  kept as working infrastructure for any future MoSPI dataset that
+  genuinely requires one, not an active exception today. No other API keys
+  or paid vendor integration exists.
 
 ### 1.3 Major modules
 
@@ -55,7 +59,7 @@ multi-tenant service.
 |---|---|
 | `server.mjs` | HTTP server, static file serving, the full API route table |
 | `data/providers/` | External data source abstraction (fundamentals, quotes) — unauthenticated only |
-| `data/integrations/` | The MoSPI eSankhyiki integration — one public/unauthenticated dataset (CPI, since 2026-09-08) and one credentialed dataset (IIP), sharing config/client code for the one upstream provider — credential lifecycle + fetch, own local credential store (§3.10) |
+| `data/integrations/` | The MoSPI eSankhyiki integration — two public/unauthenticated datasets today (CPI since 2026-09-08, IIP since 2026-09-09) sharing config/client code for the one upstream provider, plus a currently-unpopulated credential lifecycle + local credential store kept for any future MoSPI dataset that genuinely needs one (§3.10) |
 | `data/parse/` | Screener.in HTML → normalized fundamentals parsing |
 | `data/watchlist/` | Watchlist persistence, research orchestration, caching, symbol search |
 | `data/analytics/` | Pure calculation modules (valuation, technical, portfolio, risk, series math) |
@@ -1776,6 +1780,551 @@ state already present before this session began. Scratch Chrome and the
 scratch server were both terminated before finishing. Files changed:
 `index.html`, `script.js`, `styles.css`.
 
+**Watchlists → Custom** (2026-09-15): the Watchlists workspace (`#watchlists`)
+gained its first `.subtabs` nav — "All companies" (the pre-existing content,
+unchanged) and "Custom", a user-configurable screening table. Fixed
+Company/Sector/CMP/P/E prefix (this app's locked comparison-table lead,
+unchanged elsewhere) plus 20 user-togglable columns spanning valuation,
+profitability, ownership, growth and technicals — every one a read of a
+field `data/watchlist/research.mjs` already computes and `metricRegistry.mjs`
+already tags (see `docs/governance/roadmap.md`'s completed-work entry of the
+same name for the full column list and the Operating-margin/EBITDA-margin
+same-figure disclosure, which mirrors Watchlist Research → Fundamentals →
+Profitability's existing note). New generic frontend mechanism: this is the
+app's first table with user-adjustable column widths (a drag handle per
+`<th>`, `table-layout:fixed`, width persisted to `localStorage` per column)
+alongside a field-visibility selector (checkboxes, also `localStorage`-
+persisted) and the existing shared `sortForTable`/`initTableSort` sort
+mechanism. Shares the All-companies tab's filter/search/monitoring-pill
+state rather than duplicating it. Zero analytics/scoring/decision/quant/
+provider/API change — pure UI wiring and reuse, validated live (Playwright/
+Chromium against a scratch server, port 4187) per the roadmap entry.
+
+**Watchlist Research → Overview — fetched-vs-derived data lineage + full
+column sort/resize/reorder/persistence** (2026-09-22): reference implementation, scoped to
+`#wr-overview-table` only, for a data-lineage distinction this app had never
+made explicit before — which columns are raw fetched fields versus scoring/
+decision/quant-layer output. Company/Sector/CMP/P/E/Change keep the table's
+existing default look; the other 13 columns (Recommendation/Primary driver/
+Confidence/Composite score/Upside %/Regime/Risk score/Action/Company Quality/
+Stock Attractiveness/Fundamental View/Market View/Factor score) get a
+`col-derived`/`derived` class pair — a solid, slightly lighter header
+background plus a small `◆` glyph on the `<th>`, a very low-opacity indigo
+tint on the `<td>` — a deliberately new, off-palette hue so this lineage cue
+never collides with the existing green/blue/amber/red semantic language
+(positive/negative values, Buy/Hold/Sell-style rating and action bands),
+which is completely unchanged. Column sort was already fully implemented for
+all 18 columns by the pre-existing `sortForTable`/`initTableSort` mechanism
+(`RATING_RANK`/`CONVICTION_RANK` rank maps and numeric `.score` reads already
+gave Recommendation/Confidence/Regime/Action/Fundamental View/Market View a
+deterministic order, not a render-order/lexicographic one) — verified, not
+modified. Column resize is new for this table: the Watchlists → Custom
+table's drag-to-resize pointer-event logic (§2.3 above) was extracted into a
+shared `initTableColumnResize(tableId, onResize)` rather than duplicated, and
+a parallel `wrOverviewColWidths`/`localStorage['wrOverviewColWidths']` width
+store was added. One structural difference from Watchlists → Custom: this
+table's `<thead>` is static markup (`index.html`, never rebuilt by
+`render()`), so a saved width is applied once on top of the markup's own
+default `style="width:...px"` rather than baked into a JS-regenerated header
+cell. A real regression was caught during live validation, not shipped: the
+first CSS draft added `position:relative` to `#wr-overview-table th` to
+anchor the new resize handle — an ID selector, which out-specificities
+`.sticky-thead-native thead th{position:sticky}` (§2.3's "Table headers"
+entry above) regardless of source order, silently defeating this table's
+native sticky header. `position:sticky` is itself a valid containing block
+for the handle's `position:absolute`, so the fix was simply not adding
+`position:relative` at all — caught because a resize-drag test's
+`getBoundingClientRect()`-derived click coordinates came back off-screen once
+the header stopped sticking at scroll position 0. Validated live with a
+zero-dependency Chrome DevTools Protocol driver (Node 22's built-in `fetch`/
+`WebSocket`) against a scratch server (port 4189, never the user's own dev
+server): lineage classification (13 derived `<th>`/`<td>` exactly, correct
+computed background colors), every column's sort in both directions plus
+natural order (numeric columns confirmed genuinely numeric via a case where
+lexicographic order would have differed, e.g. P/E), resize (widen + narrow-
+to-floor via synthetic pointer drags on the real handle, confirmed no
+accidental sort from the drag, confirmed `position:sticky` restored after the
+fix), pixel-exact header/body alignment after combined sort+resize, and a
+regression check of the extracted `initTableColumnResize()` helper against
+its original caller (Watchlists → Custom, unaffected). `node --check`/
+`node --test` (140/140) clean — no analytics/scoring/decision/quant module
+touched, `metricRegistry.mjs` untouched (a lineage/presentation label on
+already-registered fields is not a new metric).
+
+**Column reorder + consolidated persistence + reset** (same-day follow-on,
+completing the original brief's full drag-reorder/persistence/reset
+requirements that the pass above left for a second iteration): drag-and-drop
+column reordering was new to this app — no existing table had it — so it was
+built from scratch rather than extended from a precedent. Native HTML5
+drag-and-drop on each `<th>` (`initWrOverviewColumnDrag`, delegated on the
+static `<thead>`, bound once and guarded the same way `initTableSort`/
+`initTableColumnResize` already are) plus an Alt+ArrowLeft/Right keyboard
+equivalent on a focused header, since this app has no other drag-and-drop
+component whose keyboard pattern could be matched — a minimal additive
+affordance rather than a parallel UI. Column identity is each column's
+existing `data-sort` id, never DOM position: `applyWrOverviewColumnOrder()`
+re-splices the header's `<th>` elements (via `appendChild`, which relocates
+rather than clones — no listener or state is lost) and reorders each body
+row's `<td>`s by an original-position → id map (since `renderTable()` always
+rebuilds `<tbody>` in one hardcoded default order on every render, this
+reapplies on every render too), guarded by an exact cell-count check so the
+single-`<td>` empty-watchlist fallback row is skipped rather than misread.
+Because identity is id-based, moving a column can never desync it from its
+own sort key, resize width, or `col-derived`/`derived` lineage class — all
+three are already keyed the same way and simply travel with the physically-
+moved DOM nodes. A plain click still sorts normally (the browser's own
+drag-and-drop model only engages on an actual drag gesture, not a
+click-without-movement) and the resize handle's pre-existing `pointerdown`
+`stopPropagation`/`preventDefault` keeps a resize-drag from also starting a
+column-drag.
+
+Persistence was consolidated and versioned in the same pass: the prior
+unversioned, width-only `localStorage['wrOverviewColWidths']` key was
+replaced with one feature-scoped, versioned key,
+`stocksApp.watchlistResearch.overview.screeningMatrix.v1`
+(`{version, order, widths}`), with a one-time silent migration of any
+existing width data out of the old key on first load. `loadWrOverviewLayout()`
+validates the persisted shape defensively: a column id the saved order
+doesn't recognize (a future removed column) is dropped; a column id this
+build has that the saved order doesn't (a future added column) is appended
+at its default position and width; any malformed/non-object/non-array JSON
+falls back to defaults entirely — the table can never render broken, empty,
+or with duplicated/misaligned columns from a corrupted or stale layout. A new
+"Reset columns" button next to the pre-existing "Rank by" control restores
+`WR_OVERVIEW_DEFAULT_ORDER`/`WR_OVERVIEW_DEFAULT_WIDTHS`, persists that reset
+immediately, and re-applies it to the live table with no page reload; sort
+state is deliberately left untouched by reset, since this table's sort was
+already never persisted (avoiding the exact risk the task's own spec named:
+persisted sort state silently overriding a user's next explicit sort click).
+
+Validated live with `playwright-core` driving the system's real installed
+Chrome headless (no bundled browser download — pointed directly at the local
+Chrome install) against a scratch server (port 4199, never the user's own dev
+server on 4173): drag-reordering a fetched column (Sector) and a derived
+column (Recommendation) each moved the header and every row's matching cell
+together, confirmed by reading the actual paired cell values at their new
+column position, not just the header order; the derived column's
+`col-derived`/`derived` classes traveled with it; a full page reload restored
+both the dragged order and a resized column's width exactly; "Reset columns"
+restored the default layout live and the reset persisted across a further
+reload; Alt+ArrowLeft on a focused header reordered it by one position via
+the same code path as drag. A full sidebar + Watchlist Research sub-tab
+click-through found zero duplicate DOM ids and zero console errors beyond the
+pre-existing, already-disclosed `favicon.ico` 404. `node --check`/
+`node --test` (140/140) clean — no analytics/scoring/decision/quant module
+touched. Files changed (both passes together): `index.html`, `script.js`,
+`styles.css`.
+
+**Macro extracted into its own top-level sidebar workspace (India Macro / US
+Macro / World), superseding the "geography split inside Market Intelligence"
+design from the 2026-09-07 entries above** (2026-09-23): a brief requiring a
+clean separation between Macro (market/economic context) and Market
+Intelligence (India equity-market intelligence/sector/earnings/news) found
+the existing split — India Macro and US Macro as two of `#market-intelligence`
+'s six subtabs — conflated the two, and separately found a real information
+gap: neither tab showed a single Indian, US or World equity *index* (NIFTY/
+BANKNIFTY/SENSEX/S&P 500/Nikkei etc.), and India's gold reading had no
+derived ₹-per-10g figure, only the raw USD/oz price and a separate NSE ETF
+proxy. New top-level `.tab#macro` (sidebar button inserted between Watchlist
+Research and Portfolio Analysis), with its own `.subtabs` (India Macro / US
+Macro / World) — India Macro carries a further nested `.subtab-root`
+(`#india-macro-detail`, copied verbatim from the existing Sector Intelligence/
+Earnings & Events two-level nesting pattern): Indian Indices / Commodities /
+Macro Indicators. `#market-intelligence` keeps `macro-intelligence` (Market
+regime + Data Quality only now, its indicator tables moved out), Sector
+Intelligence, Earnings & Events and News & Catalysts — unmoved, unchanged,
+same ids, same functionality. Confirmed before making any DOM change (grepped
+`script.js`/`styles.css` for `#market-intelligence`-scoped rules and for a
+`data-jump`-style compound-tab-string navigation primitive): neither exists in
+this app, so the relocation is a pure DOM move with zero risk to any other
+feature, and the sidebar/subtab activation and `subtab:<rootId>` localStorage
+persistence (§2.3's own generic `initSubtabs`/`applySubtabState` mechanism)
+need zero new code — a new `.tab`/`.subtab-root` with an `id` and a `.subtabs`
+nav is picked up automatically by the existing `$$('.tab,.subtab-root')
+.forEach(initSubtabs)` wiring, same precedent as every prior IA relocation in
+this app's history.
+
+**New data, all via the existing unauthenticated `fetchQuote()`/Yahoo chart-
+feed path — no new fetch mechanism, no new credentialed integration**
+(`data/providers/macroProvider.mjs`): Indian Indices — NIFTY 50 (`^NSEI`,
+already fetched internally via `benchmarkCache` for regime classification,
+now also its own indicator row), BANKNIFTY (`^NSEBANK`), NIFTY MIDCAP 50
+(`^NSEMDCP50`), SENSEX (`^BSESN`), India VIX (`^INDIAVIX`, moved from the
+original flat list into this group) — in that exact required order. US Macro
+— S&P 500 (`^GSPC`), Nasdaq Composite (`^IXIC`), Dow Jones Industrial Average
+(`^DJI`), Russell 2000 (`^RUT`), plus the pre-existing US 10-Year Treasury
+yield (`^TNX`) in its own small "US rates" table (a bond yield isn't an
+index, so it isn't folded into the indices table). World — Nikkei 225
+(`^N225`), Shanghai Composite, Hang Seng (`^HSI`) grouped Asia; FTSE 100
+(`^FTSE`), DAX (`^GDAXI`), CAC 40 (`^FCHI`) grouped Europe (US indices live on
+the US Macro tab, not duplicated here, per the brief's own "don't duplicate"
+instruction). Every one of these 14 new tickers was live-verified against
+Yahoo's chart endpoint *before* being wired into any UI (never guessed): the
+one genuine surprise was Shanghai Composite — the commonly-cited `^SSEC`
+ticker returns HTTP 404 on Yahoo's chart endpoint; `000001.SS` is the ticker
+confirmed to actually resolve, with a real quote (`shortName: "SSE Composite
+Index"`).
+
+**Derived Gold ₹/10g** (`data/providers/macroProvider.mjs`'s new pure
+`goldInrPer10g(goldUsdPerOz, usdInr)`, called from `data/watchlist/macro.mjs`):
+`goldUsdPerOz × usdInr × (10 ÷ 31.1034768)` — the standard troy-ounce-to-gram
+conversion, no intermediate rounding. Returns `null` (rendered blank, never
+fabricated) if either input isn't a real finite quote. Presented in the
+Commodities table alongside its two fetched inputs (Gold USD/oz, USD/INR) and
+the pre-existing India Gold Rate (Gold BeES ETF, a genuine NSE market price,
+unrelated to this derivation and left unchanged) with the existing `.derived`/
+`col-derived` fetched-vs-derived styling applied to its Value cell
+specifically (every other indicator's Value cell is a real fetched price, so
+`indicatorRow()`/`macroIndicatorRow()` — hoisted to module scope this pass so
+both `renderMacroIntelligence()` and the new `renderMacroTab()` share one
+implementation — only applies `.derived` to Value when the row itself carries
+`calculated:true`) and an info-icon tooltip disclosing the formula. New
+`metricRegistry.mjs` entry `goldInrPer10g` (tier `calculated`, confidence
+`High`); `macroIndicator`'s existing entry (tier `sourced`) had its label/
+methodology text extended to enumerate the 14 new tickers, following the same
+in-place-extension precedent already used for `goldIndia`/CPI/IIP rather than
+minting one registry key per ticker, since the fetch mechanism is identical.
+Two new pure-function unit tests added to `test/macroPeriodicIndicators.test
+.mjs` (correct formula, `null` on non-finite input, no divide-by-zero) — the
+live ticker fetches themselves stay in this module's existing manual-
+validation bucket per `docs/governance/roadmap.md §1`'s stated bar for
+I/O-touching code.
+
+**`buildMacroSnapshot()`'s return shape** (`data/watchlist/macro.mjs`): the
+original flat `indicators` array is unchanged in shape/contract — every
+existing consumer (`classifyMarketRegime()`, `data/reporting/committeePack
+.mjs`'s `macroChanges()`, script.js's `renderMorningBriefing()`/Data Quality
+cards) reads it exactly as before and needed zero changes, confirmed by
+tracing every one of those call sites before making the change. A new,
+purely additive `groups` object (`indiaIndices`/`indiaCommodities`/
+`indiaMacroIndicators`/`usIndices`/`usRates`/`worldAsia`/`worldEurope`)
+buckets the same row objects by reference for the new Macro tab's tables to
+read directly — replacing the old ad hoc client-side `MACRO_US_KEYS` `Set`-
+based split in `script.js` (retired) with one server-side grouping, avoiding
+the exact class of bug that split invited: an early draft of this grouping
+omitted India VIX from `indiaIndices` (it's still fetched via the original
+`MACRO_INDICATORS` array, not the new `INDIA_INDEX_INDICATORS` one) until a
+live `/api/macro` check against a scratch server caught the gap before it
+reached the UI.
+
+**Two real, pre-existing table-infrastructure bugs found via live browser
+testing while validating the new tables, both fixed (not scoped to Macro's
+own tables — they affect any table sharing the same structure elsewhere in
+the app, confirmed via a control test)**:
+1. *Column resize silently did nothing on a two-row `<thead>` (a colspan
+   group-header row above the real column-header row — every
+   `macro-unified-table`, both the two that already existed and the five new
+   ones this pass adds).* Root cause: the CSS `table-layout:fixed` fixed-
+   layout algorithm only ever reads the table's ORIGINAL first row (or a
+   `<colgroup>`) to set a column's rendered width — a second-row `<th>`'s
+   `style.width` is set correctly (confirmed directly) but silently ignored
+   by layout. Fixed generically in `script.js`: `ensureColgroup(tableId)`
+   (called from `initTableLayout`) adds a `<colgroup>` with one `<col>` per
+   real column, scoped to only tables whose `<thead>` has more than one
+   `<tr>`; `applyTableColumnWidths()` and the live drag handler
+   (`initTableColumnResize`) now keep both the `<th>` and its `<col>` in
+   sync. Single-row tables are untouched (no `<colgroup>` is created for
+   them, so behavior is identical to before).
+2. *"Reset columns" silently re-captured the just-resized width as the new
+   "default" instead of the table's true natural width, on ANY table (not
+   just the new colgroup-managed ones — reproduced live on the pre-existing
+   `sector-intel-table`).* Root cause: the reset handler cleared its own
+   width *state* before calling `captureDefaultWidthsIfVisible()`, but never
+   cleared the *DOM* — the `<th>` (and now `<col>`) still carried the old
+   manually-set width at the moment of remeasurement. Fixed by clearing
+   `th.style.width`/`col.style.width` and temporarily dropping
+   `table-layout-managed` (returning the table to its original, first-bind
+   `auto`-layout state) immediately before recapturing.
+
+Both fixes validated live (headless Chrome via a zero-dependency CDP driver —
+Node 22's built-in `fetch`/`WebSocket`, same discipline as every prior
+validation pass in this history — against a scratch server, port 4599, never
+the user's own dev server): 30 assertions covering sidebar/subtab navigation,
+exact Indian Indices row order, fetched-vs-derived styling on the derived
+gold row (and confirming the row it's *not* applied to), every new table's
+content, Market Intelligence's 4 remaining subtabs and their pre-existing
+content all still present, zero leftover DOM ids from the retired
+`macro-indicators-table-india`/`-us` elements, a real column resize now
+visibly changing width (before/after `getBoundingClientRect` + persisted
+`localStorage` key), Reset now genuinely reverting, sort still working, zero
+console errors, zero duplicate DOM ids — plus a 12-tab full-sidebar
+regression sweep (42/42 total assertions passed) and a live `GET /api/macro`
+inspection confirming every new ticker resolved with real data (24/24 `Live`,
+zero `Unavailable`) and the derived gold value matched the disclosed formula
+by hand-calculation against the same response. `node --check` clean on every
+touched file; `node --test`: 143/143 (no analytics/scoring/decision/quant
+module touched). No incidental writes to `data/watchlists/`/`data/cache/`
+(confirmed via file mtimes predating this session's own validation runs).
+Files changed: `index.html`, `script.js`, `data/providers/macroProvider.mjs`,
+`data/watchlist/macro.mjs`, `data/metadata/metricRegistry.mjs`,
+`test/macroPeriodicIndicators.test.mjs` — `styles.css` untouched, including
+by the two table-infrastructure bug fixes above (both are pure JS fixes to
+existing generic CSS classes/behavior, no new rule needed).
+
+**Macro commodity/currency presentation revision — global source prices
+separated from India-denominated derived prices; India Macro gains a
+Currencies tab; US Macro gains a Commodities tab** (2026-09-23, same-day
+follow-on to the Macro extraction above): a brief found the just-shipped
+Macro workspace still conflated global source prices with India-relevant
+prices — India Macro → Commodities showed Gold/Crude Oil (WTI)/Natural Gas
+(Henry Hub) at their raw USD values under an India label, the one exception
+being Gold, which additionally carried a derived ₹/10g row alongside its own
+raw USD row — and had no dedicated currency-conversion view at all beyond
+that single USD/INR figure buried inside the commodities table as a
+derivation input.
+
+**US Macro → Commodities** (new `#macro-commodities-us` card, reusing the
+existing `macro-unified-table` structure/`renderMacroIndicatorTable()` — zero
+new table-rendering mechanism): Gold (US$/troy oz), Crude Oil (WTI, US$/bbl),
+Natural Gas (Henry Hub, US$/MMBtu) — the exact same 3 already-fetched
+`MACRO_INDICATORS` entries (`GC=F`/`CL=F`/`NG=F`), simply re-grouped into a
+new `groups.usCommodities` bucket (`data/watchlist/macro.mjs`) rather than
+refetched; gold's unit label corrected from the vaguer `US$/oz` to the exact
+`US$/troy oz` the conversion formula already used. **India Macro →
+Commodities** was cut down to exactly the derived INR figures — Gold
+(₹/10g), Crude Oil (WTI) (₹/bbl), Natural Gas (Henry Hub) (₹/MMBtu), each
+carrying `calculated: true` and this app's existing fetched-vs-derived
+`.derived` styling — plus the pre-existing, genuinely NSE-traded India Gold
+Rate (Gold BeES ETF), which carries no `calculated` flag and is now the one
+clearly-non-derived row in that table, distinguishing it from the derived
+rows the way the brief required. The raw USD Gold/Crude/Natural Gas values
+no longer appear anywhere under an India label. Crude Oil/Natural Gas
+derivation is a new pure function, `usdToInr(usdValue, usdInr)` — the same
+"two already-fetched Yahoo tickers, no independent India-specific source"
+pattern `goldInrPer10g()` already established, minus gold's troy-ounce-to-
+gram step (neither commodity needs a unit-of-measure conversion, only a
+currency conversion). `toDerivedGoldIndicator()` was generalized into
+`toDerivedIndicator({key,label,category,unit}, inputs, value)` so all
+derived rows (gold, crude, gas, and the new RUB/INR cross-rate below) share
+one status/asOf-combination implementation rather than four copies.
+
+**India Macro → Currencies** (new 4th tab under `#india-macro-detail`,
+alongside Indian Indices/Commodities/Macro Indicators — same nested
+`.subtab-root` mechanism, zero new nav code): 1 unit of foreign currency = ₹
+for 12 currencies (USD, GBP, EUR, CHF, AUD, CAD, AED, RUB, CNY, SGD, THB,
+VND), reusing the identical `macro-unified-table`/`renderMacroIndicatorTable()`
+row rendering as every other Macro tab. USD/INR is not refetched — the same
+`usdInr` object already used by every India-commodity derivation above is
+spliced into `groups.currencies` at position 1 by reference, so there is
+exactly one canonical USD/INR value across this entire snapshot (CLAUDE.md's
+"no duplicate calculations," applied to a shared upstream fetch rather than
+just a shared formula). 11 of the 12 currencies resolve via a direct Yahoo
+`<CCY>INR=X` quote (`CURRENCY_INDICATORS`, `data/providers/macroProvider.mjs`),
+each live-verified against the chart endpoint before being wired in: GBP,
+EUR, CHF, AUD, CAD, AED, CNY, SGD, THB, VND. Vietnamese Dong's raw per-unit
+rate (~₹0.0037) is too small to round meaningfully, so it is shown per 1,000
+units (`displayScale: 1000` on its def; `data/watchlist/macro.mjs`'s
+`toIndicator()` now applies a def's `displayScale` to the fetched price and
+every DMA identically before rounding — never a silently-changed
+denominator, the unit column always discloses the "per 1,000" scale
+applied). Russian Ruble is the one currency with no direct Yahoo ticker
+(`RUBINR=X` returns HTTP 404 on the chart endpoint, confirmed live, not
+guessed) — derived instead via a new pure function, `crossRateInr(usdInr,
+usdForeign) = usdInr ÷ usdForeign`, from two already-fetched USD legs:
+`usdInr` (reused, not refetched) and a new `usdRub` (`RUB=X`, "1 USD = X
+RUB"), fetched via `CROSS_RATE_INDICATORS` solely as a cross-rate input and
+never itself rendered as its own row anywhere. RUB/INR carries
+`calculated: true` and the same derived styling as the commodity
+conversions.
+
+**`metricRegistry.mjs`**: `goldInrPer10g`'s entry was broadened into
+`commodityInrDerived` (now disclosing all 3 derived commodity conversions,
+not just gold) rather than adding two near-duplicate entries; a new
+`currencyCrossRateInr` entry discloses the RUB-specific cross-rate math;
+`macroIndicator`'s entry was extended (not duplicated) to enumerate the 11
+new currency tickers and the US Commodities/India Commodities split.
+
+Validated live (zero-dependency Chrome DevTools Protocol driver, Node 22's
+built-in `fetch`/`WebSocket`, real installed Chrome headless, a scratch
+server on port 4711, never the user's own dev server): `GET /api/macro`
+read directly first — all 37 indicators (up from 24) returned `Live`, zero
+`Delayed`/`Unavailable`; the derived Crude Oil/Natural Gas/RUB figures
+hand-verified against the same response's raw USD legs (e.g. Crude Oil
+90.2 US$/bbl × USD/INR 95.71 = ₹8,633.04/bbl, matching the API's own
+`crudeOilInrPerBbl` value exactly). Two scripted browser passes (30+
+assertions): India Macro → Currencies shows exactly the 12 required
+currencies in the exact required order; India Macro → Commodities shows
+exactly 4 rows, the 3 derived ones carrying the `.derived` value-cell class
+and the ETF row not; US Macro → Commodities shows exactly the 3 raw USD
+rows with the corrected `US$/troy oz`/`US$/bbl`/`US$/MMBtu` units; every new
+table's info-icon tooltip resolves to real (non-empty) methodology text;
+column sort applies its indicator class on the new Currencies table; both
+new tables' "Reset columns" buttons exist and are wired via the same
+`initTableLayout()` every other macro-unified-table already uses; a full
+10-tab sidebar sweep plus Indian Indices/Macro Indicators/World/Market
+Intelligence re-checked found each unaffected and rendering its pre-existing
+content unchanged; zero duplicate DOM ids app-wide; zero console errors/
+exceptions. `node --check` clean on every touched file; `node --test`:
+151/151 pass, including 8 new pure-function cases across 3 new suites added
+to `test/macroPeriodicIndicators.test.mjs` for `usdToInr()`, `crossRateInr()`
+and `CURRENCY_INDICATORS`' shape (no analytics/scoring/decision/quant module
+touched). No incidental writes to `data/watchlists/`; `data/cache/macro/`
+gained the expected new regenerable cache entries for the 10 new direct
+currency tickers plus `usdRub` — confirmed via `git status` these are the
+only cache additions, no pre-existing entry altered. One known, disclosed
+side effect: Morning Briefing's "Market moves" card and the printable Weekly
+Committee Pack's macro-changes section both iterate `macroData.indicators`
+without truncation (pre-existing behavior, unchanged code) — the flat
+`indicators` array grew from 24 to 37 rows with this pass (same precedent as
+every prior Macro group addition, which also appended to this array), so
+both now render a longer list than before. Not fixed in this pass (out of
+its explicit commodity/currency-presentation scope); flagged here as a
+candidate follow-up if the longer list proves too dense in practice. Files
+changed: `index.html`, `script.js`, `data/providers/macroProvider.mjs`,
+`data/watchlist/macro.mjs`, `data/metadata/metricRegistry.mjs`,
+`test/macroPeriodicIndicators.test.mjs` — `styles.css` untouched (both new
+tables reuse the existing `macro-unified-table`/`.derived`/`col-derived`
+classes with zero new CSS).
+
+**Macro one-table-per-tab + sticky-header fix** (2026-09-23, same-day
+follow-on): the Macro workspace above shipped with three panels each
+stacking multiple independent `<table>`s (India Macro → Macro Indicators:
+CPI/IIP + Periodic/Policy + Future Integration, 3 tables; US Macro: Indices
++ Rates + Commodities, 3 tables; World: Asia + Europe, 2 tables) and, since
+none of its tables ever carried the `card-table-fill`/`sticky-thead-native`
+pair §2.4's own "Table headers — native `position:sticky` where genuinely
+possible" entry established as this app's standard, no working sticky
+header anywhere in the workspace — every Macro table's header scrolled away
+with its rows. Fixed by reusing the existing mechanism, not inventing a
+new one: India Macro → Macro Indicators split into **Macro Indicators**
+(CPI/IIP only) and a new 4th tab **Periodic / Policy** (the former
+`macro-periodic-table` and `macro-unavailable-table` merged into one
+table — Periodic and Future Integration are two statuses of the same
+"indicator with no live feed" concept sharing the same Indicator/Category/
+Status columns; an unavailable row's blank Value/Period/As of/Source is the
+existing §2.6 missing-data blank convention, not new code). India Macro is
+now 5 tabs (Indian Indices / Commodities / Macro Indicators / Periodic /
+Policy / Currencies). US Macro and World were each promoted to their own
+nested `.subtab-root` (`#us-macro-detail`: Major Indices/Rates/Commodities;
+`#world-macro-detail`: Asia/Europe) — the identical mechanism India Macro's
+own `#india-macro-detail` already uses, so the generic `$$('.tab,
+.subtab-root').forEach(initSubtabs)` wiring picked up both automatically,
+zero new subtab JS. Every Macro table's card gained `card-table-fill` and
+`sticky-thead-native`.
+
+That surfaced a real, previously-latent bug in `sticky-thead-native` itself:
+`macro-unified-table` has a 2-row `<thead>` (a colspan group-label row above
+the real column-header row) — a shape no other `sticky-thead-native` table
+in the app has ever had — and the old rule
+(`.sticky-thead-native thead th{position:sticky;top:0}`) pinned *both* rows
+to the same offset, so they fought for the same pixels instead of stacking.
+Generalized to `.sticky-thead-native thead tr:last-child th` (`styles.css`):
+only the real header row stays pinned, the group-label row scrolls away once
+passed — identical behavior to before for every existing single-row-thead
+table (`tr:last-child` selects that one row either way), confirmed by
+regression.
+
+Validated live (Playwright driving real installed Chromium, scratch server
+port 4599, never the user's own dev server on 4173): 28/28 scripted
+assertions (5 India Macro tabs each showing exactly 1 table, US Macro's 3
+and World's 2 nested tabs each exactly 1 table, the merged Periodic/Policy
+table's 9 rows split 2 Periodic/7 Future Integration, sticky real-header
+`<th>` clamped to its scroll container after scrolling — measured on the
+`<th>` itself, not the `<tr>`, since a row's own bounding rect doesn't
+reflect a sticky cell's shifted position — column resize/reset/sort, sub-tab
+persistence across reload, zero duplicate ids, zero console errors) plus a
+14-assertion regression sweep (sticky clamping on every overflowing Macro
+table, reorder+reset on the new single-row Periodic/Policy table, the
+pre-existing `allowReorder:false` exception on every 2-row-thead
+`macro-unified-table` confirmed unchanged, the Watchlists floating-header
+table and Sector Intelligence's sticky table both unaffected). `node --test`:
+151/151 pass (no analytics/scoring/decision/quant module touched). Files
+changed: `index.html`, `script.js`, `styles.css` — no data/calculation
+change, per the brief's own explicit IA/layout-only scope.
+
+**World Asia/Europe: both sticky header rows now frozen, plus a Country
+column** (2026-09-23, same-day follow-on): the fix immediately above
+deliberately left the group-label row (`.table-group-row` — "Indicator
+Details"/"Performance"/"Trend Parameters") scrolling away, pinning only the
+real column-header row. A follow-up brief, screenshot-driven against World →
+Asia/Europe specifically, called that a defect rather than the intended
+design — a two-level header where only the lower level survives scrolling
+reads as a broken table, not a simplification — and asked for both rows
+frozen, professional-fixed-header style, plus an explicit Country column on
+just those two tables. Investigated first (per the brief's own instruction
+not to invent a new mechanism): this app has exactly one native-sticky
+multi-row-thead shape, `macro-unified-table` (all 9 tables across India
+Macro/US Macro/World share it), so the fix is one shared CSS change, not a
+World-specific one — every 2-row-thead Macro table now gets both rows
+frozen, not just the two that gained a Country column.
+
+**Sticky-header fix** (`styles.css`): `.sticky-thead-native thead tr:last-child
+th{position:sticky;top:0}` is now two rules, split via `:has()` (a selector
+this app already relies on elsewhere, e.g. §2.6's install note) so every
+existing single-row-thead `sticky-thead-native` table is untouched —
+`thead:not(:has(.table-group-row)) tr:last-child th` keeps the old
+`top:0` behavior verbatim. For a 2-row thead
+(`thead:has(.table-group-row)`), the group row pins at `top:0;z-index:2`
+and the real header row pins at `top:25px;z-index:1` (immediately below it,
+stacked rather than fighting for the same pixels — the actual defect in the
+very first pass at this, before the "only pin the last row" workaround
+above). The `25px` is not a guessed pixel value: `.table-group-row th` now
+carries an explicit `line-height:12px` (previously left to the browser's
+unspecified default, which this app's own `body` rule never sets), so its
+total rendered height is fully determined by this app's own declared box
+model — `6px+6px` padding + `12px` line-height + the `1px` border-bottom
+every `th`/`td` already carries = `25px` — and the second rule's `top`
+reuses that exact same number rather than measuring it at runtime. No new
+JS, no CSS custom property, no resize/scroll listener — deliberately, since
+the row's content (short, uppercase, single-line, non-wrapping) never
+changes shape at runtime, unlike this app's other sticky-offset problems
+that do need live `getBoundingClientRect()` reads (§2.3's `.floating-thead`
+mechanism, still unchanged and still used by the panels that mix a table
+with sibling content).
+
+**Country column** (`data/providers/macroProvider.mjs`,
+`data/watchlist/macro.mjs`, `script.js`, `index.html`): `country` is a new
+field on each of the 6 `WORLD_INDEX_INDICATORS` entries (Japan/China/Hong
+Kong for the Asia group; United Kingdom/Germany/France for Europe) — the
+same static-curation basis as the existing `label`/`category`/`unit` fields
+on that same array, not a live fetch, so it carries no separate
+`metricRegistry.mjs` tier of its own (the existing `macroIndicator` entry's
+methodology text was extended to disclose it, same as it already discloses
+every ticker). `toIndicator()` (`macro.mjs`) passes `country: def.country`
+through into the row object (`undefined` for every non-World indicator,
+never rendered). `macroIndicatorRow()`/`renderMacroIndicatorTable()`
+(`script.js`) both take a new `{ country: true }` option — used only at the
+World Asia/Europe call sites — that prepends a Country `<td>`, adds
+`country` to the shared `MACRO_INDICATOR_SORT` map (harmless no-op for the
+other 7 macro-unified-tables, which have no `data-sort="country"` `<th>` to
+ever trigger it), and switches the "Not available" fallback row's `colspan`
+from 14 to 15. `index.html`'s two tables gained a `<th data-sort="country">`
+first column and their `.table-group-row`'s "Indicator Details" `colspan`
+went from 3 to 4 — column resize/sort/persistence all generalize for free
+through the existing `data-sort`-keyed `initTableLayout()` mechanism, no
+table-specific code. Reorder stays disabled for Country exactly as it
+already was for every other column on these 9 tables (`allowReorder:false`,
+unchanged from the entry above) — the pre-existing, documented,
+app-wide rule that a 2-row colspan-grouped thead can't support drag-reorder
+without desyncing the group labels; Country is not a special case of that
+rule, just one more column subject to it.
+
+Validated live (Playwright, real installed Chromium, scratch server port
+4599): 39/39 scripted assertions — Country column present with the correct
+Japan/China/Hong Kong and United Kingdom/Germany/France default order on
+both tables; both header rows measured motionless (via each sticky `<th>`'s
+own bounding rect, not its `<tr>`) after both a real scroll and a synthetic
+~120-row deep scroll to 3000px (the real dataset is only 3 rows per table —
+too little to produce genuine overflow, so extra clone rows were injected
+client-side, never sent to the server, purely to force a tall scrollable
+body per the brief's own "don't validate with 3 rows" instruction); zero
+gap/overlap between the two stacked rows at every scroll position;
+horizontal scroll keeps both rows column-aligned; Country sorts
+alphabetically; Country resizes and the resized width survives a reload
+exactly; Reset columns restores the default width and keeps the column
+present; zero duplicate DOM ids; zero console errors. Regression: the same
+both-rows-sticky fix confirmed working identically on `macro-indices-india`
+(a 2-row-thead table that did NOT gain a Country column — confirming the
+CSS fix generalized correctly and no Country column leaked onto it), and
+`wr-overview-table` (Watchlist Research → Overview, a single-row-thead
+`sticky-thead-native` table) confirmed still pinning at `top:0` exactly as
+before, unaffected by the `:has()` split. `node --test`: 151/151 pass (no
+analytics/scoring/decision/quant module touched). Files changed:
+`index.html`, `script.js`, `styles.css`,
+`data/providers/macroProvider.mjs`, `data/watchlist/macro.mjs`,
+`data/metadata/metricRegistry.mjs` — no index-value/calculation/trend/DMA/
+recommendation logic touched, per the brief's own explicit scope.
+
 ### 2.4 Rendering pattern
 
 `render(data)` is the one function that sets `currentData = data` and cascades
@@ -1847,6 +2396,195 @@ real value or render blank; never fabricate `-`/"Unknown"/"N/A" text. If a
 new frontend file is added outside the 4 above, it needs its own equivalent
 `escape()`/formatter treatment; there is no shared frontend module system to
 inherit it from (§1.2).
+
+**App-wide table standard — column resize/reorder/persistence generalized
+from Overview, plus a fetched-vs-derived data-lineage cue on every table**
+(2026-09-23): Watchlist Research → Overview's screening matrix
+(`#wr-overview-table`) had been the one table in this app with drag-to-resize
+columns, drag-to-reorder columns, a persisted layout and a
+fetched/calculated visual distinction (`col-derived`/`derived`, a subtle
+indigo tint + header diamond) — every other comparison table had column
+sort only. This pass generalizes that mechanism into a reusable engine
+(`script.js`) and applies it, plus the lineage classification, to every real
+comparison table in the app: `wl-table`, `wl-custom-table` (Watchlists),
+`opportunities-table`, `pi-action-table` (Dashboard), `wr-overview-table`,
+`valuation-table`, `profitability-table`, `balance-sheet-table`,
+`ownership-table`, `growth-table`, the 6 `technical-table-*` tables,
+`risk-table`, `alerts-table` (Watchlist Research), `portfolio-table`,
+`rebalancing-table`, `exposure-matrix-table` (Portfolio Analysis), and
+`macro-indicators-table-india`/`-us`, `macro-periodic-table`,
+`macro-unavailable-table`, `sector-intel-table`, `earnings-intel-table`
+(Market Intelligence) — 27 tables total. Company Research, Reports, Compare
+and the disabled Sector Research placeholder contain no `<table>` and were
+left untouched, per this task's own scoping instruction not to add table
+behavior where there is no table. Column sort itself was already rolled out
+to nearly every one of these tables in an earlier pass (§2.3's "App-wide
+UX/data-parity consistency pass") — this pass is resize/reorder/persistence/
+lineage only, layered onto the existing sort mechanism.
+
+**The generic engine** (`initTableLayout(tableId, {resetButtonId,
+allowReorder})`, replacing what were Overview-only functions
+`loadWrOverviewLayout`/`applyWrOverviewColumnOrder`/
+`initWrOverviewColumnResize`/`initWrOverviewColumnDrag`): column identity is
+always a `data-sort` id, never DOM position, so a saved layout survives an
+added/removed/renamed column — a removed id is dropped, a new one is
+appended at its default position/width. Default order and width are read
+from each table's own `<thead>` the first time it's bound (DOM order, and
+each `<th>`'s natural rendered width) rather than hand-duplicated per table,
+so `index.html` stays the one source of truth for what columns exist.
+Persistence is one versioned localStorage key per table
+(`stocksApp.tableLayout.<tableId>.v1`) — genuinely isolated per table, not a
+shared/generic key. `wr-overview-table`'s prior dedicated key (and, before
+that, an even earlier width-only key) migrates once into this scheme so a
+real user's existing customization isn't lost by the refactor.
+
+Two structural subtleties the generalization had to solve that didn't exist
+in the single-table original:
+
+1. **A table on an inactive tab/subtab is `display:none` somewhere up its
+   ancestor chain**, so `getBoundingClientRect()` reports 0 for every
+   column — capturing "default width" at bind time (which happens the first
+   time a table's render function runs, often while a different workspace
+   tab is still active) would silently record garbage for every table that
+   isn't the one currently on screen. Fixed by deferring: default widths are
+   captured the first time a table is actually visible
+   (`captureDefaultWidthsIfVisible`), re-attempted from
+   `activateWorkspaceTab()`/`applySubtabState()` on every tab/subtab switch
+   (`recaptureVisibleTableLayouts()`) — the same visibility-change trigger
+   these two functions already use to refresh floating table headers. The
+   `table-layout-managed` CSS marker class (which switches the table to
+   `table-layout:fixed`, making a dragged width authoritative) is
+   deliberately not added until real widths are known, so a still-hidden
+   table keeps its normal auto layout rather than flashing to a generic
+   120px-per-column fallback the moment it's shown.
+2. **Several tables mix sortable columns with fixed, non-reorderable ones
+   that don't sit only at the edges** — `wl-table`'s leading bulk-select
+   checkbox and trailing Notes/Actions columns, `alerts-table`'s trailing
+   Acknowledge button, and `profitability-table`'s always-blank Gross margin
+   column sitting in the *middle* of its sortable columns (Screener.in
+   exposes no cost-of-goods-sold line to derive it from). A naive
+   reorder implementation that only `appendChild`s the sortable columns (in
+   their new order) onto the header row would leave every fixed column
+   "dragged toward the front" — each moved sortable element jumps to the end
+   of the row's children one at a time, so an untouched fixed column ends up
+   sandwiched wherever it happened to be relative to the elements that moved
+   past it, not pinned at its own position (caught live during validation:
+   `profitability-table`'s Gross margin column visibly jumped after
+   reordering Earnings quality). Fixed by `state.fullLayout` — a positional
+   template of the table's *original* column layout captured once at bind
+   time (`{sortable:true, id}` or `{sortable:false, el}` per column) — and
+   `reorderSlots()`, which walks that template and substitutes the current
+   `order` sequence into just the sortable slots, leaving fixed slots at
+   their own relative position; the *whole* resulting sequence (fixed and
+   sortable together) is then re-appended, not just the moved subset.
+   Header `<th>` elements are looked up by their stable `data-sort` id (or a
+   direct element reference for a fixed column), never by live DOM
+   position, since a static table's header persists across renders and may
+   already be in a previously-reordered position by the time this runs
+   again; a fresh `<tbody>` row's cells, by contrast, are always emitted in
+   original template order on every render, so a positional lookup against
+   them is safe.
+
+**`allowReorder:false`**: the two Market Intelligence macro-indicator tables
+(`macro-indicators-table-india`/`-us`) have a second `<tr class=
+"table-group-row">` of colspan group headers ("Indicator Details" /
+"Performance" / "Trend Parameters (Moving Averages)") above the real
+column-header row — dragging a column out from under its group label would
+visually misalign the grouping, and the reorder logic's `headRow`/cell
+positional assumptions specifically target a single-row `<thead>`. Sort and
+resize have no such assumption and stay fully enabled on both tables; only
+drag-to-reorder is disabled for these two.
+
+**`wl-table`** (the Watchlists tab's main roster, the single largest and
+most-used table in the app) keeps its pre-existing bespoke 3-state sort
+(`wlSortColumn`/`wlSortDir`, entangled with its row-reorder-by-button
+mechanism, per §2.3's own prior "no defect in it" note) untouched — resize/
+reorder/persistence layer on independently via the same generic
+`initTableLayout` call, since neither touches which mechanism drives row
+order, only column `<th>`/`<td>` DOM and width/order state.
+
+**`wl-custom-table`** (Watchlists → Custom, user-toggleable optional
+columns) is the one table whose `<thead>` is fully regenerated
+(`innerHTML`) on every render rather than being static markup — its
+column-width persistence (previously its own dedicated, width-only
+`wlCustomColWidths` key) and drag-reorder now go through the same generic
+engine (with a one-time migration of that legacy key), gaining reorder for
+the first time. `initTableColumnResize`'s per-handle bind guard and
+`initTableColumnDragGeneric`'s "mark draggable" step were both changed from
+a table-level "bind once" flag to a per-element/idempotent-every-call
+pattern specifically to keep working against this table's freshly-created
+elements each render (a table-level guard would silently leave a
+freshly-rebuilt table's new handles/headers unbound after the first
+render). A generic reconciliation in `initTableLayout` (not specific to
+this table, though it's the only one exercising it today) handles the live
+column *set* changing — dropping a hidden field, appending a newly-shown
+one at the end, re-measuring default widths for the new set — the same
+drop-missing/append-new logic the persisted-layout loader already applies,
+just live instead of at load time.
+
+**Data-lineage classification** (`col-derived` header class + `derived`
+cell class, `styles.css`'s `.table-layout-managed` rules, generalized from
+the same indigo-tint-plus-header-diamond treatment Overview already had):
+classified per table by reading each table's actual row-template function
+and cross-referencing `data/metadata/metricRegistry.mjs`'s Sourced/
+Calculated/Heuristic tier where that was the fastest way to tell fetched
+from calculated, never guessed from a column name. Company/Sector/CMP/P/E
+and other raw reported fields (ROE, ROCE, promoter/FII/DII holding, debt,
+cash, market cap, raw OHLCV volume, forward P/E as reported, a user-entered
+target weight, timestamps) stay unstyled, as fetched; every score, ratio,
+CAGR, technical indicator, risk sub-score, action score, regime/signal
+label and recommendation output computed in `data/analytics`|`scoring`|
+`decision`|`quant` gets the derived treatment. Two incidental gaps were
+fixed while touching each table: `profitability-table`'s Operating margin
+column (previously display-only, duplicating EBITDA margin's own disclosed
+value with no `data-sort` of its own) now has one; its neighboring Gross
+margin column is left deliberately non-sortable (no `data-sort` at all) —
+it's permanently blank (no cost-of-goods-sold line in this data source to
+derive it from), not a real sortable value. `sector-intel-table`'s Ratings
+column (a multi-tag rating-count summary with no natural total order) is
+similarly left non-sortable by design, documented via its header `title`.
+
+**Reset control**: every managed table gets a small "Reset columns"
+`icon-btn`, placed in that table's existing `<h3>`/intro toolbar (no new
+layout element introduced for tables using `.card-table-fill`'s exact-fit
+`h3` + `.scroll` flex layout — the button sits inside the existing `<h3>`,
+not as a third flex sibling, for tables that had no other natural toolbar
+slot). Restores default order and widths immediately, no page refresh.
+
+**Validated live** (Puppeteer wasn't available in this session's sandbox;
+same zero-dependency CDP-driver technique this app's own prior validation
+passes used, against a scratch server on a different port from the user's
+own dev server, `data/watchlists`/cache never touched — the one
+active-watchlist switch made to exercise a 30-company watchlist was
+reverted to its exact pre-session value before finishing, confirmed via
+`git diff`): a first pass at a default ~764×485 headless-Chrome viewport
+produced false negatives across the board (the whole session running in
+the app's `<901px` mobile/document-scroll fallback rather than the desktop
+bounded-viewport shell §2.3 describes) — caught by checking
+`window.innerWidth` against unexpectedly-zero `getBoundingClientRect()`
+reads, not assumed; re-run at 1600×1000 confirmed all 27 tables correctly
+gain `.table-layout-managed`, a working resize handle on every sortable
+column, and a working reset button once genuinely visible. Fixed-column
+pinning verified directly: dragging `wl-table`'s Company column past P/E
+left the leading checkbox column first and the trailing Notes/Actions
+columns last; dragging `profitability-table`'s Earnings quality column to
+the front left the always-blank Gross margin column's cell correctly
+aligned under its own header, not shifted. Keyboard reorder
+(Alt+ArrowLeft/Right) confirmed directionally correct. A resized column
+width and a reordered column order both survived a full page reload
+(`localStorage`-backed, per-table key confirmed via `Object.keys
+(localStorage)`). `wl-custom-table`'s field-visibility toggle confirmed to
+correctly reconcile a live reorder against a shrinking/growing column set
+with no header/body misalignment (`headCount === firstRowCells` held
+throughout). `macro-indicators-table-india`'s header confirmed
+non-draggable while still sortable/resizable. Zero console exceptions
+across the full sweep (all 27 tables visited, several interacted with).
+`node --check` clean on `script.js`; `node --test`: all 140 tests/45 suites
+pass (no `data/analytics`/scoring/decision/quant module touched — this is
+presentation-layer only, reading fields every table already had; no new
+`metricRegistry.mjs` entries were needed, since classifying an *existing*
+field's lineage isn't shipping a new metric). Files changed: `index.html`,
+`script.js`, `styles.css`.
 
 ---
 
@@ -1932,6 +2670,10 @@ External sources in use today:
   (USD/INR, US 10-Year Treasury yield, WTI crude, natural gas, gold, India
   VIX) for the Macro Intelligence panel (§3.8). No new fetch mechanism, no
   new external dependency.
+- **National Power Portal** (`data/providers/nppProvider.mjs`, 2026-09-24,
+  §3.11) — All-India Power Demand (MW), a real public/unauthenticated JSON
+  endpoint (`npp.gov.in/dashBoard/demandmet1chartdata`) backing NPP's own
+  live dashboard. No API key.
 
 ### 3.4 Caching
 
@@ -2113,22 +2855,71 @@ composition over data already fetched/computed elsewhere.
   via Yahoo Finance tickers (USD/INR, US 10-Year Treasury yield, WTI crude,
   natural gas, gold, India Gold Rate via GOLDBEES.NS, India VIX), cached on
   their own namespace (`data/cache/macro/`) and TTL (30min), independent of
-  any watchlist's own refresh cycle. A 2026-09-08 feasibility audit
-  re-verified every remaining indicator the Phase 6 brief named: RBI policy
-  repo rate, India G-Sec yield, PMI, power demand, ethanol policy, defence
-  budget and banking liquidity still have no free, unauthenticated,
-  machine-readable public source this app can reach — official sources exist
-  for all seven (RBI, CCIL/FBIL, Grid-India/NPP, PIB, indiabudget.gov.in) but
-  publish only HTML press pages or PDF/Excel reports, CCIL's own site
-  additionally prohibits automated/commercial use without written
-  permission, and PMI has no government source at all (S&P Global, a paid
-  commercial product) — each still renders an explicit **Future Integration**
-  status rather than being estimated or fabricated, the same posture as
-  TD-10's market-wide peer database. CPI inflation and IIP are the one
-  exception the audit found — see §3.10, a credentialed integration, not a
-  Yahoo Finance ticker. The Data Quality panel now shows
+  any watchlist's own refresh cycle. A 2026-09-08 feasibility audit first
+  evaluated every remaining indicator the Phase 6 brief named; a **2026-09-09
+  re-verification task** (explicitly scoped "re-audit every deferred India
+  Macro indicator with fresh live evidence, don't trust the prior audit as
+  final") independently re-tested each one rather than assuming the prior
+  conclusion still held, and found two outcomes:
+  - **Still genuinely unavailable, now with fresh evidence** (7 indicators):
+    RBI policy repo rate, India G-Sec yield, PMI, power demand, banking
+    liquidity, India Crude Oil and India Natural Gas each render an explicit
+    **Future Integration** status. Every source was fetched/tested live this
+    round, not just re-read from documentation: RBI's own homepage renders
+    the repo rate as static HTML sourced from FBIL, with no JSON/API found on
+    `data.rbi.org.in/DBIE` or the Weekly Statistical Supplement pages; a
+    third-party static mirror at `dbie.rbihub.in` self-describes as
+    unofficial ("no server and no database behind these pages") and was
+    excluded on that basis. FBIL's own published FAQ (fetched and read in
+    full) shows even its 7-day-lagged free tier requires registering an
+    organization, a certified turnover statement and a signed Benchmark
+    License Agreement — not a path this personal, single-user tool can take
+    — and CCIL separately prohibits automated/commercial use without written
+    permission. PMI remains S&P Global's sole commercial product, no free
+    tier, no government source at all. A genuinely new finding: **CEA
+    (Central Electricity Authority) publishes a documented, unauthenticated
+    public API** for power-supply-position data
+    (`cea.nic.in/api/psp_peak.php`/`psp_energy.php`) — live-tested 5 times
+    this session; one attempt returned HTTP 200 with body `"Connection
+    failed: Connection timed out"`, four retries timed out with zero bytes
+    received. The endpoint is real but currently non-functional, failing
+    this app's "real data returned, not just HTTP 200" bar — kept Deferred
+    rather than wired up against a broken backend (worth re-testing later).
+    PPAC (crude/gas) publishes the Indian Basket price only as a daily PDF
+    press release, no CSV/JSON. Every one of these keeps its previous
+    posture, but for freshly-verified reasons, not inherited ones — same
+    stance as TD-10's market-wide peer database (the blocker is data access,
+    not engineering effort).
+  - **Promoted to a new Periodic/Policy tier** (2 indicators): ethanol
+    blending policy and Union defence budget each turned out to have no live
+    feed but a clear, current, officially-published figure. See
+    `PERIODIC_MACRO_INDICATORS` below.
+  CPI inflation and IIP are the other exception the 2026-09-08/09 audits
+  found — see §3.10, originally built as a credentialed integration, not a
+  Yahoo Finance ticker (both datasets were independently found to work
+  unauthenticated in same-day/next-day follow-on tasks — see §3.10's dated
+  entries; this paragraph describes Phase 6's original design, now
+  superseded). The Data Quality panel at the time showed
   Live/Delayed/Unavailable/Future Integration/**Credentials Required** counts
-  per indicator. **Market Regime** (`data/decision/marketRegime.mjs`) is a
+  per indicator; it now shows Live/Delayed/Unavailable/**Periodic**/Future
+  Integration (no Credentials Required bucket exists any more — see §3.10).
+  **Periodic/Policy indicators** (`PERIODIC_MACRO_INDICATORS` in
+  `data/providers/macroProvider.mjs`, merged into `payload.periodic` by
+  `data/watchlist/macro.mjs`'s `toPeriodicIndicator()`) are the 2026-09-09
+  task's other outcome: Union Defence Budget (₹7,84,678 crore, FY2026-27,
+  sourced from the Union Budget 2026-27 Demand for Grants and cross-checked
+  against PRS Legislative Research's own published analysis) and Ethanol
+  Blending Rate (20% petrol blending, ESY 2025-26, sourced from a PIB/
+  Ministry of Petroleum & Natural Gas backgrounder dated 2026-07-05) are
+  each a manually-curated, dated, officially-sourced one-time reading —
+  never fetched, never given a changePct/trend/DMA (an annual/event-cadence
+  figure has no daily series to compute one from), and refreshed by hand
+  only at the next official publication. Rendered in India Macro's own
+  "Periodic / policy indicators" table (Indicator/Category/Value/Period/
+  Status/As of/Source, the Source cell linking to the exact official
+  document) — a `status: 'Periodic'` distinct from both `Live` (implies a
+  recent fetch) and `Future Integration` (implies no source exists), with
+  its own Data Quality tile. **Market Regime** (`data/decision/marketRegime.mjs`) is a
   disclosed rule-based classification (Risk-on/Risk-off/tightening-or-easing
   bias) blending India VIX level, the Nifty 50 benchmark's own already-
   computed trend (reused from `benchmarkCache`, never refetched) and US 10Y
@@ -2274,7 +3065,7 @@ risk-budget/attribution modules are later stages, not yet built (see
   which remain this app's primary decision-layer signals. A later UI stage
   surfaces a disagreement between them, rather than blending it away.
 
-### 3.10 The MoSPI integration (`data/integrations/`, 2026-09-08; CPI moved to a public/unauthenticated path the same day — see the dated follow-on entry at the end of this section)
+### 3.10 The MoSPI integration (`data/integrations/`, 2026-09-08; CPI moved to a public/unauthenticated path the same day, IIP independently confirmed public 2026-09-09 — see the dated follow-on entries at the end of this section)
 
 This app's **first** credentialed external source — every other provider in
 `data/providers/` is free and unauthenticated (§1.2). A 2026-09-08 feasibility
@@ -2599,6 +3390,385 @@ this task.
   `data/metadata/metricRegistry.mjs`, `index.html`, `script.js`,
   `server.mjs` (comment only), `test/mospiIntegration.test.mjs`.
 
+**IIP independently investigated and moved to the same public,
+unauthenticated path as CPI (2026-09-09)**: a separate, from-scratch task
+explicitly instructed *not* to assume IIP behaves like CPI just because CPI
+turned out to be public — IIP was live-tested on its own. Phase 1 review of
+the existing implementation found it was built entirely on assumption: the
+credentialed `fetchIipMonthly()` endpoint path was corroborated only by the
+official `nso-india` GitHub client's source code (no dedicated IIP manual
+exists, unlike CPI/WPI), its response shape was never confirmed against a
+real response (the shape-detecting `parseMospiSeries()` parser existed
+specifically because of this), and IIP's own credentialed code path had
+never been exercised against a real token (`data/config/mospi.local.json`
+carried `accessToken: null` throughout this app's history to date).
+
+Live testing (`curl` and direct Node scripts, verified again independently
+of the CPI conclusion) found IIP genuinely public: a plain unauthenticated
+`GET https://api.mospi.gov.in/api/iip/getIIPMonthly?Format=JSON` (this app's
+existing, already-correct endpoint) returned real, current General IIP data
+— `{"data":[{"base_year":"2022-23","year":2026,"month":"July","type":
+"General","category":"General","sub_category":"","index":"124.8",
+"growth_rate":"6.7"}, ...9 more sectoral records], "meta_data":{"page":1,
+"totalRecords":17110,"totalPages":1711,"recordPerPage":10}, "msg":"Data
+fetched successfully","statusCode":true}` — with zero `Authorization`
+header. This is a real answer, not the `{"data":[]}`/"No Data Found" case
+this task was explicitly told not to count as success. The same two
+constraints CPI's own investigation found were independently re-verified for
+IIP, not assumed: (1) every query filter (`Year`, `category`, etc.) is
+silently ignored for anonymous callers — repeated calls with different
+params returned byte-identical output; (2) the identical
+`ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED` TLS defect blocks Node's
+`fetch`/https stack (confirmed by a direct, deliberate reproduction before
+writing any fix), and the already-approved, narrowly-scoped
+`legacyRenegotiationAgent` (`SSL_OP_LEGACY_SERVER_CONNECT` only — certificate
+verification untouched) was independently confirmed, live, to unblock this
+endpoint too, before being reused for it — never copied over on the
+assumption it would just work. Per CLAUDE.md's TLS-workaround gate, this
+was proven through testing first, kept isolated to a new `fetchIipPublic()`
+function (sharing only the request-boilerplate helper and the agent object
+with `fetchCpiPublic()`, both in `data/integrations/mospiClient.mjs`), and
+never applied to `login()`/`signup()` or any other host.
+
+Unlike CPI (which had to settle for the Consumer Food Price Index as a
+fallback because the headline General series wasn't selectable without a
+token), IIP's fixed anonymous slice places the headline **General/Overall
+IIP** record (`type: "General"`, `category: "General"`) first — exactly the
+official series this app's own brief required, with no substitution of a
+sub-series (Manufacturing/Mining/Electricity) and no selection ambiguity to
+disclose. Base year 2022-23 (MoSPI's current IIP base), Year-on-Year growth
+supplied directly by MoSPI's own `growth_rate` field (treated as YoY per
+standard published IIP press-release convention — no dedicated manual exists
+to cite for IIP the way CPI's manual documents its own `inflation` field,
+disclosed as such in `metricRegistry.mjs`'s `mospiIndicator` entry), latest
+available reporting period at investigation time: **July 2026** (a monthly
+series with the typical ~6-week publication lag).
+
+**Outcome A** (per this task's own completion rubric): IIP is publicly
+available and integrated without credentials, alongside CPI.
+
+- **`data/integrations/mospiClient.mjs`**: `fetchIipMonthly()` (the
+  credentialed, unverified-shape fetch) removed — superseded, not left as
+  dead code. New `fetchIipPublic()`, sharing a `requestPublic(path, label)`
+  helper with `fetchCpiPublic()` (both were near-identical
+  `https.request`/`legacyRenegotiationAgent` boilerplate differing only in
+  path and error-message label — refactored into one implementation).
+- **`data/integrations/mospiProvider.mjs`**: `iip` moved from
+  `CREDENTIALED_DATASETS` into `PUBLIC_DATASETS` (now `{cpiInflation, iip}`);
+  `CREDENTIALED_DATASETS` is now `[]` — kept as real, working infrastructure
+  (`getDatasetSnapshot()`, `parseMospiSeries()`, the whole signup/login/token
+  lifecycle) for any future MoSPI dataset that genuinely needs one (e.g. WPI,
+  corroborated only as a sibling manual in `config.mjs`'s own citations, not
+  built here), not deleted just because nothing populates it today. New
+  `findIipRecord()` (mirrors `findCpiRecord()`'s null-before-`Number()`
+  discipline and case-insensitive matching, targeting `type`/`category`
+  both `"general"`) and `getIipPublicSnapshot()` (mirrors
+  `getCpiPublicSnapshot()`'s cache-first/fetch-if-stale shape, own
+  `mospiCache` namespace `iip`, 6-hour TTL, never reads a credential).
+  `testConnection()` now returns an honest "no credentialed dataset
+  currently configured" message instead of calling `getDatasetSnapshot('iip')`
+  (which would silently return `null` now that `iip` left
+  `CREDENTIALED_DATASETS`, since `'Not Configured'`/success must never be
+  fabricated). `getIntegrationStatus()`'s `hasCachedValue` check for public
+  rows now recognizes both CPI's `inflationYoY` and IIP's `growthYoY` shapes.
+- **`data/providers/macroProvider.mjs`**: `MOSPI_MACRO_INDICATORS` (the
+  credential-gated macro-indicator list) removed entirely — IIP no longer
+  belongs to a credential-gated bucket at all.
+- **`data/watchlist/macro.mjs`**: new `loadIipIndicator()`, structurally
+  identical to `loadCpiIndicator()` — merged directly into the main,
+  always-on `indicators` array (not a separate `configGated` array, which is
+  removed from this module and from `buildMacroSnapshot()`'s return value
+  entirely, along with the `dataQuality.credentialsRequired` counter it fed —
+  removed, not left permanently at zero, per CLAUDE.md's "don't leave stale
+  messaging from the previous architecture"). Same disclosed
+  no-daily-series treatment as CPI: `changePct`/`trend`/all 4 DMA fields stay
+  `null` (a monthly reporting-period index has no daily price series to
+  average — faking one was explicitly out of scope for this task), and
+  `oneYearChangePct` is MoSPI's own directly-supplied YoY `growth_rate`,
+  used as-is rather than recomputed (this app cannot reconstruct a
+  12-months-prior data point from a filter-less, unauthenticated response).
+- **India Macro UI** (`index.html`, `script.js`): the former "Economic
+  indicators (credential-gated)" table/card and its "Configure" jump button
+  are removed outright (there is no more credential-gated macro indicator to
+  show) — IIP now renders as a row in the same "India macro indicators"
+  table CPI already uses (`#macro-indicators-table-india`), same
+  Indicator/Category/Value/Change/1Y Change/Direction/Status/As of/Trend
+  columns. The Data Quality panel dropped its "Credentials Required" card
+  (4 cards now, not 5; `.grid.five`'s now-unused CSS rule removed alongside
+  it). A new small, generic enhancement (`periodTitle()` in `script.js`)
+  adds a title-attribute tooltip to any indicator's Value cell that carries
+  a `period` (both CPI and IIP) showing the actual reporting month/year plus
+  base year/series label — addressing this task's "show the correct
+  reporting/as-of date" requirement without adding a column that would be
+  meaningless on every priced-instrument row.
+- **Configuration → Integrations UI**: the "Public data" table now lists
+  both `CPI Inflation (Consumer Food Price Index)` and
+  `Index of Industrial Production (IIP)`, both `authRequired:false`. The
+  "Credential-gated data" table correctly renders "None." — its explanatory
+  copy, the Account/Token workflow's own description, and this integration's
+  top-level route comments (`server.mjs`) were all reworded to state plainly
+  that no MoSPI dataset in this app currently needs a credential, and that
+  the whole credential lifecycle is retained only for a possible future
+  dataset — not deleted (removing a working, tested subsystem wasn't asked
+  for and a future MoSPI dataset, e.g. WPI, could still need it), but no
+  longer described as relevant to CPI or IIP anywhere in the UI.
+- **`metricRegistry.mjs`**: `mospiIndicator` rewritten from "credentialed" to
+  "public" (mirrors `mospiCpiIndicator`'s structure — same live-tested-not-
+  assumed disclosure, same Medium confidence for the same class of reason:
+  no published response schema exists for either, only this task's own
+  verification pass); `mospiCredential` reworded to describe an unpopulated,
+  future-facing state machine; `macroDataQuality` dropped the "Credentials
+  Required" state from its label/methodology; `macroIndicator` updated to
+  reflect both CPI and IIP as public.
+- **Validation**: `node --check` clean on every changed file and via the
+  full repo-wide sweep (matching the CI gate). `node --test`: 134/134 tests /
+  42 suites pass (127 pre-existing + 7 new in `test/mospiIntegration.test.mjs`
+  covering `findIipRecord()` — a real, live-captured fixture from this task's
+  own `curl` verification pass; case-insensitive matching; explicit
+  never-substitutes-a-sub-series coverage; a genuine "No Data Found"/empty
+  response; a matched record with a `null` index/growth_rate; a record
+  resolving only one of the two fields). Live validation, all against a
+  scratch server (port 4501) and a scratch headless Chrome instance (its own
+  profile, CDP port 9401) — neither ever the user's own dev server (4173) or
+  browser session: `buildMacroSnapshot()` called directly confirmed `iip`
+  reads `status: "Live"`, real `value`/`oneYearChangePct`/`period`/
+  `baseYear`/`seriesLabel`, with **zero** MoSPI credential file present
+  (`accessToken: null` throughout); `getIntegrationStatus()` confirmed the
+  `datasets` array carries both `cpiInflation` and `iip` as
+  `authRequired:false` with real cached-fetch timestamps, and
+  `CREDENTIALED_DATASETS` empty; `testConnection()` confirmed it returns the
+  new honest "no credentialed dataset" message rather than a fabricated
+  result. A CDP-driven headless-Chrome walkthrough across all 4 required
+  viewports (1600×1000, 1366×768, 1280×700, 390×844) confirmed: both CPI and
+  IIP rows render Live with correct values in the India Macro table; the old
+  credential-gated table/card no longer exists in the DOM; the Data Quality
+  panel shows exactly 4 cards; Configuration → Integrations' Public-data
+  table lists both datasets with cached values, its Credential-gated table
+  correctly shows "None.", and its status badge correctly reads "Not
+  Configured" (never a fabricated "Connected"); zero duplicate DOM ids; zero
+  console errors/exceptions; zero failed network requests; no horizontal
+  overflow on `document.documentElement` or `#main` at any of the 4
+  viewports (390×844's larger `scrollHeight` than `clientHeight` is the
+  existing, correct sub-900px document-scroll fallback, not a regression);
+  CPI continued rendering correctly throughout, unaffected. No incidental
+  writes to `data/watchlists/`/`data/config/` (confirmed via `git status`
+  before/after — only the intended source files changed;
+  `data/cache/mospi/iip.json` gained a real cache entry, the correct,
+  expected effect of the feature working, and is gitignored like every other
+  `data/cache/` file). One process-hygiene note from this task's own
+  teardown, disclosed rather than hidden: the scratch headless Chrome
+  instance was stopped via `taskkill /IM chrome.exe /T`, which matches by
+  executable name rather than PID and would affect **any** Chrome process on
+  the machine, not only the scratch one — the exact process count killed (3)
+  is consistent with only the freshly-launched, fresh-profile headless
+  instance (a real interactively-used Chrome session typically holds far
+  more child processes), but this could not be verified with certainty
+  after the fact; flagged to the user directly, not silently. Files changed:
+  `data/integrations/mospiClient.mjs`, `data/integrations/mospiProvider.mjs`,
+  `data/providers/macroProvider.mjs`, `data/watchlist/macro.mjs`,
+  `data/metadata/metricRegistry.mjs`, `index.html`, `script.js`,
+  `styles.css`, `server.mjs` (comment only),
+  `test/mospiIntegration.test.mjs`.
+
+**Configurable TLS mode + full Future-Integration audit (2026-09-24)**: this
+task had two parts — the account-registration/authenticated-workflow request
+was explicitly declined by the user after the trade-off was shown (extending
+the legacy-renegotiation workaround to login/signup would mean sending a real
+MoSPI password over a connection with TLS's anti-MITM renegotiation
+protection disabled) — so login/signup remain unconditionally standard TLS,
+exactly as every earlier entry in this section already documents, and no
+account was registered or signed into. What *was* done:
+
+- **`MOSPI_TLS_MODE` environment variable** (`data/integrations/config.mjs`,
+  same `process.env.X || default` pattern already used by
+  `MACRO_CACHE_TTL_MS`/`WATCHLIST_CACHE_TTL_MS`/`SCREENER_CACHE_TTL_MS`):
+  `standard` (default) or `legacy-renegotiation`. Governs **only**
+  `mospiClient.mjs`'s `resolvePublicAgent()` — the agent
+  `fetchCpiPublic()`/`fetchIipPublic()` pass to `https.request()`. `standard`
+  returns `undefined` (Node's own default, fully-verified agent — not a
+  second, merely-less-weakened agent instance); `legacy-renegotiation`
+  returns the same `legacyRenegotiationAgent` singleton this section already
+  documented as a narrow, user-approved exception since 2026-09-08/09-09 —
+  this task made an existing, already-scoped workaround switchable rather
+  than introducing a new one. `login()`/`signup()`/`fetchCpiIndex()` (all
+  built on `request()`'s plain global `fetch`) never call
+  `resolvePublicAgent()` and are structurally unaffected by this setting at
+  any value — **live-verified**, not just asserted: with
+  `MOSPI_TLS_MODE=legacy-renegotiation` set, a `login()` call against a
+  deliberately fake, non-existent account still failed with the exact same
+  `ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED`-derived message as under
+  `standard` — the setting built for the two public endpoints does not leak
+  into the password-carrying path. Also live-verified in isolation: default
+  (no env var) resolves to `standard`; a real `fetchCpiPublic()` call under
+  `standard` fails with the live TLS error (no silent weakening); the same
+  call under `legacy-renegotiation` succeeds (10 real CPI records, `msg:
+  "Data fetched successfully"`); `fetchIipPublic()` likewise succeeds under
+  `legacy-renegotiation`. Switching back to `standard` once MoSPI fixes its
+  server needs only unsetting/changing this one environment variable — no
+  code change, satisfying this task's own migration requirement.
+  `mospiProvider.mjs`'s `getIntegrationStatus()` now reports the running
+  process's `tlsMode`; Configuration → Integrations' Connection-status table
+  shows it ("Standard (secure)" / "Legacy compatibility (renegotiation
+  enabled)") with inline copy stating the env var name, its default, and that
+  it never affects Sign in/Register.
+- **Future-Integration audit**: every indicator in this app currently
+  rendered with a non-live/placeholder status was inventoried and checked
+  against MoSPI's actual published material (its official CPI/WPI API
+  manuals, the `nso-india` GitHub org, and eSankhyiki's own Macro Indicators
+  Module documentation — not an unofficial third party) rather than assumed
+  from the general idea that "MoSPI publishes lots of statistics":
+  - The 7 entries in `UNAVAILABLE_MACRO_INDICATORS`
+    (`data/providers/macroProvider.mjs`) — RBI policy repo rate, India 10-Year
+    G-Sec yield, Manufacturing/Services PMI, All-India power demand, Banking
+    system liquidity, India Crude Oil (Indian Basket/MCX), India Natural Gas
+    (MCX) — are **all classified "Not available from MoSPI"**. Each has a
+    real official source, just never MoSPI: RBI (repo rate, G-Sec yield,
+    banking-system liquidity — all monetary-policy/money-market data, RBI's
+    own statutory domain, published via its Database on Indian Economy and
+    Weekly Statistical Supplement); Grid-India (formerly POSOCO)/Central
+    Electricity Authority under the Ministry of Power (power demand); PPAC
+    (Petroleum Planning & Analysis Cell, Ministry of Petroleum & Natural Gas)
+    for the Indian Basket crude price, and MCX (a private commodity exchange,
+    not a government body at all) for futures pricing of crude/natural gas;
+    S&P Global's own private monthly survey for Manufacturing/Services PMI
+    (not a government statistic at all). MoSPI's own mandate and eSankhyiki's
+    documented Macro Indicators Module Phase 1 (National Accounts/GDP, CPI,
+    IIP, Annual Survey of Industries) confirm none of these 7 fall inside it
+    — this app cannot fetch them from MoSPI at any authentication level, so
+    nothing was implemented for them; they remain "Future Integration" with
+    this finding now on record instead of an open-ended "coming later".
+  - The 6 `Future Integration`-status earnings fields in
+    `data/analytics/earningsAnalytics.mjs`/`forwardFramework.mjs`
+    (`nextEarningsDate`, `daysRemaining`, `expectedImpact`,
+    `historicalReaction`, `guidanceChanges`, `managementCommentary`,
+    `estimateRevisionSignals`) are company-level analyst/estimates data (the
+    domain of a financial data vendor, not a national-statistics agency) —
+    entirely outside MoSPI's subject-matter scope regardless of API
+    availability, also classified "Not available from MoSPI".
+  - No new dataset met "IMPLEMENT NOW"/"IMPLEMENT WITH AUTHENTICATION" —
+    CPI and IIP (already implemented, both public) remain the only two MoSPI
+    datasets this app consumes. This audit's own negative finding (nothing
+    new to build) is the deliverable, not a gap in the work — CLAUDE.md's
+    "never guess a sourced field"/never fabricate an integration applies
+    equally to *claiming* an integration exists.
+- **Validation**: `node --check` clean on every changed file
+  (`data/integrations/config.mjs`, `mospiClient.mjs`, `mospiProvider.mjs`,
+  `script.js`, `test/mospiIntegration.test.mjs`) and via the repo-wide sweep.
+  `node --test`: all suites pass, +3 new cases in
+  `test/mospiIntegration.test.mjs` covering `resolvePublicAgent()`'s
+  standard/legacy-renegotiation/unrecognized-mode behavior (pure, no network
+  needed to prove the switch logic). Live checks described above exercised
+  the real `api.mospi.gov.in` host with zero credentials involved at any
+  point (both public endpoints) and one deliberately-fake, never-real login
+  attempt that fails at the TLS layer before any body is transmitted. Files
+  changed: `data/integrations/config.mjs`, `data/integrations/mospiClient.mjs`,
+  `data/integrations/mospiProvider.mjs`, `script.js`,
+  `test/mospiIntegration.test.mjs`, this document, `docs/governance/roadmap.md`.
+
+---
+
+### 3.11 Non-MoSPI India Macro Future Integration sources (`data/providers/nppProvider.mjs`, 2026-09-24)
+
+A follow-on task asked this app to implement the 7 remaining
+`UNAVAILABLE_MACRO_INDICATORS` (9 rows counting PMI/crude-oil's split
+instruments) from their *authoritative non-MoSPI* sources — §3.10 above
+already closed the MoSPI-specific question. Deliberately kept separate from
+§3.10: this section is entirely about `data/providers/` (unauthenticated,
+same tier as `yahooQuoteProvider.mjs`), never `data/integrations/` — no
+MoSPI code, config, credential or TLS behavior was touched by this work.
+
+- **All-India Power Demand is now Live** — the one indicator that moved out
+  of `UNAVAILABLE_MACRO_INDICATORS`. National Power Portal (NPP,
+  `npp.gov.in` — a Government of India platform, Ministry of Power,
+  operated by the National Informatics Centre) serves a real, public,
+  unauthenticated JSON endpoint backing its own live dashboard:
+  `GET https://npp.gov.in/dashBoard/demandmet1chartdata?date=YYYY-MM-DD`,
+  returning a chronological array of `{ updated_on (epoch ms), name_of_data:
+  "DEMAND MET", value_of_data (MW) }` sampled roughly every 4 minutes.
+  Live-verified this session with a bare, header-less GET — no API key, no
+  cookies, no session/referer requirement, standard TLS; the `date` param
+  was confirmed to resolve at least a full year back. This is a genuinely
+  new finding, distinct from every mechanism the 2026-09-08/09 audits tested
+  and rejected for this same indicator (CEA's documented but non-functional
+  `psp_peak.php`/`psp_energy.php` API, Grid-India/POSOCO's PDF-only PSP
+  reports, NPP's own separate NPDMS API restricted to registered government
+  organizations) — see `data/providers/nppProvider.mjs`'s own top comment
+  for the full citation. Implemented with the identical cache-first/
+  fetch-if-stale/provider-isolated shape as CPI/IIP
+  (`getPowerDemandSnapshot()`, mirroring `mospiProvider.mjs`'s
+  `getCpiPublicSnapshot()`), merged into the same India Macro → Macro
+  Indicators table (`data/watchlist/macro.mjs`'s
+  `loadPowerDemandIndicator()`/`groups.indiaMacroIndicators`) — never a
+  separate table. The pure parsing step (`pickLatestDemandMet()`) is unit
+  tested against synthetic fixtures (`test/nppPowerDemand.test.mjs`), same
+  precedent as `mospiProvider.mjs`'s `findCpiRecord()`/`findIipRecord()`.
+- **The other 8 rows were freshly re-tested live this session** (RBI
+  homepage/WSS/DBIE, FBIL, CCIL, PPAC, MCX all fetched directly, not
+  assumed from the 2026-09-08/09 conclusions) and every one reconfirmed
+  genuinely unavailable, each for its own specific reason — see
+  `macroProvider.mjs`'s `UNAVAILABLE_MACRO_INDICATORS` comment for the full
+  per-source write-up: RBI's repo rate is still only a static HTML table on
+  its own homepage (no JSON/CSV/API); FBIL is now a JS-rendered SPA shell
+  still gated by the same signed Benchmark License Agreement; CCIL and MCX
+  both return HTTP 403 to an unauthenticated automated request; PPAC's
+  Indian Basket price table is populated client-side by JavaScript with
+  JS-triggered, non-stable download links; RBI's WSS/DBIE remain
+  portal/manual-export only. **Manufacturing PMI** and **Services PMI**
+  (split from the former single `pmi` row) and **India Crude Oil (Indian
+  Basket)**/**India Crude Oil (MCX)**/**India Natural Gas (MCX)** (split
+  from the former combined `crudeOilIndia`/`naturalGasIndia` rows) are now
+  distinct rows per the task's own explicit instruction — never conflated
+  (Indian Basket ≠ MCX; MCX Natural Gas ≠ Henry Hub).
+- **Per-row Source/status disclosure** (new this task): every entry in
+  `UNAVAILABLE_MACRO_INDICATORS` now carries its own `source`/`sourceUrl`/
+  `statusNote` fields, spread through unchanged by
+  `data/watchlist/macro.mjs`'s `buildMacroSnapshot()`, and a specific
+  `status` — **Not Programmatically Available** (a real official source
+  exists but only as a browsable HTML page/portal, never a stable API/feed)
+  or **Licensing Required** (a real source exists but needs a paid
+  subscription or a signed license/ToS agreement this app does not have) —
+  replacing one undifferentiated "Future Integration" label. The India
+  Macro → Macro Indicators/Periodic-Policy table's Source column (`script.js`'s
+  `macroSourceCell()`, shared with a new optional Source column on the
+  Macro Indicators (CPI/IIP/Power Demand) table itself via
+  `renderMacroIndicatorTable(..., { source: true })` — the same
+  precedent-following optional-column mechanism the World tables' Country
+  column already established) names the real authoritative provider (RBI,
+  FBIL / CCIL, S&P Global, PPAC, MCX) even for a row this app cannot fetch;
+  the status badge's hover title carries the specific access-limitation
+  reason.
+- **`data.gov.in` investigated, deliberately not implemented**: India's
+  Open Government Data platform was newly identified this session as a
+  *possible* future source for some of these rows (RBI-policy-rate-adjacent
+  datasets appear to exist there), gated behind a free, self-serve API key.
+  The user explicitly declined pursuing it this session — CLAUDE.md
+  requires the same explicit sign-off any new credentialed integration got
+  for MoSPI (§3.10 above), even for a free key, and that sign-off was not
+  sought here. No `data.gov.in` code, config or credential was added; it
+  remains a documented future option only.
+- **Validation**: `node --check` clean on every changed file and the
+  repo-wide sweep; `node --test` 166/166 pass (+9 new cases:
+  `test/nppPowerDemand.test.mjs`'s pure-function coverage for
+  `pickLatestDemandMet()`/`istDateString()`, plus `macroPeriodicIndicators
+  .test.mjs` updated for the 8-row split and the new source/status/
+  statusNote fields). Live: a scratch server's `GET /api/macro` (port 4711,
+  never the user's own dev server) confirmed `powerDemand` genuinely
+  `"status":"Live"` with a real NPP MW reading and timestamp,
+  `dataQuality.futureIntegration: 8` (down from 9, up from the pre-split 7
+  since PMI and crude oil/natural gas each split into 2). A zero-dependency
+  Chrome DevTools Protocol driver (Node's built-in fetch/WebSocket against a
+  real installed Chrome, headless) confirmed the India Macro → Macro
+  Indicators tab renders exactly 3 rows (CPI/IIP/Power Demand) with a
+  working Source column, the Periodic/Policy tab renders exactly 10 rows (2
+  Periodic + 8 unavailable) each with a real, non-generic Source cell and a
+  specific status, column sort works on both, zero browser console errors.
+  CPI/IIP and MoSPI login/signup behavior confirmed unaffected.
+- Files changed: `data/providers/nppProvider.mjs` (new),
+  `data/providers/macroProvider.mjs`, `data/watchlist/macro.mjs`,
+  `data/metadata/metricRegistry.mjs`, `index.html`, `script.js`,
+  `test/nppPowerDemand.test.mjs` (new), `test/macroPeriodicIndicators.test.mjs`,
+  this document, `docs/governance/roadmap.md`.
+
 ---
 
 ## 4. Analytics architecture
@@ -2916,8 +4086,8 @@ Stocks/
 │   ├── decision/                  — Portfolio Action Score, alerts, health, rebalancing, thesis tracking (§3.7); Phase 6's marketRegime.mjs, exposureMatrix.mjs (§3.8)
 │   ├── quant/                     — Phase 7 quantitative research domain: config.mjs, factorEngine.mjs (Stage 1), performanceEngine.mjs (Stage 2) (§3.9)
 │   ├── reporting/                — per-company report, Portfolio Review Pack, Weekly Investment Committee Pack model builders (§3.6, §3.8)
-│   ├── providers/                — external data source abstraction (§3.3), including Phase 6's macroProvider.mjs
-│   ├── integrations/              — the MoSPI integration (§3.10): config.mjs, credentialStore.mjs, mospiClient.mjs, mospiProvider.mjs — one public/unauthenticated dataset (CPI) + one credentialed dataset (IIP)
+│   ├── providers/                — external data source abstraction (§3.3), including Phase 6's macroProvider.mjs and nppProvider.mjs (§3.11, All-India Power Demand)
+│   ├── integrations/              — the MoSPI integration (§3.10): config.mjs, credentialStore.mjs, mospiClient.mjs, mospiProvider.mjs — two public/unauthenticated datasets (CPI, IIP) + a currently-unpopulated credential lifecycle kept for a future dataset
 │   ├── config/                    — local credential store (gitignored, e.g. mospi.local.json — §3.10); not user watchlist data
 │   ├── parse/                    — Screener.in HTML parsing (feeds screenerProvider)
 │   ├── news/                     — company news fetch + classification (+ Phase 6 sentiment/affected-thesis-driver)

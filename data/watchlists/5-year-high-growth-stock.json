@@ -1,0 +1,120 @@
+{
+  "id": "5-year-high-growth-stock",
+  "name": "5-Year High-Growth Stock",
+  "createdAt": "2026-09-12T12:39:00.523Z",
+  "updatedAt": "2026-09-13T06:49:01.240Z",
+  "companies": [
+    {
+      "symbol": "BSE.NS",
+      "name": "BSE Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Exchange and Data Platform",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:39:06.576Z"
+    },
+    {
+      "symbol": "WAAREERTL.NS",
+      "name": "Waaree Renewable Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:39:49.342Z"
+    },
+    {
+      "symbol": "BLS.NS",
+      "name": "BLS International Services Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Services",
+      "industry": "Tour, Travel Related Services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:40:24.648Z"
+    },
+    {
+      "symbol": "BANCOINDIA.NS",
+      "name": "Banco Products (India) Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Automobile and Auto Components",
+      "industry": "Auto Components & Equipments",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:40:32.818Z"
+    },
+    {
+      "symbol": "SRM.NS",
+      "name": "SRM Contractors Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Construction",
+      "industry": "Civil Construction",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:40:44.768Z"
+    },
+    {
+      "symbol": "RMDRIP.NS",
+      "name": "R M Drip and Sprinklers Systems Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Plastic Products - Industrial",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:40:55.335Z"
+    },
+    {
+      "symbol": "RADHIKAJWE.NS",
+      "name": "Radhika Jeweltech Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Durables",
+      "industry": "Gems, Jewellery And Watches",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:41:03.252Z"
+    },
+    {
+      "symbol": "POLYCAB.NS",
+      "name": "Polycab India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Cables - Electricals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T12:41:38.363Z"
+    },
+    {
+      "symbol": "AERPACE.BO",
+      "name": "Aerpace Industries Limited",
+      "exchange": "Bombay",
+      "market": "India",
+      "sector": null,
+      "industry": null,
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-13T06:48:55.748Z"
+    },
+    {
+      "symbol": "IIFL.NS",
+      "name": "IIFL Finance Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Non Banking Financial Company (NBFC)",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-13T06:49:00.617Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

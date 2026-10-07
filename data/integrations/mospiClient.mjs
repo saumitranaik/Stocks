@@ -1,6 +1,6 @@
 import https from 'node:https';
 import crypto from 'node:crypto';
-import { MOSPI } from './config.mjs';
+import { MOSPI, MOSPI_TLS_MODE } from './config.mjs';
 
 // Thin, dependency-free HTTP layer over the documented MoSPI API platform
 // (see config.mjs for source citations). Every request uses standard,
@@ -23,6 +23,27 @@ export class MospiUpstreamError extends Error {
   constructor(message, status) { super(message); this.name = 'MospiUpstreamError'; this.status = status; }
 }
 
+// Node's global `fetch` collapses every network-level failure (DNS, TLS,
+// connection refused, ...) into a generic `TypeError: fetch failed`, with the
+// real reason discarded into `err.cause`. Surfacing that verbatim to the
+// Configuration UI is technically true but useless -- this turns it into a
+// specific, actionable message instead, without ever weakening TLS on this
+// path. The live-confirmed case (2026-09-24 diagnosis) is MoSPI's own server
+// requiring legacy TLS renegotiation, the exact defect fetchCpiPublic()/
+// fetchIipPublic() below work around with a scoped https.Agent -- deliberately
+// NOT applied here, since this function is the one that carries a real
+// account password (see this file's top comment).
+export function describeNetworkError(err) {
+  const code = err?.cause?.code || err?.code;
+  if (code === 'ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED') {
+    return "MoSPI's server requires an insecure, legacy TLS renegotiation mode that this app deliberately does not enable for registration or sign-in, since that would mean sending your password over a weakened connection. This is a defect on MoSPI's own server (independently confirmed), not a problem with your account or this app's setup. CPI and IIP data are unaffected -- they use a separate public endpoint that never needs a password. Report this to MoSPI/NIC, or use \"Manual token entry\" with a token you generate yourself via MoSPI's own Postman/Swagger flow.";
+  }
+  if (code === 'ENOTFOUND' || code === 'EAI_AGAIN') return 'Unable to reach MoSPI: DNS lookup failed. Check network connectivity.';
+  if (code === 'ECONNREFUSED' || code === 'ECONNRESET' || code === 'ETIMEDOUT') return "Unable to reach MoSPI: connection failed. MoSPI's service may be unavailable.";
+  if (typeof code === 'string' && code.startsWith('ERR_TLS')) return `Unable to reach MoSPI over a secure connection (${code}).`;
+  return `Unable to reach MoSPI: ${err?.cause?.message || err.message || 'unknown network error'}`;
+}
+
 async function request(path, { method = 'GET', body, token, query } = {}) {
   const url = new URL(path, MOSPI.baseUrl);
   if (query) for (const [k, v] of Object.entries(query)) if (v != null && v !== '') url.searchParams.set(k, v);
@@ -36,7 +57,13 @@ async function request(path, { method = 'GET', body, token, query } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), MOSPI.requestTimeoutMs);
   try {
-    const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
+    let res;
+    try {
+      res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal });
+    } catch (err) {
+      if (err.name === 'AbortError') throw new MospiUpstreamError('MoSPI did not respond within the timeout window.');
+      throw new MospiUpstreamError(describeNetworkError(err));
+    }
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
@@ -94,15 +121,6 @@ export async function fetchCpiIndex(params, token) {
   return request(MOSPI.cpiGroupPath, { query: { Format: 'JSON', ...params }, token });
 }
 
-// Monthly Index of Industrial Production -- endpoint path corroborated by
-// the official nso-india GitHub client (see config.mjs), not by a published
-// user manual the way CPI/WPI each have. Callers must treat a successful
-// response's *shape* as unverified until confirmed live (see
-// mospiProvider.mjs's defensive parser).
-export async function fetchIipMonthly(params, token) {
-  return request(MOSPI.iipMonthlyPath, { query: { Format: 'JSON', ...params }, token });
-}
-
 // ---- Public, unauthenticated CPI fetch (2026-09-08 CPI-without-credentials
 // task) ----
 //
@@ -134,26 +152,63 @@ export async function fetchIipMonthly(params, token) {
 //
 // This is a deliberate, narrow, user-approved exception (2026-09-08, same
 // conversation that requested this feature, after the trade-off was
-// explained) -- NOT a blanket TLS downgrade for this module. It is scoped to
-// exactly this one function/agent:
+// explained; made runtime-configurable via MOSPI_TLS_MODE on 2026-09-24,
+// still opt-in and still scoped the same way -- see config.mjs) -- NOT a
+// blanket TLS downgrade for this module. It is scoped to exactly the two
+// public-fetch functions that use this agent:
 //   - Certificate verification stays fully on (`rejectUnauthorized` is not
 //     touched, defaults true) -- only the renegotiation policy is relaxed.
 //   - It is a separate https.Agent, never applied to request() above, so
-//     login/signup/fetchIipMonthly (IIP) are completely unaffected and keep
-//     failing exactly as before (still "Provider Unavailable") until MoSPI
-//     fixes their server or a separate, explicitly-approved task extends
-//     this exception to IIP too -- see docs/authoritative/system.md §3.10.
+//     login/signup remain completely unaffected and keep failing exactly as
+//     before (still "Provider Unavailable") if ever exercised against this
+//     host -- see docs/authoritative/system.md §3.10.
+//
+// IIP investigation (2026-09-09, independent task, per its own explicit
+// instruction not to assume IIP behaves like CPI): live-tested from scratch,
+// not copied from the CPI conclusion. A plain unauthenticated GET against
+// /api/iip/getIIPMonthly (this app's existing endpoint, corroborated by the
+// nso-india reference client -- config.mjs) returned real, current General
+// IIP data with zero Authorization header -- the exact same "first 10
+// records for anonymous callers" platform behavior CPI's manual documents,
+// now independently confirmed for IIP too (MoSPI has no separate IIP manual,
+// but the live response matches the same platform pattern). The same two
+// constraints found for CPI were independently re-verified for IIP: every
+// query filter is silently ignored for anonymous callers (repeated calls
+// with different params returned byte-identical output), and the identical
+// `ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED` TLS defect blocks Node's
+// plain `fetch`/https stack (confirmed live before writing fetchIipPublic()
+// below, not assumed from the CPI case) -- so the same narrow, already-
+// user-approved legacyRenegotiationAgent is reused for IIP's own public
+// fetch, never for login/signup/any other host.
 const legacyRenegotiationAgent = new https.Agent({
   secureOptions: crypto.constants.SSL_OP_LEGACY_SERVER_CONNECT
 });
 
-export async function fetchCpiPublic() {
-  const url = new URL(MOSPI.cpiGroupPath, MOSPI.baseUrl);
+// Which agent requestPublic() below hands to https.request(), driven by
+// config.mjs's MOSPI_TLS_MODE (see its own comment for the full rationale).
+// 'standard' (the default) returns undefined -- https.request() then falls
+// back to Node's own default global agent, i.e. normal, fully-verified TLS
+// with no renegotiation relaxation at all, not a second/weaker agent
+// instance. Pure (no I/O), so it's covered by this module's own unit tests
+// without needing a live network call to prove the mode switch works.
+export function resolvePublicAgent(mode = MOSPI_TLS_MODE) {
+  return mode === 'legacy-renegotiation' ? legacyRenegotiationAgent : undefined;
+}
+
+// Shared by fetchCpiPublic()/fetchIipPublic() below -- both need the exact
+// same GET (differing only in path and the label used in error messages),
+// with the same MOSPI_TLS_MODE-driven agent choice. One implementation, not
+// two copies of the same https.request boilerplate. Deliberately separate
+// from request() above -- login/signup always go through request()'s plain
+// global `fetch` and never call resolvePublicAgent() or see this agent,
+// regardless of MOSPI_TLS_MODE (see config.mjs's comment on that setting).
+function requestPublic(path, label) {
+  const url = new URL(path, MOSPI.baseUrl);
   url.searchParams.set('Format', 'JSON');
   return new Promise((resolve, reject) => {
     const req = https.request(url, {
       method: 'GET',
-      agent: legacyRenegotiationAgent,
+      agent: resolvePublicAgent(),
       headers: { 'User-Agent': 'Stocks-Research-Workspace/1.0 (local, single-user)' },
       timeout: MOSPI.requestTimeoutMs
     }, res => {
@@ -161,15 +216,29 @@ export async function fetchCpiPublic() {
       res.on('data', chunk => { body += chunk; });
       res.on('end', () => {
         if (res.statusCode < 200 || res.statusCode >= 300) {
-          reject(new MospiUpstreamError(`MoSPI CPI request failed (HTTP ${res.statusCode})`, res.statusCode));
+          reject(new MospiUpstreamError(`MoSPI ${label} request failed (HTTP ${res.statusCode})`, res.statusCode));
           return;
         }
         try { resolve(JSON.parse(body)); }
-        catch { reject(new MospiUpstreamError('MoSPI CPI response was not valid JSON.')); }
+        catch { reject(new MospiUpstreamError(`MoSPI ${label} response was not valid JSON.`)); }
       });
     });
-    req.on('timeout', () => req.destroy(new MospiUpstreamError('MoSPI CPI request timed out.')));
+    req.on('timeout', () => req.destroy(new MospiUpstreamError(`MoSPI ${label} request timed out.`)));
     req.on('error', err => reject(err instanceof MospiUpstreamError ? err : new MospiUpstreamError(err.message)));
     req.end();
   });
+}
+
+export async function fetchCpiPublic() {
+  return requestPublic(MOSPI.cpiGroupPath, 'CPI');
+}
+
+// IIP's own public fetch (2026-09-09 investigation, see the comment above
+// legacyRenegotiationAgent for the live-tested basis) -- same shape as
+// fetchCpiPublic(), same endpoint path this app already had configured
+// (config.mjs's iipMonthlyPath), same fixed ~10-record anonymous slice
+// behavior, same TLS workaround, independently confirmed rather than
+// assumed.
+export async function fetchIipPublic() {
+  return requestPublic(MOSPI.iipMonthlyPath, 'IIP');
 }

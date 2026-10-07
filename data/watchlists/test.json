@@ -2,7 +2,7 @@
   "id": "test",
   "name": "Test",
   "createdAt": "2026-08-14T07:55:35.256Z",
-  "updatedAt": "2026-08-26T07:43:26.933Z",
+  "updatedAt": "2026-09-28T05:12:22.738Z",
   "companies": [
     {
       "symbol": "BHEL.NS",
@@ -80,6 +80,17 @@
       "notes": null,
       "targetWeightPct": null,
       "addedAt": "2026-08-26T07:43:21.385Z"
+    },
+    {
+      "symbol": "MEGRISOFT.BO",
+      "name": "Megri Soft Limited",
+      "exchange": "Bombay",
+      "market": "India",
+      "sector": null,
+      "industry": null,
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-28T05:12:22.738Z"
     }
   ],
   "cashTargetPct": 0,

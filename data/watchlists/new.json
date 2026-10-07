@@ -1,0 +1,230 @@
+{
+  "id": "new",
+  "name": "New",
+  "createdAt": "2026-10-05T04:23:05.136Z",
+  "updatedAt": "2026-10-05T04:25:22.804Z",
+  "companies": [
+    {
+      "symbol": "ADANIENT.NS",
+      "name": "Adani Enterprises Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Metals & Mining",
+      "industry": "Trading - Minerals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:13.640Z"
+    },
+    {
+      "symbol": "ETERNAL.NS",
+      "name": "Eternal Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Services",
+      "industry": "E-Retail/ E-Commerce",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:17.826Z"
+    },
+    {
+      "symbol": "ADANIPORTS.NS",
+      "name": "Adani Ports and Special Economic Zone Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Services",
+      "industry": "Port & Port services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:25.627Z"
+    },
+    {
+      "symbol": "TECHM.NS",
+      "name": "Tech Mahindra Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Information Technology",
+      "industry": "Computers - Software & Consulting",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:30.491Z"
+    },
+    {
+      "symbol": "BSE.NS",
+      "name": "BSE Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Financial Services",
+      "industry": "Exchange and Data Platform",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:34.154Z"
+    },
+    {
+      "symbol": "LAURUSLABS.NS",
+      "name": "Laurus Labs Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Healthcare",
+      "industry": "Pharmaceuticals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:38.923Z"
+    },
+    {
+      "symbol": "RADICO.NS",
+      "name": "Radico Khaitan Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Fast Moving Consumer Goods",
+      "industry": "Breweries & Distilleries",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:45.410Z"
+    },
+    {
+      "symbol": "BHEL.NS",
+      "name": "Bharat Heavy Electricals Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Heavy Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:48.919Z"
+    },
+    {
+      "symbol": "APARINDS.NS",
+      "name": "APAR Industries Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:23:57.445Z"
+    },
+    {
+      "symbol": "COFORGE.NS",
+      "name": "Coforge Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Information Technology",
+      "industry": "Computers - Software & Consulting",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:01.359Z"
+    },
+    {
+      "symbol": "STLTECH.NS",
+      "name": "Sterlite Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Telecommunication",
+      "industry": "Telecom -  Equipment & Accessories",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:05.628Z"
+    },
+    {
+      "symbol": "CUPID.NS",
+      "name": "Cupid Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Fast Moving Consumer Goods",
+      "industry": "Personal Care",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:09.522Z"
+    },
+    {
+      "symbol": "HFCL.NS",
+      "name": "HFCL Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Telecommunication",
+      "industry": "Telecom - Infrastructure",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:15.209Z"
+    },
+    {
+      "symbol": "WELCORP.NS",
+      "name": "Welspun Corp Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Iron & Steel Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:27.033Z"
+    },
+    {
+      "symbol": "CPPLUS.NS",
+      "name": "Aditya Infotech Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Industrial Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:34.442Z"
+    },
+    {
+      "symbol": "SIGMAADV.NS",
+      "name": "Sigma Advanced Systems Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aerospace & Defense",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:41.732Z"
+    },
+    {
+      "symbol": "SHILPAMED.NS",
+      "name": "Shilpa Medicare Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Healthcare",
+      "industry": "Pharmaceuticals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:46.554Z"
+    },
+    {
+      "symbol": "E2E.NS",
+      "name": "E2E Networks Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Information Technology",
+      "industry": "IT Enabled Services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:24:50.674Z"
+    },
+    {
+      "symbol": "DIACABS.NS",
+      "name": "Diamond Power Infrastructure Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Other Electrical Equipment",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:25:07.587Z"
+    },
+    {
+      "symbol": "SHADOWFAX.NS",
+      "name": "Shadowfax Technologies Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Services",
+      "industry": "Logistics Solution Provider",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-05T04:25:22.368Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

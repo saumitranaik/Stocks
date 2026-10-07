@@ -1,0 +1,131 @@
+{
+  "id": "minervini",
+  "name": "Minervini",
+  "createdAt": "2026-10-04T07:44:11.435Z",
+  "updatedAt": "2026-10-04T07:49:04.724Z",
+  "companies": [
+    {
+      "symbol": "ONEPOINT.NS",
+      "name": "One Point One Solutions Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Services",
+      "industry": "Business Process Outsourcing (BPO)/ Knowledge Process Outsourcing (KPO)",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:44:51.872Z"
+    },
+    {
+      "symbol": "MOREPENLAB.NS",
+      "name": "Morepen Laboratories Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Healthcare",
+      "industry": "Pharmaceuticals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:44:57.177Z"
+    },
+    {
+      "symbol": "LLOYDSENGG.NS",
+      "name": "Lloyds Engineering Works Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Industrial Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:45:11.687Z"
+    },
+    {
+      "symbol": "CUBEXTUB.NS",
+      "name": "Cubex Tubings Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Aluminium, Copper & Zinc Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:45:20.934Z"
+    },
+    {
+      "symbol": "PREMIERPOL.NS",
+      "name": "Premier Polyfilm Ltd.",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Plastic Products - Industrial",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:45:34.651Z"
+    },
+    {
+      "symbol": "FILATEX.NS",
+      "name": "Filatex India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Textiles",
+      "industry": "Other Textile Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:45:42.613Z"
+    },
+    {
+      "symbol": "FCL.NS",
+      "name": "Fineotex Chemical Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Chemicals",
+      "industry": "Specialty Chemicals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:45:49.285Z"
+    },
+    {
+      "symbol": "GULFPETRO.NS",
+      "name": "GP Petroleums Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Oil, Gas & Consumable Fuels",
+      "industry": "Lubricants",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:46:02.996Z"
+    },
+    {
+      "symbol": "SIGIND.NS",
+      "name": "Signet Industries Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Services",
+      "industry": "Trading & Distributors",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:46:19.672Z"
+    },
+    {
+      "symbol": "INDORAMA.NS",
+      "name": "Indo Rama Synthetics (India) Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Textiles",
+      "industry": "Other Textile Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:46:30.827Z"
+    },
+    {
+      "symbol": "SALSTEEL.NS",
+      "name": "S.A.L. Steel Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Metals & Mining",
+      "industry": "Sponge Iron",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-04T07:46:53.472Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

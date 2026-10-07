@@ -1,0 +1,54 @@
+{
+  "id": "sub-100-growth-di-crossover-setup-monthly",
+  "name": "Sub-100 Growth — DI Crossover Setup (Monthly)",
+  "createdAt": "2026-09-14T17:45:32.955Z",
+  "updatedAt": "2026-09-25T10:08:43.514Z",
+  "companies": [
+    {
+      "symbol": "AMDIND.NS",
+      "name": "AMD Industries Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Packaging",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-14T17:45:54.106Z"
+    },
+    {
+      "symbol": "UGARSUGAR.NS",
+      "name": "The Ugar Sugar Works Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Fast Moving Consumer Goods",
+      "industry": "Sugar",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-14T17:59:57.524Z"
+    },
+    {
+      "symbol": "JYOTICNC.NS",
+      "name": "Jyoti CNC Automation Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Industrial Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-22T13:37:26.798Z"
+    },
+    {
+      "symbol": "LLOYDSME.NS",
+      "name": "Lloyds Metals and Energy Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Metals & Mining",
+      "industry": "Industrial Minerals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-25T10:08:42.314Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

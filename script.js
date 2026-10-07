@@ -282,6 +282,15 @@ window.addEventListener('scroll', scheduleFloatingHeaderUpdate, { passive: true 
 let watchlistIndex = null;
 let currentData = null;
 let opportunitiesSort = 'recommendation';
+// Declared here (ahead of initSubtabs()'s eager top-level call below, and
+// the sidebar's own restore-last-tab call, both of which can reach
+// recaptureVisibleTableLayouts() before the script has finished executing
+// top to bottom) so it's never read from its temporal dead zone. The actual
+// generic table-layout engine (initTableLayout and friends) is defined
+// further down, near where it replaced Watchlist Research -> Overview's
+// original table-only implementation -- only this variable's *declaration*
+// needs to be this early, since function declarations are hoisted already.
+let tableLayouts = {}; // { [tableId]: { order, widths, defaultOrder, defaultWidths } }
 const avgOf = (values) => { const v = values.filter(Number.isFinite); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
 
 // ---- Watchlists tab state: sort/filter/search/multi-select, all client-side
@@ -297,6 +306,273 @@ let wlSelected = new Set();
 // -- multiple chips OR together, same reset-on-watchlist-switch lifecycle as
 // wlSelected/wlSortColumn above.
 let wlIntelFilters = new Set();
+
+// ---- Watchlists -> Custom: a user-configurable comparison table (field
+// selector + sortable + resizable columns), sharing the same filtered/
+// searched stock set as the All companies tab (wlFilteredSortedStocks) --
+// no separate filter UI, no duplicate filter state. Every field below reads
+// a value data/watchlist/research.mjs already computes; zero new calculation,
+// zero new metricRegistry.mjs entry needed. Company/Sector/CMP/P/E are the
+// same locked prefix every comparison table in this app leads with
+// (prefixCells()/STANDARD_SORT_KEYS) -- not part of the field selector.
+const WL_CUSTOM_FIELDS = [
+  { id: 'debtToEquity', label: 'Debt / Equity', sortKey: s => s.metrics?.debtToEquity, cell: s => pct(s.metrics?.debtToEquity) },
+  { id: 'roe', label: 'ROE', sortKey: s => s.roe, cell: s => pct(s.roe) },
+  { id: 'roce', label: 'ROCE', sortKey: s => s.roce, cell: s => pct(s.roce) },
+  { id: 'ebitdaMargin', label: 'EBITDA margin', sortKey: s => s.metrics?.ebitdaMargin, cell: s => pct(s.metrics?.ebitdaMargin) },
+  // Screener.in's Operating Profit is the only margin line this data source
+  // exposes (no separate D&A add-back) -- Operating margin reads the same
+  // figure as EBITDA margin, same disclosed limitation as Watchlist Research
+  // -> Fundamentals -> Profitability's own "EBITDA margin and operating
+  // margin show the same reported figure" note.
+  { id: 'operatingMargin', label: 'Operating margin', sortKey: s => s.metrics?.ebitdaMargin, cell: s => pct(s.metrics?.ebitdaMargin) },
+  { id: 'netMargin', label: 'Net margin', sortKey: s => s.metrics?.netMargin, cell: s => pct(s.metrics?.netMargin) },
+  { id: 'earningsYield', label: 'Earnings yield', sortKey: s => s.earningsYield, cell: s => pct(s.earningsYield) },
+  { id: 'fcfYield', label: 'FCF yield', sortKey: s => s.fcfYield, cell: s => pct(s.fcfYield) },
+  { id: 'promoterHolding', label: 'Promoter holding', sortKey: s => s.metrics?.promoterHolding, cell: s => pct(s.metrics?.promoterHolding) },
+  { id: 'fiiHolding', label: 'FII holding', sortKey: s => s.metrics?.fiiHolding, cell: s => pct(s.metrics?.fiiHolding) },
+  { id: 'diiHolding', label: 'DII holding', sortKey: s => s.metrics?.diiHolding, cell: s => pct(s.metrics?.diiHolding) },
+  { id: 'revenueGrowth5y', label: 'Revenue growth 5Y', sortKey: s => s.metrics?.revenueCagr5y, cell: s => pct(s.metrics?.revenueCagr5y) },
+  { id: 'ebitdaGrowth5y', label: 'EBITDA growth 5Y', sortKey: s => s.metrics?.ebitdaCagr5y, cell: s => pct(s.metrics?.ebitdaCagr5y) },
+  { id: 'profitGrowth5y', label: 'Profit growth 5Y', sortKey: s => s.metrics?.profitCagr5y, cell: s => pct(s.metrics?.profitCagr5y) },
+  { id: 'cagr5y', label: '5Y CAGR (price)', sortKey: s => s.performance?.cagr?.['5Y']?.stockCagrPct, cell: s => pct(s.performance?.cagr?.['5Y']?.stockCagrPct) },
+  { id: 'rsi', label: 'RSI (14)', sortKey: s => s.rsi, cell: s => fmt(s.rsi) },
+  // Same derived count-above-DMA reused from the Watchlist Research Trend
+  // table (TREND_TABLE_SORT.dmaAlignment/dmaAlignmentLabel) -- not a new
+  // calculation, the same client-side arithmetic on already-fetched DMAs.
+  { id: 'dmaAlignment', label: 'DMA alignment', sortKey: s => { const dmas = [s.twenty, s.fifty, s.hundred, s.twoHundred]; return Number.isFinite(s.price) ? dmas.filter(d => Number.isFinite(d) && s.price > d).length : null; }, cell: s => dmaAlignmentLabel(s) },
+  { id: 'adx', label: 'ADX', sortKey: s => s.technicalScorecard?.adx, cell: s => fmt(s.technicalScorecard?.adx) },
+  { id: 'diPlus', label: 'DI+', sortKey: s => s.technicalScorecard?.diPlus, cell: s => fmt(s.technicalScorecard?.diPlus) },
+  { id: 'diMinus', label: 'DI-', sortKey: s => s.technicalScorecard?.diMinus, cell: s => fmt(s.technicalScorecard?.diMinus) }
+];
+const WL_CUSTOM_SORT_KEYS = { ...STANDARD_SORT_KEYS, ...Object.fromEntries(WL_CUSTOM_FIELDS.map(f => [f.id, f.sortKey])) };
+const WL_CUSTOM_PREFIX = [
+  { id: 'company', label: 'Company' },
+  { id: 'sector', label: 'Sector' },
+  { id: 'cmp', label: 'CMP (Rs.)' },
+  { id: 'pe', label: 'P/E' }
+];
+// Column order/width for this table are now owned by the generic
+// initTableLayout engine (stocksApp.tableLayout.wl-custom-table.v1) -- only
+// which OPTIONAL fields are shown stays a bespoke concern here, since that's
+// not something the generic engine (which only reorders/resizes/persists
+// whatever <th data-sort> elements already exist) models.
+const WL_CUSTOM_FIELDS_KEY = 'wlCustomFields';
+let wlCustomVisibleFields = new Set(WL_CUSTOM_FIELDS.map(f => f.id)); // default: every optional column shown
+try {
+  const savedFields = JSON.parse(localStorage.getItem(WL_CUSTOM_FIELDS_KEY) || 'null');
+  if (Array.isArray(savedFields)) wlCustomVisibleFields = new Set(savedFields.filter(id => WL_CUSTOM_FIELDS.some(f => f.id === id)));
+} catch { /* storage unavailable -- defaults to every column shown */ }
+function saveWlCustomFields() {
+  try { localStorage.setItem(WL_CUSTOM_FIELDS_KEY, JSON.stringify([...wlCustomVisibleFields])); } catch { /* storage unavailable -- selection just won't survive a reload */ }
+}
+// One-time migration: this table's column widths used to live under their
+// own dedicated key, width-only, before column layout was generalized to
+// every table -- migrate a real user's already-saved widths into the new
+// shared per-table key scheme (as a widths-only layout; order falls back to
+// default) so they aren't silently lost by this refactor.
+(function migrateWlCustomWidthsKey() {
+  const newKey = tableLayoutStorageKey('wl-custom-table');
+  if (localStorage.getItem(newKey)) return;
+  try {
+    const legacyWidths = JSON.parse(localStorage.getItem('wlCustomColWidths') || 'null');
+    if (legacyWidths && typeof legacyWidths === 'object') {
+      localStorage.setItem(newKey, JSON.stringify({ version: 1, order: [], widths: legacyWidths }));
+      localStorage.removeItem('wlCustomColWidths');
+    }
+  } catch { /* no legacy data, or storage unavailable -- nothing to migrate */ }
+})();
+// Toolbar/popover state (redesign, 2026-09-23): the field-visibility list
+// used to render as a permanently-visible checkbox panel above the table;
+// it's now a compact "Columns N/total" button opening a searchable popover,
+// per the same info-icon/popover component the rest of the app already uses
+// for tooltips (helpIcon()/infoIcon()). Search filters WL_CUSTOM_FIELDS by
+// label only -- it never touches wlCustomVisibleFields or the table itself.
+let wlCustomFieldSearch = '';
+function updateWlCustomColumnsCount() {
+  const total = WL_CUSTOM_FIELDS.length, visible = wlCustomVisibleFields.size;
+  $('#wl-custom-columns-count').textContent = `${visible}/${total}`;
+  $('#wl-custom-columns-count-popover').textContent = `${visible} / ${total}`;
+  $('#wl-custom-columns-total').textContent = `${WL_CUSTOM_PREFIX.length + total} columns`;
+}
+function renderWlCustomFieldSelector() {
+  const query = wlCustomFieldSearch.trim().toLowerCase();
+  const fields = query ? WL_CUSTOM_FIELDS.filter(f => f.label.toLowerCase().includes(query)) : WL_CUSTOM_FIELDS;
+  $('#wl-custom-field-selector').innerHTML = fields.length
+    ? fields.map(f => `<label class="columns-item"><input type="checkbox" data-field-toggle="${f.id}" ${wlCustomVisibleFields.has(f.id) ? 'checked' : ''}><span>${escape(f.label)}</span></label>`).join('')
+    : `<p class="small columns-empty">No columns match "${escape(wlCustomFieldSearch)}".</p>`;
+  updateWlCustomColumnsCount();
+}
+$('#wl-custom-field-selector').addEventListener('change', (event) => {
+  const input = event.target.closest('input[data-field-toggle]');
+  if (!input) return;
+  if (input.checked) wlCustomVisibleFields.add(input.dataset.fieldToggle); else wlCustomVisibleFields.delete(input.dataset.fieldToggle);
+  saveWlCustomFields();
+  updateWlCustomColumnsCount();
+  if (currentData) render(currentData);
+});
+$('#wl-custom-columns-search').addEventListener('input', (event) => {
+  wlCustomFieldSearch = event.target.value;
+  renderWlCustomFieldSelector();
+});
+// Company/Sector/CMP/P/E (WL_CUSTOM_PREFIX) are never part of WL_CUSTOM_FIELDS
+// at all -- they're the locked prefix every comparison table in this app
+// leads with -- so Select all/Clear all (which only ever touch
+// wlCustomVisibleFields) can never hide every column: the 4 locked ones
+// always remain, satisfying the "never an empty table" requirement by
+// construction rather than a separate minimum-columns check.
+$('#wl-custom-select-all').addEventListener('click', () => {
+  wlCustomVisibleFields = new Set(WL_CUSTOM_FIELDS.map(f => f.id));
+  saveWlCustomFields();
+  renderWlCustomFieldSelector();
+  if (currentData) render(currentData);
+});
+$('#wl-custom-clear-all').addEventListener('click', () => {
+  wlCustomVisibleFields = new Set();
+  saveWlCustomFields();
+  renderWlCustomFieldSelector();
+  if (currentData) render(currentData);
+});
+// Resets the field-visibility half of "Reset layout" -- the column order/
+// width half is the pre-existing generic initTableLayout(resetButtonId)
+// listener bound to this same button id from renderWlCustomTable(), so a
+// single click fires both and restores the complete default configuration.
+$('#wl-custom-reset-columns').addEventListener('click', () => {
+  wlCustomVisibleFields = new Set(WL_CUSTOM_FIELDS.map(f => f.id));
+  saveWlCustomFields();
+  wlCustomFieldSearch = '';
+  $('#wl-custom-columns-search').value = '';
+  renderWlCustomFieldSelector();
+  if (currentData) render(currentData);
+});
+// Default anchor is bottom-left of the Columns button (CSS .columns-popover).
+// That can clip off-screen once the popover got wider (300px -> 400px), so on
+// each open we measure the real rendered position and flip right/above via
+// these two modifier classes -- CSS alone has no way to know the button's
+// on-screen position.
+function positionWlCustomColumnsPopover() {
+  const popover = $('#wl-custom-columns-popover');
+  const btn = $('#wl-custom-columns-btn');
+  popover.classList.remove('align-right', 'align-above');
+  const btnRect = btn.getBoundingClientRect();
+  const rect = popover.getBoundingClientRect();
+  // Flip left<->right / above<->below only when doing so genuinely helps --
+  // i.e. there's more room on the other side -- otherwise flipping trades a
+  // small, scrollable overflow for a worse, more-clipped one (confirmed live:
+  // a naive "flip if it overflows" flipped the popover fully off the left
+  // edge on a narrow viewport where right-aligning overflowed further left
+  // than the original state overflowed right).
+  const spaceRight = window.innerWidth - btnRect.left;
+  const spaceLeft = btnRect.right;
+  if (rect.right > window.innerWidth && spaceLeft > spaceRight) popover.classList.add('align-right');
+  const spaceBelow = window.innerHeight - btnRect.bottom;
+  const spaceAbove = btnRect.top;
+  if (rect.bottom > window.innerHeight && spaceAbove > spaceBelow) popover.classList.add('align-above');
+}
+function toggleWlCustomColumnsPopover(show) {
+  const popover = $('#wl-custom-columns-popover');
+  const btn = $('#wl-custom-columns-btn');
+  const shouldShow = show ?? popover.hidden;
+  popover.hidden = !shouldShow;
+  btn.setAttribute('aria-expanded', String(shouldShow));
+  if (shouldShow) {
+    positionWlCustomColumnsPopover();
+    $('#wl-custom-columns-search').focus();
+  }
+}
+$('#wl-custom-columns-btn').addEventListener('click', (event) => {
+  event.stopPropagation();
+  toggleWlCustomColumnsPopover();
+});
+// Click-outside/Escape-to-close, matching the popover-dismissal convention
+// every dropdown in this app already uses. Checking/unchecking a column
+// deliberately does NOT close the popover (no listener here reacts to the
+// field-selector's own change event), so multiple columns can be toggled in
+// one open/close cycle per the redesign's own explicit requirement.
+document.addEventListener('click', (event) => {
+  const popover = $('#wl-custom-columns-popover');
+  if (popover.hidden) return;
+  if (event.target.closest('#wl-custom-columns-popover') || event.target.closest('#wl-custom-columns-btn')) return;
+  toggleWlCustomColumnsPopover(false);
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') toggleWlCustomColumnsPopover(false);
+});
+renderWlCustomFieldSelector();
+// Drag-to-resize: bound fresh after every render (the <thead> is rebuilt via
+// innerHTML each time, same as every other table in this app), so there's
+// never a stale listener on a removed element. click's own stopPropagation
+// keeps a plain click on the handle from also registering as a sort click on
+// initTableSort's delegated <thead> listener.
+// Generic drag-to-resize driver for any table using the .col-resize-handle
+// pattern (originally Watchlists -> Custom only; reused as-is by Watchlist
+// Research -> Overview below) -- one shared pointer-event implementation
+// instead of a per-table copy. Each caller keeps its own width state/
+// localStorage key; onResize(key, widthPx) is just told the result once a
+// drag ends. click's own stopPropagation keeps a plain click on the handle
+// from also registering as a sort click on initTableSort's delegated
+// <thead> listener.
+function initTableColumnResize(tableId, onResize) {
+  $$(`#${tableId} thead th[data-sort]`).forEach(th => {
+    const handle = th.querySelector('.col-resize-handle');
+    // Per-handle guard (not a one-time-per-table guard): safe to call this
+    // on every render. Most tables' <thead> is static markup whose handles
+    // persist forever, so this is a cheap no-op after the first call: but
+    // wl-custom-table's <thead> is fully regenerated (innerHTML) on every
+    // render, producing brand-new handle elements each time that still need
+    // binding -- a table-level "bound once" flag would silently leave those
+    // fresh handles inert after the first render.
+    if (!handle || handle.dataset.resizeBound) return;
+    handle.dataset.resizeBound = '1';
+    handle.addEventListener('click', event => event.stopPropagation());
+    handle.addEventListener('pointerdown', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const key = th.dataset.sort;
+      const startX = event.clientX, startWidth = th.getBoundingClientRect().width;
+      // A multi-row thead's real rendered width is governed by the
+      // <colgroup>'s <col> (see ensureColgroup/applyTableColumnWidths above),
+      // not by this th's own style.width -- kept live in sync here too, or
+      // the drag would visually do nothing until the next reload/rebind.
+      const col = $(`#${tableId} colgroup col[data-col-id="${key}"]`);
+      const onMove = (moveEvent) => {
+        const width = `${Math.max(60, Math.round(startWidth + (moveEvent.clientX - startX)))}px`;
+        th.style.width = width;
+        if (col) col.style.width = width;
+      };
+      const onUp = () => {
+        onResize(key, parseInt(th.style.width, 10));
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+      };
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+  });
+}
+function renderWlCustomTable(data) {
+  // Same filtered/searched stock set as the All companies tab -- this view
+  // doesn't duplicate filter state, only adds its own independent column sort
+  // (cmpSortState['wl-custom-table'], via the shared sortForTable/
+  // initTableSort mechanism every Watchlist Research table already uses).
+  const stocks = sortForTable('wl-custom-table', wlFilteredSortedStocks(data), WL_CUSTOM_SORT_KEYS);
+  const visibleFields = WL_CUSTOM_FIELDS.filter(f => wlCustomVisibleFields.has(f.id));
+  // Every optional field here is a calculated ratio/CAGR/indicator (see
+  // WL_CUSTOM_FIELDS above) -- derived, per the same fetched-vs-derived
+  // convention every other table uses. The locked Company/Sector/CMP/P/E
+  // prefix is fetched, left unstyled as everywhere else.
+  const headCells = [
+    ...WL_CUSTOM_PREFIX.map(f => `<th data-sort="${f.id}" title="${escape(f.label)}">${escape(f.label)}<span class="col-resize-handle"></span></th>`),
+    ...visibleFields.map(f => `<th class="num col-derived" data-sort="${f.id}" title="${escape(f.label)}">${escape(f.label)}<span class="col-resize-handle"></span></th>`)
+  ].join('');
+  const table = $('#wl-custom-table');
+  table.querySelector('thead').innerHTML = `<tr>${headCells}</tr>`;
+  table.querySelector('tbody').innerHTML = stocks.length
+    ? stocks.map(stock => `<tr data-symbol="${escape(stock.symbol)}">${prefixCells(stock, { num: true })}${visibleFields.map(f => `<td class="num derived">${f.cell(stock)}</td>`).join('')}</tr>`).join('')
+    : `<tr><td colspan="${WL_CUSTOM_PREFIX.length + visibleFields.length}" class="small">No companies match the current filter, or this watchlist is empty.</td></tr>`;
+  initTableSort('wl-custom-table');
+  initTableLayout('wl-custom-table', { resetButtonId: 'wl-custom-reset-columns' });
+}
 
 // ---- Company search (add-company typeahead) state: the local index fetched
 // once from /api/companies/index (data/watchlist/searchIndex.mjs -- static
@@ -330,11 +606,25 @@ function activateWorkspaceTab(tabId) {
   const showCompanyContext = tabId === 'company-research';
   $('#company-context-bar').hidden = !showCompanyContext;
   $('#company-context-label').hidden = !showCompanyContext;
+  // Compare is the dedicated home for Compare Mode (§2.3 IA redesign) -- landing
+  // here shouldn't require first finding and clicking its own on/off toggle just
+  // to see the comparison render. setCompareMode() is the canonical setter (same
+  // one the toggle button calls), so this doesn't duplicate any state; it just
+  // turns Compare Mode on automatically on arrival, since that's this
+  // workspace's whole purpose. The button remains available to turn it back off
+  // (e.g. to fall back to single-company selection elsewhere) for the rest of
+  // that visit.
+  if (tabId === 'compare' && !compareMode && currentData) setCompareMode(true);
   closeMobileSidebar();
   // The newly-active tab's floating-header clones (if any) need their
   // position/visibility recomputed immediately -- switching tabs changes
   // which table (if any) is even in the DOM's visible flow.
   refreshFloatingHeaders();
+  // Same reason: a managed table that was hidden (0-width) at its last
+  // render may have just become visible for the first time -- capture its
+  // real default column widths now instead of leaving it stuck on the
+  // generic fallback until the next data refresh.
+  recaptureVisibleTableLayouts();
 }
 $$('#app-sidebar .sidebar-item[data-tab]').forEach(button => button.addEventListener('click', () => activateWorkspaceTab(button.dataset.tab)));
 
@@ -413,6 +703,9 @@ function applySubtabState(root) {
   // a newly-visible table's header shows/hides correctly right away instead
   // of waiting for the next scroll tick.
   refreshFloatingHeaders();
+  // Same visibility change can be the first time a managed table's real
+  // width is measurable -- see captureDefaultWidthsIfVisible's own comment.
+  recaptureVisibleTableLayouts();
 }
 function setActiveSubtab(root, subtabId, opts = {}) {
   activeSubtabs[root.id] = subtabId;
@@ -772,16 +1065,375 @@ function renderValuationTab(stocks) {
   const sorted = sortForTable('valuation-table', stocks, VALUATION_TABLE_SORT);
   renderTable('#valuation-table', sorted, stock => {
     const m = stock.metrics || {}, v = stock.valuation || {}, rv = stock.relativeValuation;
-    return `<td>${fmt(m.forwardPe)}</td><td>${fmt(m.pb)}</td><td>${fmt(m.evEbitda)}</td><td>${fmt(m.peg)}</td><td>${fmt(v.fairValue)}</td><td>${fmt(v.targetPrice)}</td><td>${pct(v.upsidePct)}</td><td>${pct(v.marginOfSafetyPct)}</td><td>${escape(v.confidenceBand || '')}</td><td>${pct(stock.sectorPremiumDiscountPe)}</td><td>${pct(stock.earningsYield)}</td><td>${pct(stock.fcfYield)}</td>` +
-      `<td>${rv ? `${rv.sectorRank}/${rv.sectorPeerCount}` : ''}</td><td class="num">${rv?.relativeAttractivenessScore == null ? '' : `${rv.relativeAttractivenessScore}/100`}</td><td>${escape(rv?.peerCompleteness || '')}</td>`;
+    return `<td>${fmt(m.forwardPe)}</td><td class="derived">${fmt(m.pb)}</td><td class="derived">${fmt(m.evEbitda)}</td><td class="derived">${fmt(m.peg)}</td><td class="derived">${fmt(v.fairValue)}</td><td class="derived">${fmt(v.targetPrice)}</td><td class="derived">${pct(v.upsidePct)}</td><td class="derived">${pct(v.marginOfSafetyPct)}</td><td class="derived">${escape(v.confidenceBand || '')}</td><td class="derived">${pct(stock.sectorPremiumDiscountPe)}</td><td class="derived">${pct(stock.earningsYield)}</td><td class="derived">${pct(stock.fcfYield)}</td>` +
+      `<td class="derived">${rv ? `${rv.sectorRank}/${rv.sectorPeerCount}` : ''}</td><td class="num derived">${rv?.relativeAttractivenessScore == null ? '' : `${rv.relativeAttractivenessScore}/100`}</td><td class="derived">${escape(rv?.peerCompleteness || '')}</td>`;
   });
   initTableSort('valuation-table');
+  initTableLayout('valuation-table', { resetButtonId: 'valuation-table-reset-columns' });
+}
+// ---- Generic reusable table layout: drag-to-resize + drag-to-reorder +
+// persisted column order/widths + a "Reset columns" control. Generalized
+// from Watchlist Research -> Overview's original implementation (the first
+// table in this app to get this treatment) so every comparison table gets
+// the same mechanism instead of a per-table copy. Column identity is always
+// a column's existing `data-sort` id (already used for sorting) -- reorder/
+// resize state never keys off DOM position, so a saved layout survives an
+// added/removed/renamed column. Default order and widths are read from each
+// table's own <thead> the first time it's bound (DOM order, and each th's
+// natural rendered width measured before switching to a fixed layout)
+// rather than hand-duplicated per table -- index.html's own markup stays
+// the one source of truth for what columns exist and how wide they start.
+// Persistence is one versioned localStorage key per table
+// (stocksApp.tableLayout.<tableId>.v1), so no two tables ever share layout
+// state and a future incompatible saved shape can be detected instead of
+// misread. (tableLayouts itself is declared near the top of this file, not
+// here -- see that declaration's own comment for why.)
+function tableLayoutStorageKey(tableId) { return `stocksApp.tableLayout.${tableId}.v1`; }
+function loadTableLayoutState(tableId, defaultOrder) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(tableLayoutStorageKey(tableId)) || 'null');
+    if (raw && typeof raw === 'object') {
+      let order = defaultOrder;
+      if (Array.isArray(raw.order)) {
+        // Drop any id this build no longer has (a removed column), dedupe,
+        // then append any id this build has that the saved layout doesn't
+        // (a newly-added column) at the end, at its default width.
+        const valid = [...new Set(raw.order)].filter(id => defaultOrder.includes(id));
+        const missing = defaultOrder.filter(id => !valid.includes(id));
+        if (valid.length) order = [...valid, ...missing];
+      }
+      const widths = raw.widths && typeof raw.widths === 'object'
+        ? Object.fromEntries(Object.entries(raw.widths).filter(([id, w]) => defaultOrder.includes(id) && Number.isFinite(w) && w > 0))
+        : {};
+      return { order, widths };
+    }
+  } catch { /* malformed/incompatible JSON -- fall through to defaults */ }
+  return { order: defaultOrder, widths: {} };
+}
+function saveTableLayoutState(tableId) {
+  const state = tableLayouts[tableId];
+  if (!state) return;
+  try { localStorage.setItem(tableLayoutStorageKey(tableId), JSON.stringify({ version: 1, order: state.order, widths: state.widths })); } catch { /* storage unavailable -- layout just won't survive a reload */ }
+}
+// One-time migration: Overview's column layout used to live under its own
+// dedicated key (and, before that, an even earlier width-only key) before
+// this mechanism was generalized to every table -- migrate a real user's
+// already-saved customization into the new shared per-table key scheme so
+// it isn't silently lost by this refactor.
+(function migrateWrOverviewLayoutKey() {
+  const newKey = tableLayoutStorageKey('wr-overview-table');
+  if (localStorage.getItem(newKey)) return; // already migrated, or already saved fresh under the new scheme
+  try {
+    const oldVersioned = JSON.parse(localStorage.getItem('stocksApp.watchlistResearch.overview.screeningMatrix.v1') || 'null');
+    if (oldVersioned && typeof oldVersioned === 'object') {
+      localStorage.setItem(newKey, JSON.stringify(oldVersioned));
+      localStorage.removeItem('stocksApp.watchlistResearch.overview.screeningMatrix.v1');
+      return;
+    }
+    const legacyWidths = JSON.parse(localStorage.getItem('wrOverviewColWidths') || 'null');
+    if (legacyWidths && typeof legacyWidths === 'object') {
+      localStorage.setItem(newKey, JSON.stringify({ version: 1, order: [], widths: legacyWidths }));
+      localStorage.removeItem('wrOverviewColWidths');
+    }
+  } catch { /* no legacy data, or storage unavailable -- nothing to migrate */ }
+})();
+// Reapplies the persisted column order to the live DOM. Most tables' <thead>
+// is static markup that's never rebuilt, so moving its <th> elements (by id,
+// via appendChild -- which relocates rather than clones, so no listener or
+// state is lost) sticks across renders on its own; the <tbody> IS rebuilt on
+// every render, always back in the table's original column order, so this
+// must re-run after every render to keep body cells under the header they
+// belong to. Guarded by an exact cell-count check so a colspan empty-state
+// fallback row is safely skipped rather than misread.
+// Several tables mix sortable columns with fixed, non-reorderable ones that
+// don't sit only at the edges (wl-table's leading checkbox column is first,
+// but its Notes/Actions columns are last while alerts-table's Acknowledge
+// column is last and profitability-table's always-blank Gross margin column
+// sits in the *middle*, between CMP/P/E and EBITDA margin). Naively
+// appendChild-ing only the sortable th/td's in `state.order` would silently
+// leave every fixed column "behind" -- each moved element jumps to the end
+// of headRow/row's children, one at a time, so an untouched fixed column
+// ends up dragged toward the front instead of staying at its own position.
+// `state.fullLayout` (captured once at bind time, see initTableLayout) is a
+// positional template of the table's ORIGINAL column layout -- one entry per
+// column, `{sortable:true, id}` or `{sortable:false, el}` (a stable direct
+// element reference for the header, since a static <thead>'s th elements are
+// never recreated, only moved). reorderSlots() below walks that template and
+// substitutes the current `order` sequence into just the sortable slots,
+// leaving every fixed slot's element in its own original relative position --
+// then appending the WHOLE resulting sequence (fixed and sortable alike)
+// keeps fixed columns correctly pinned regardless of how the sortable ones
+// were reordered.
+function reorderSlots(fullLayout, order, sortableElementFor, fixedElementFor) {
+  let cursor = 0;
+  return fullLayout.map((slot, i) => slot.sortable ? sortableElementFor(order[cursor++]) : fixedElementFor(slot, i));
+}
+function applyTableColumnOrder(tableId) {
+  const state = tableLayouts[tableId];
+  const headRow = $(`#${tableId} thead tr`);
+  if (!headRow || !state?.fullLayout) return;
+  // Looked up by data-sort id (stable regardless of DOM position), not by
+  // position -- unlike tbody cells (rebuilt fresh, in original order, every
+  // render), a static table's <th> elements persist and may already be in a
+  // previously-reordered position by the time this runs again. Fixed th's
+  // use the stable element reference captured once at bind time (also
+  // position-independent, since that same element persists forever).
+  const thById = Object.fromEntries($$(`#${tableId} thead th[data-sort]`).map(th => [th.dataset.sort, th]));
+  reorderSlots(state.fullLayout, state.order, id => thById[id], slot => slot.el).forEach(th => { if (th) headRow.appendChild(th); });
+  $$(`#${tableId} tbody tr`).forEach(row => {
+    const cells = [...row.children];
+    if (cells.length !== state.fullLayout.length) return;
+    // A freshly-rendered row's cells ARE positionally aligned with
+    // fullLayout (renderTable() always emits <td>s in the original template
+    // order), so a fixed slot's cell is looked up positionally here (cells[i])
+    // -- unlike the header, there's no persistent element to reference since
+    // <tbody> is rebuilt from scratch on every render.
+    const cellBySortId = {};
+    state.fullLayout.forEach((slot, i) => { if (slot.sortable) cellBySortId[slot.id] = cells[i]; });
+    reorderSlots(state.fullLayout, state.order, id => cellBySortId[id], (slot, i) => cells[i]).forEach(cell => { if (cell) row.appendChild(cell); });
+  });
+}
+// A multi-row <thead> (a colspan group-header row above the real column
+// headers -- every macro-unified-table on the Macro workspace) breaks plain
+// th.style.width under table-layout:fixed: per the CSS2.1 fixed-table-layout
+// algorithm, only the FIRST row's cell widths (or a <colgroup>/<col>) ever
+// set a column's rendered width -- a second-row th's style.width is silently
+// ignored by the renderer even though the style attribute itself is set
+// correctly (confirmed live: a real drag-resize wrote the correct pixel
+// value to both the th's style and the persisted layout state, but the
+// column's on-screen width never changed -- a genuine gap in the existing
+// resize claim for this table shape, found via live browser testing, not
+// present on any single-row-thead table). A <colgroup> sidesteps the whole
+// row-based lookup: one <col> per real column, in this table's fixed,
+// never-reordered column order (allowReorder:false on every table this
+// applies to), created once and left in place -- no reorder logic needed.
+function ensureColgroup(tableId) {
+  const table = $(`#${tableId}`);
+  if (!table || table.querySelector('colgroup') || $$(`#${tableId} thead tr`).length < 2) return;
+  const cols = $$(`#${tableId} thead th[data-sort]`).map(th => `<col data-col-id="${th.dataset.sort}">`).join('');
+  table.insertAdjacentHTML('afterbegin', `<colgroup>${cols}</colgroup>`);
+}
+function applyTableColumnWidths(tableId) {
+  const state = tableLayouts[tableId];
+  if (!state) return;
+  const colgroup = $(`#${tableId} colgroup`);
+  $$(`#${tableId} thead th[data-sort]`).forEach(th => {
+    const width = state.widths[th.dataset.sort] || state.defaultWidths[th.dataset.sort] || 120;
+    th.style.width = `${width}px`;
+    const col = colgroup?.querySelector(`col[data-col-id="${th.dataset.sort}"]`);
+    if (col) col.style.width = `${width}px`;
+  });
+}
+// A table on an inactive tab/subtab has display:none somewhere up its
+// ancestor chain, so getBoundingClientRect() reports 0 for every column --
+// capturing "default width" at bind time would silently record garbage for
+// every table that isn't the one currently on screen. Deferred: widths are
+// captured the first time the table is actually visible, re-attempted from
+// activateWorkspaceTab()/applySubtabState() (below) each time visibility can
+// have changed, same trigger these already use to refresh floating headers.
+// table-layout:fixed (via the .table-layout-managed class, which also drives
+// the resize-handle/lineage CSS) is deliberately not applied until real
+// widths are known, so a still-hidden table keeps its normal auto layout
+// rather than collapsing to the 120px fallback the moment it's shown.
+function captureDefaultWidthsIfVisible(tableId) {
+  const state = tableLayouts[tableId];
+  const table = $(`#${tableId}`);
+  if (!state || state.widthsCaptured || !table || table.offsetParent === null) return;
+  $$(`#${tableId} thead th[data-sort]`).forEach(th => {
+    const width = Math.round(th.getBoundingClientRect().width);
+    if (width > 0) state.defaultWidths[th.dataset.sort] = width;
+  });
+  if (state.defaultOrder.every(id => state.defaultWidths[id] > 0)) {
+    state.widthsCaptured = true;
+    table.classList.add('table-layout-managed');
+  }
+}
+function recaptureVisibleTableLayouts() {
+  Object.keys(tableLayouts).forEach(tableId => {
+    if (tableLayouts[tableId].widthsCaptured) return;
+    captureDefaultWidthsIfVisible(tableId);
+    applyTableColumnWidths(tableId);
+  });
+}
+// Native HTML5 drag-and-drop column reorder -- no extra dependency, and
+// click-to-sort keeps working on the same <th> unchanged (a plain click
+// never engages a drag gesture in the browser's own drag-and-drop model).
+// Bound once per table (delegated on <thead>, guarded like initTableSort/
+// initTableColumnResize). Alt+ArrowLeft/Right on a focused header is a small
+// keyboard-operable equivalent (this app has no other drag-and-drop
+// precedent to match, so this is a minimal, additive affordance rather than
+// a full parallel UI).
+function initTableColumnDragGeneric(tableId) {
+  const thead = $(`#${tableId} thead`);
+  if (!thead) return;
+  const ths = () => $$(`#${tableId} thead th[data-sort]`);
+  // Marking headers draggable is idempotent and cheap, so it's safe to redo
+  // on every call -- necessary for wl-custom-table, whose <thead> (and every
+  // <th> in it) is fully regenerated on each render; a table-level "bound
+  // once" flag would leave those fresh elements non-draggable after the
+  // first render, same reasoning as initTableColumnResize's per-handle guard.
+  ths().forEach(th => { th.draggable = true; th.tabIndex = 0; th.classList.add('col-draggable'); });
+  if (thead.dataset.dragBound) return;
+  thead.dataset.dragBound = '1';
+  const clearDropMarkers = () => ths().forEach(el => el.classList.remove('col-drop-before', 'col-drop-after'));
+  const moveColumn = (id, targetIndex) => {
+    const state = tableLayouts[tableId];
+    const order = state.order.filter(x => x !== id);
+    order.splice(Math.max(0, Math.min(targetIndex, order.length)), 0, id);
+    state.order = order;
+    saveTableLayoutState(tableId);
+    applyTableColumnOrder(tableId);
+  };
+  let dragId = null;
+  thead.addEventListener('dragstart', (event) => {
+    const th = event.target.closest('th[data-sort]');
+    if (!th || event.target.closest('.col-resize-handle')) { event.preventDefault(); return; }
+    dragId = th.dataset.sort;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', dragId);
+    th.classList.add('col-dragging');
+  });
+  thead.addEventListener('dragover', (event) => {
+    const th = event.target.closest('th[data-sort]');
+    if (!th || !dragId || th.dataset.sort === dragId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    clearDropMarkers();
+    const before = event.clientX - th.getBoundingClientRect().left < th.getBoundingClientRect().width / 2;
+    th.classList.add(before ? 'col-drop-before' : 'col-drop-after');
+  });
+  thead.addEventListener('drop', (event) => {
+    const th = event.target.closest('th[data-sort]');
+    event.preventDefault();
+    clearDropMarkers();
+    ths().forEach(el => el.classList.remove('col-dragging'));
+    if (!th || !dragId || th.dataset.sort === dragId) { dragId = null; return; }
+    const before = event.clientX - th.getBoundingClientRect().left < th.getBoundingClientRect().width / 2;
+    const targetIndex = tableLayouts[tableId].order.filter(x => x !== dragId).indexOf(th.dataset.sort);
+    moveColumn(dragId, before ? targetIndex : targetIndex + 1);
+    dragId = null;
+  });
+  thead.addEventListener('dragend', () => { ths().forEach(el => el.classList.remove('col-dragging')); clearDropMarkers(); dragId = null; });
+  thead.addEventListener('keydown', (event) => {
+    const th = event.target.closest('th[data-sort]');
+    if (!th || !event.altKey || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) return;
+    event.preventDefault();
+    const id = th.dataset.sort;
+    const currentIndex = tableLayouts[tableId].order.indexOf(id);
+    const targetIndex = event.key === 'ArrowLeft' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= tableLayouts[tableId].order.length) return;
+    moveColumn(id, targetIndex);
+    th.focus();
+  });
+}
+// One call per table's render function: binds resize/drag/reset once (first
+// call, guarded like initTableSort/initTableColumnResize on the same
+// <thead>), then reapplies persisted order+widths on every call thereafter
+// -- cheap, and necessary since <tbody> is rebuilt every render, same as
+// initTableSort's own always-reapply pattern for sort indicators.
+// allowReorder:false (the two Market Intelligence macro-indicator tables,
+// which have a second <tr class="table-group-row"> of colspan group headers
+// above the real column-header row) disables drag-reorder entirely: dragging
+// a column out from under its group label would visually misalign the
+// grouping, and applyTableColumnOrder's appendChild-into-headRow logic
+// specifically assumes a single-row <thead> -- against a two-row one it
+// would relocate the real header cells into the group row. Resize and sort
+// have no such assumption and stay fully enabled.
+function initTableLayout(tableId, { resetButtonId, allowReorder = true } = {}) {
+  const thead = $(`#${tableId} thead`);
+  const table = $(`#${tableId}`);
+  if (!thead || !table) return;
+  // fullLayout captures the table's ORIGINAL column template positionally --
+  // one entry per <th>, sortable or fixed -- so applyTableColumnOrder can
+  // keep fixed (non-data-sort) columns pinned at their own position instead
+  // of being left behind by reordering the sortable ones around them (see
+  // that function's own comment). Fixed slots keep a direct element
+  // reference, valid forever for a static <thead> (only wl-custom-table's
+  // <thead> is rebuilt per render, and it has zero fixed columns today, so
+  // this reference never goes stale in practice).
+  const fullLayout = $$(`#${tableId} thead th`).map(th => th.dataset.sort ? { sortable: true, id: th.dataset.sort } : { sortable: false, el: th });
+  const currentIds = fullLayout.filter(slot => slot.sortable).map(slot => slot.id);
+  ensureColgroup(tableId);
+  if (!thead.dataset.layoutBound) {
+    thead.dataset.layoutBound = '1';
+    const { order, widths } = loadTableLayoutState(tableId, currentIds);
+    tableLayouts[tableId] = { order, widths, defaultOrder: currentIds, defaultWidths: {}, widthsCaptured: false, fullLayout };
+    if (resetButtonId) {
+      $(`#${resetButtonId}`)?.addEventListener('click', () => {
+        const state = tableLayouts[tableId];
+        state.order = [...state.defaultOrder];
+        state.widths = {};
+        state.defaultWidths = {};
+        state.widthsCaptured = false;
+        saveTableLayoutState(tableId);
+        if (allowReorder) applyTableColumnOrder(tableId);
+        // Pre-existing bug, found via live UI testing while validating the
+        // Macro workspace's new tables (also reproduced on sector-intel-table,
+        // an existing single-row-thead table -- not introduced by the
+        // colgroup mechanism above, just newly discovered by it): the manually
+        // resized width was still applied to the th (and, for a multi-row
+        // thead, its <col>) at the moment captureDefaultWidthsIfVisible
+        // re-measured "the default" below, so Reset silently recaptured the
+        // very width it was supposed to discard instead of the table's true
+        // natural size. Clearing the applied width -- and dropping
+        // table-layout-managed so the table returns to auto layout, exactly
+        // its state the first time this table was ever bound -- before
+        // recapturing fixes this for every table, not just the new ones.
+        $$(`#${tableId} thead th[data-sort]`).forEach(th => { th.style.width = ''; });
+        $$(`#${tableId} colgroup col`).forEach(col => { col.style.width = ''; });
+        table.classList.remove('table-layout-managed');
+        captureDefaultWidthsIfVisible(tableId);
+        applyTableColumnWidths(tableId);
+      });
+    }
+  } else {
+    // The live set of columns can change without a full unbind/rebind --
+    // wl-custom-table's user-toggleable optional fields are the one case in
+    // this app today, but this reconciliation is generic (same drop-missing/
+    // append-new logic loadTableLayoutState already applies at load time):
+    // drop ids no longer present, append newly-shown ids at the end, and
+    // re-measure default widths for the new column set since the old
+    // measurements no longer describe what's on screen.
+    const state = tableLayouts[tableId];
+    const idsChanged = currentIds.length !== state.defaultOrder.length || !currentIds.every(id => state.defaultOrder.includes(id));
+    if (idsChanged) {
+      const stillValid = state.order.filter(id => currentIds.includes(id));
+      const newlyShown = currentIds.filter(id => !stillValid.includes(id));
+      state.order = [...stillValid, ...newlyShown];
+      state.defaultOrder = currentIds;
+      // Safe to take the freshly-queried fullLayout here: this branch only
+      // ever fires today for wl-custom-table (the one table whose visible
+      // column set can change), whose <thead> is always rebuilt in natural
+      // (unreordered) order on every render, before this function reorders
+      // it -- so "current DOM order" and "original template order" are the
+      // same thing at this exact point, unlike a static table mid-reorder.
+      state.fullLayout = fullLayout;
+      state.widths = Object.fromEntries(Object.entries(state.widths).filter(([id]) => currentIds.includes(id)));
+      state.defaultWidths = {};
+      state.widthsCaptured = false;
+    }
+  }
+  // Idempotent per-element/first-bind-per-table guards inside these two make
+  // it safe to call them on every render regardless of which branch above
+  // ran -- necessary for wl-custom-table, whose <thead> markup (and every
+  // <th> in it) is fully regenerated each render.
+  initTableColumnResize(tableId, (key, width) => { tableLayouts[tableId].widths[key] = width; saveTableLayoutState(tableId); });
+  if (allowReorder) initTableColumnDragGeneric(tableId);
+  captureDefaultWidthsIfVisible(tableId);
+  applyTableColumnWidths(tableId);
+  if (allowReorder) applyTableColumnOrder(tableId);
 }
 // Watchlist Research -> Overview: the primary screening table. Every field
 // below is already computed elsewhere in this payload (recommendation,
 // valuation, technical scorecard, institutional risk, decision-layer action
 // score) -- this reads, never recomputes, matching the single-computation-
-// site rule the rest of this app follows.
+// site rule the rest of this app follows. Recommendation/Primary driver/
+// Confidence/Composite score/Upside %/Regime/Risk score/Action/Company
+// Quality/Stock Attractiveness/Fundamental View/Market View/Factor score are
+// all derived/calculated output (scoring, decision or quant layer) and carry
+// the `derived` class for the fetched-vs-derived tint (styles.css); Change
+// (like the Company/Sector/CMP/P/E prefix) is a raw fetched field and is left
+// unstyled, matching index.html's `col-derived` classification on the header.
 function renderWrOverviewTable(data) {
   const actionScores = data.intelligence?.actionScores || {};
   const rows = rankAllStocks(data.stocks, opportunitiesSort);
@@ -800,30 +1452,32 @@ function renderWrOverviewTable(data) {
     const risk = stock.institutionalRisk || {};
     const r = stock.recommendation || {}, qf = stock.quantFactors;
     const fv = r.fundamentalView || {}, mv = r.marketView || {};
-    return `<td class="num">${pct(stock.change)}</td><td>${signalTag(stock)}</td><td>${escape(keyCatalystFor(stock))}</td><td>${escape(r.confidence || '')}</td>` +
-      `<td class="num">${stock.score == null ? '' : `${fmt(stock.score)}/100`}</td><td class="num">${pct(stock.valuation?.upsidePct)}</td>` +
-      `<td>${escape(stock.technicalScorecard?.regime || '')}</td><td class="num">${risk.compositeRiskScore == null ? '' : `${fmt(risk.compositeRiskScore)}/100`}</td>` +
-      `<td>${actionScoreBadge(actionScores[stock.symbol])}</td>` +
-      `<td class="num">${r.companyQuality?.score == null ? '' : `${r.companyQuality.score}/100`}</td>` +
-      `<td class="num">${r.stockAttractiveness?.score == null ? '' : `${r.stockAttractiveness.score}/100`}</td>` +
-      `<td>${escape(fv.label || '')}</td><td>${escape(mv.label || '')}</td>` +
-      `<td class="num" title="${escape(qf?.capNote || '')}">${qf?.factorScore == null ? '' : `${qf.factorScore}/100`}</td>`;
+    return `<td class="num">${pct(stock.change)}</td><td class="derived">${signalTag(stock)}</td><td class="derived">${escape(keyCatalystFor(stock))}</td><td class="derived">${escape(r.confidence || '')}</td>` +
+      `<td class="num derived">${stock.score == null ? '' : `${fmt(stock.score)}/100`}</td><td class="num derived">${pct(stock.valuation?.upsidePct)}</td>` +
+      `<td class="derived">${escape(stock.technicalScorecard?.regime || '')}</td><td class="num derived">${risk.compositeRiskScore == null ? '' : `${fmt(risk.compositeRiskScore)}/100`}</td>` +
+      `<td class="derived">${actionScoreBadge(actionScores[stock.symbol])}</td>` +
+      `<td class="num derived">${r.companyQuality?.score == null ? '' : `${r.companyQuality.score}/100`}</td>` +
+      `<td class="num derived">${r.stockAttractiveness?.score == null ? '' : `${r.stockAttractiveness.score}/100`}</td>` +
+      `<td class="derived">${escape(fv.label || '')}</td><td class="derived">${escape(mv.label || '')}</td>` +
+      `<td class="num derived" title="${escape(qf?.capNote || '')}">${qf?.factorScore == null ? '' : `${qf.factorScore}/100`}</td>`;
   }, { num: true });
   initTableSort('wr-overview-table');
+  initTableLayout('wr-overview-table', { resetButtonId: 'wr-overview-reset-columns' });
 }
 // Each of these four tabs previously drove one wide, horizontally-scrolling
 // table off `stock.metrics`; they now drive several narrower ones (one per
 // sub-tab) via the same renderTable()/prefixCells() helper -- same fields,
 // same stocks array, just a smaller column subset per call.
 const PROFITABILITY_TABLE_SORT = {
-  ...STANDARD_SORT_KEYS, ebitdaMargin: s => s.metrics?.ebitdaMargin, netMargin: s => s.metrics?.netMargin,
+  ...STANDARD_SORT_KEYS, ebitdaMargin: s => s.metrics?.ebitdaMargin, operatingMargin: s => s.metrics?.ebitdaMargin, netMargin: s => s.metrics?.netMargin,
   roe: s => s.metrics?.roe, roce: s => s.metrics?.roce, roa: s => s.metrics?.roa, earningsQuality: s => s.metrics?.earningsQualityScore
 };
 function renderProfitability(stocks) {
   const m = (stock) => stock.metrics || {};
   const sorted = sortForTable('profitability-table', stocks, PROFITABILITY_TABLE_SORT);
-  renderTable('#profitability-table', sorted, stock => `<td class="num"></td><td class="num">${pct(m(stock).ebitdaMargin)}</td><td class="num">${pct(m(stock).ebitdaMargin)}</td><td class="num">${pct(m(stock).netMargin)}</td><td class="num">${pct(m(stock).roe)}</td><td class="num">${pct(m(stock).roce)}</td><td class="num">${pct(m(stock).roa)}</td><td class="num">${fmt(m(stock).earningsQualityScore)}</td>`, { num: true });
+  renderTable('#profitability-table', sorted, stock => `<td class="num"></td><td class="num derived">${pct(m(stock).ebitdaMargin)}</td><td class="num derived">${pct(m(stock).ebitdaMargin)}</td><td class="num derived">${pct(m(stock).netMargin)}</td><td class="num">${pct(m(stock).roe)}</td><td class="num">${pct(m(stock).roce)}</td><td class="num derived">${pct(m(stock).roa)}</td><td class="num derived">${fmt(m(stock).earningsQualityScore)}</td>`, { num: true });
   initTableSort('profitability-table');
+  initTableLayout('profitability-table', { resetButtonId: 'profitability-table-reset-columns' });
 }
 const BALANCE_SHEET_TABLE_SORT = {
   ...STANDARD_SORT_KEYS, debt: s => s.metrics?.debt, cash: s => s.metrics?.cash, netDebt: s => s.metrics?.netDebt,
@@ -834,8 +1488,9 @@ function renderBalanceSheetTab(stocks) {
   const m = (stock) => stock.metrics || {};
   const wcDays = (stock) => stock.fundamentalsAnalytics?.workingCapital?.workingCapitalDays;
   const sorted = sortForTable('balance-sheet-table', stocks, BALANCE_SHEET_TABLE_SORT);
-  renderTable('#balance-sheet-table', sorted, stock => `<td class="num">${fmt(m(stock).debt)}</td><td class="num">${fmt(m(stock).cash)}</td><td class="num">${fmt(m(stock).netDebt)}</td><td class="num">${pct(m(stock).debtToEquity)}</td><td class="num">${fmt(m(stock).currentRatio)}</td><td class="num">${fmt(m(stock).quickRatio)}</td><td class="num">${fmt(wcDays(stock))}</td><td>${escape(m(stock).capitalStructure || '')}</td>`, { num: true });
+  renderTable('#balance-sheet-table', sorted, stock => `<td class="num">${fmt(m(stock).debt)}</td><td class="num">${fmt(m(stock).cash)}</td><td class="num">${fmt(m(stock).netDebt)}</td><td class="num derived">${pct(m(stock).debtToEquity)}</td><td class="num derived">${fmt(m(stock).currentRatio)}</td><td class="num derived">${fmt(m(stock).quickRatio)}</td><td class="num derived">${fmt(wcDays(stock))}</td><td class="derived">${escape(m(stock).capitalStructure || '')}</td>`, { num: true });
   initTableSort('balance-sheet-table');
+  initTableLayout('balance-sheet-table', { resetButtonId: 'balance-sheet-table-reset-columns' });
 }
 const GROWTH_TABLE_SORT = {
   ...STANDARD_SORT_KEYS, revenue3y: s => s.metrics?.revenueCagr3y, revenue5y: s => s.metrics?.revenueCagr5y,
@@ -845,8 +1500,9 @@ const GROWTH_TABLE_SORT = {
 function renderGrowthTab(stocks) {
   const m = (stock) => stock.metrics || {};
   const sorted = sortForTable('growth-table', stocks, GROWTH_TABLE_SORT);
-  renderTable('#growth-table', sorted, stock => `<td class="num">${pct(m(stock).revenueCagr3y)}</td><td class="num">${pct(m(stock).revenueCagr5y)}</td><td class="num">${pct(m(stock).ebitdaCagr3y)}</td><td class="num">${pct(m(stock).ebitdaCagr5y)}</td><td class="num">${pct(m(stock).profitCagr3y)}</td><td class="num">${pct(m(stock).profitCagr5y)}</td><td class="num">${pct(m(stock).epsCagr5y)}</td><td class="num">${fmt(m(stock).bookValueCagr)}</td><td class="num">${pct(m(stock).fcfCagr)}</td>`, { num: true });
+  renderTable('#growth-table', sorted, stock => `<td class="num derived">${pct(m(stock).revenueCagr3y)}</td><td class="num derived">${pct(m(stock).revenueCagr5y)}</td><td class="num derived">${pct(m(stock).ebitdaCagr3y)}</td><td class="num derived">${pct(m(stock).ebitdaCagr5y)}</td><td class="num derived">${pct(m(stock).profitCagr3y)}</td><td class="num derived">${pct(m(stock).profitCagr5y)}</td><td class="num derived">${pct(m(stock).epsCagr5y)}</td><td class="num derived">${fmt(m(stock).bookValueCagr)}</td><td class="num derived">${pct(m(stock).fcfCagr)}</td>`, { num: true });
   initTableSort('growth-table');
+  initTableLayout('growth-table', { resetButtonId: 'growth-table-reset-columns' });
 }
 const OWNERSHIP_TABLE_SORT = {
   ...STANDARD_SORT_KEYS, promoter: s => s.metrics?.promoterHolding, promoterTrend: s => s.metrics?.promoterHoldingTrend,
@@ -858,8 +1514,9 @@ function renderOwnershipTab(stocks) {
   const m = (stock) => stock.metrics || {};
   const concentration = (stock) => m(stock).promoterHolding != null && m(stock).institutionalHolding != null ? m(stock).promoterHolding + m(stock).institutionalHolding : null;
   const sorted = sortForTable('ownership-table', stocks, OWNERSHIP_TABLE_SORT);
-  renderTable('#ownership-table', sorted, stock => `<td class="num">${pct(m(stock).promoterHolding)}</td><td>${pct(m(stock).promoterHoldingTrend)}</td><td class="num">${pct(m(stock).fiiHolding)}</td><td class="num">${pct(m(stock).diiHolding)}</td><td class="num">${fmt(m(stock).mutualFundHolding)}</td><td class="num">${pct(m(stock).institutionalHolding)}</td><td class="num">${pct(concentration(stock))}</td>`, { num: true });
+  renderTable('#ownership-table', sorted, stock => `<td class="num">${pct(m(stock).promoterHolding)}</td><td class="derived">${pct(m(stock).promoterHoldingTrend)}</td><td class="num">${pct(m(stock).fiiHolding)}</td><td class="num">${pct(m(stock).diiHolding)}</td><td class="num">${fmt(m(stock).mutualFundHolding)}</td><td class="num derived">${pct(m(stock).institutionalHolding)}</td><td class="num derived">${pct(concentration(stock))}</td>`, { num: true });
   initTableSort('ownership-table');
+  initTableLayout('ownership-table', { resetButtonId: 'ownership-table-reset-columns' });
 }
 // Company Research -> Ownership: no per-company deep-dive existed before
 // this redesign, only the 4 comparison tables above (now on Watchlist
@@ -1091,46 +1748,53 @@ function renderTechnicalTab(stocks) {
   const scores = (stock) => stock.technicalScorecard?.scores || {};
   renderTable('#technical-table-trend', sortForTable('technical-table-trend', stocks, TREND_TABLE_SORT), stock => {
     const t = stock.technicalScorecard || {};
-    return `<td>${escape(stock.trend || '')}</td><td class="num">${dmaCell(stock.price, stock.twenty)}</td><td class="num">${dmaCell(stock.price, stock.fifty)}</td><td class="num">${dmaCell(stock.price, stock.hundred)}</td><td class="num">${dmaCell(stock.price, stock.twoHundred)}</td><td>${dmaAlignmentLabel(stock)}</td><td class="num">${scoreText(scores(stock).trendStrengthScore)}</td>` +
-      `<td class="num" title="${escape(t.adxInterpretation || '')}">${fmt(t.adx)}</td><td class="num">${fmt(t.diPlus)}</td><td class="num">${fmt(t.diMinus)}</td>` +
-      `<td class="num">${fmt(stock.support)}</td><td class="num">${stock.atHigh ? 'At high' : fmt(stock.resistance)}</td>`;
+    return `<td class="derived">${escape(stock.trend || '')}</td><td class="num derived">${dmaCell(stock.price, stock.twenty)}</td><td class="num derived">${dmaCell(stock.price, stock.fifty)}</td><td class="num derived">${dmaCell(stock.price, stock.hundred)}</td><td class="num derived">${dmaCell(stock.price, stock.twoHundred)}</td><td class="derived">${dmaAlignmentLabel(stock)}</td><td class="num derived">${scoreText(scores(stock).trendStrengthScore)}</td>` +
+      `<td class="num derived" title="${escape(t.adxInterpretation || '')}">${fmt(t.adx)}</td><td class="num derived">${fmt(t.diPlus)}</td><td class="num derived">${fmt(t.diMinus)}</td>` +
+      `<td class="num derived">${fmt(stock.support)}</td><td class="num derived">${stock.atHigh ? 'At high' : fmt(stock.resistance)}</td>`;
   }, { num: true });
   initTableSort('technical-table-trend');
+  initTableLayout('technical-table-trend', { resetButtonId: 'technical-table-trend-reset-columns' });
   renderTable('#technical-table-momentum', sortForTable('technical-table-momentum', stocks, MOMENTUM_TABLE_SORT), stock => {
     const macd = stock.macd || {};
-    return `<td class="num">${fmt(stock.rsi)}</td><td>${escape(stock.momentum || '')}</td><td class="num">${scoreText(scores(stock).momentumScore)}</td><td class="num">${fmt(macd.macdLine)}</td><td class="num">${fmt(macd.signalLine)}</td><td class="num">${fmt(macd.histogram)}</td>`;
+    return `<td class="num derived">${fmt(stock.rsi)}</td><td class="derived">${escape(stock.momentum || '')}</td><td class="num derived">${scoreText(scores(stock).momentumScore)}</td><td class="num derived">${fmt(macd.macdLine)}</td><td class="num derived">${fmt(macd.signalLine)}</td><td class="num derived">${fmt(macd.histogram)}</td>`;
   }, { num: true });
   initTableSort('technical-table-momentum');
+  initTableLayout('technical-table-momentum', { resetButtonId: 'technical-table-momentum-reset-columns' });
   renderTable('#technical-table-volume', sortForTable('technical-table-volume', stocks, VOLUME_TABLE_SORT), stock => {
     const t = stock.technicalScorecard || {};
-    return `<td>${escape(stock.volumeTrend || '')}</td><td class="num">${stock.volume == null ? '' : compact(stock.volume)}</td><td class="num">${stock.avgVolume20 == null ? '' : compact(stock.avgVolume20)}</td>` +
-      `<td class="num">${t.obv?.value == null ? '' : compact(t.obv.value)}</td><td>${escape(t.obv?.trend || '')}</td>` +
-      `<td class="num">${t.accDist?.value == null ? '' : compact(t.accDist.value)}</td><td>${escape(t.accDist?.trend || '')}</td>`;
+    return `<td class="derived">${escape(stock.volumeTrend || '')}</td><td class="num">${stock.volume == null ? '' : compact(stock.volume)}</td><td class="num derived">${stock.avgVolume20 == null ? '' : compact(stock.avgVolume20)}</td>` +
+      `<td class="num derived">${t.obv?.value == null ? '' : compact(t.obv.value)}</td><td class="derived">${escape(t.obv?.trend || '')}</td>` +
+      `<td class="num derived">${t.accDist?.value == null ? '' : compact(t.accDist.value)}</td><td class="derived">${escape(t.accDist?.trend || '')}</td>`;
   }, { num: true });
   initTableSort('technical-table-volume');
+  initTableLayout('technical-table-volume', { resetButtonId: 'technical-table-volume-reset-columns' });
   renderTable('#technical-table-relative-strength', sortForTable('technical-table-relative-strength', stocks, RELATIVE_STRENGTH_TABLE_SORT), stock => {
     const p1y = stock.performance?.periods?.['1Y'];
     const benchmark = stock.performance?.benchmark;
     const cagr3y = stock.performance?.cagr?.['3Y'], cagr5y = stock.performance?.cagr?.['5Y'];
     const dd = stock.performance?.risk?.maxDrawdown, sharpe = stock.performance?.riskAdjusted?.sharpeLike, sortino = stock.performance?.riskAdjusted?.sortinoLike;
-    return `<td class="num">${p1y?.stockReturnPct == null ? '' : pct(p1y.stockReturnPct)}</td><td class="num">${p1y?.benchmarkReturnPct == null ? '' : pct(p1y.benchmarkReturnPct)}</td><td class="num">${pct(stock.relativeStrengthPct)}</td><td>${escape(benchmark?.name || benchmark?.symbol || '')}</td><td class="num">${cagr3y?.stockCagrPct == null ? '' : pct(cagr3y.stockCagrPct)}</td><td class="num">${cagr5y?.stockCagrPct == null ? '' : pct(cagr5y.stockCagrPct)}</td>` +
-      `<td class="num">${dd?.stockPct == null ? '' : pct(dd.stockPct)}</td><td class="num">${sharpe?.value == null ? '' : fmt(sharpe.value)}</td><td class="num">${sortino?.value == null ? '' : fmt(sortino.value)}</td>`;
+    return `<td class="num derived">${p1y?.stockReturnPct == null ? '' : pct(p1y.stockReturnPct)}</td><td class="num derived">${p1y?.benchmarkReturnPct == null ? '' : pct(p1y.benchmarkReturnPct)}</td><td class="num derived">${pct(stock.relativeStrengthPct)}</td><td>${escape(benchmark?.name || benchmark?.symbol || '')}</td><td class="num derived">${cagr3y?.stockCagrPct == null ? '' : pct(cagr3y.stockCagrPct)}</td><td class="num derived">${cagr5y?.stockCagrPct == null ? '' : pct(cagr5y.stockCagrPct)}</td>` +
+      `<td class="num derived">${dd?.stockPct == null ? '' : pct(dd.stockPct)}</td><td class="num derived">${sharpe?.value == null ? '' : fmt(sharpe.value)}</td><td class="num derived">${sortino?.value == null ? '' : fmt(sortino.value)}</td>`;
   }, { num: true });
   initTableSort('technical-table-relative-strength');
+  initTableLayout('technical-table-relative-strength', { resetButtonId: 'technical-table-relative-strength-reset-columns' });
   renderTable('#technical-table-volatility', sortForTable('technical-table-volatility', stocks, VOLATILITY_TABLE_SORT), stock => {
     const t = stock.technicalScorecard || {};
-    return `<td class="num">${stock.volatilityPct == null ? '' : pct(stock.volatilityPct)}</td><td class="num">${scoreText(scores(stock).volatilityScore, true)}</td><td class="num">${fmt(t.atr)}</td><td class="num">${t.atrPct == null ? '' : pct(t.atrPct)}</td>`;
+    return `<td class="num derived">${stock.volatilityPct == null ? '' : pct(stock.volatilityPct)}</td><td class="num derived">${scoreText(scores(stock).volatilityScore, true)}</td><td class="num derived">${fmt(t.atr)}</td><td class="num derived">${t.atrPct == null ? '' : pct(t.atrPct)}</td>`;
   }, { num: true });
   initTableSort('technical-table-volatility');
-  renderTable('#technical-table-signals', sortForTable('technical-table-signals', stocks, SIGNALS_TABLE_SORT), stock => `<td class="num">${scoreText(scores(stock).breakoutProbability)}</td><td>${escape(stock.technicalScorecard?.regime || '')}</td><td>${escape(stock.technicalScorecard?.signalConfidence || '')}</td><td>${escape(stock.technicalScorecard?.adxInterpretation || '')}</td>`, { num: true });
+  initTableLayout('technical-table-volatility', { resetButtonId: 'technical-table-volatility-reset-columns' });
+  renderTable('#technical-table-signals', sortForTable('technical-table-signals', stocks, SIGNALS_TABLE_SORT), stock => `<td class="num derived">${scoreText(scores(stock).breakoutProbability)}</td><td class="derived">${escape(stock.technicalScorecard?.regime || '')}</td><td class="derived">${escape(stock.technicalScorecard?.signalConfidence || '')}</td><td class="derived">${escape(stock.technicalScorecard?.adxInterpretation || '')}</td>`, { num: true });
   initTableSort('technical-table-signals');
+  initTableLayout('technical-table-signals', { resetButtonId: 'technical-table-signals-reset-columns' });
 }
 const PORTFOLIO_TABLE_SORT = { ...STANDARD_SORT_KEYS, quality: s => s.score, weight: s => s.effectiveWeightPct, bucket: s => s.score };
 function renderPortfolioTab(stocks) {
   const bucketFor = (score) => score >= 70 ? 'Core' : score >= 55 ? 'Growth' : 'Satellite';
   const sorted = sortForTable('portfolio-table', stocks, PORTFOLIO_TABLE_SORT);
-  renderTable('#portfolio-table', sorted, stock => `<td class="num">${fmt(stock.score)}/100</td><td class="num">${fmt(stock.effectiveWeightPct)}%</td><td>${escape(bucketFor(stock.score || 0))}</td>`, { num: true });
+  renderTable('#portfolio-table', sorted, stock => `<td class="num derived">${fmt(stock.score)}/100</td><td class="num derived">${fmt(stock.effectiveWeightPct)}%</td><td class="derived">${escape(bucketFor(stock.score || 0))}</td>`, { num: true });
   initTableSort('portfolio-table');
+  initTableLayout('portfolio-table', { resetButtonId: 'portfolio-table-reset-columns' });
 }
 
 // ---- Shared pill-selector component: same per-stock deep-dive pattern
@@ -1748,15 +2412,16 @@ function renderPortfolioIntelligence(data) {
     return `<tr data-symbol="${escape(a.symbol)}">
       <td>${companyLink(a.symbol, stock.name)}</td>
       <td>${escape(stock.sector || '')}</td>
-      <td>${actionScoreBadge(intel.actionScores[a.symbol])}</td>
-      <td class="num" title="${escape(actionScoreTitle(intel.actionScores[a.symbol]))}">${a.score}/100</td>
-      <td>${escape(stock.recommendation?.confidence || '')}</td>
-      <td>${escape(a.rationale || '')}</td>
-      <td class="num">${fairValueGapCell(stock)}</td>
-      <td>${escape(stock.institutionalRisk?.riskTrend || '')}</td>
+      <td class="derived">${actionScoreBadge(intel.actionScores[a.symbol])}</td>
+      <td class="num derived" title="${escape(actionScoreTitle(intel.actionScores[a.symbol]))}">${a.score}/100</td>
+      <td class="derived">${escape(stock.recommendation?.confidence || '')}</td>
+      <td class="derived">${escape(a.rationale || '')}</td>
+      <td class="num derived">${fairValueGapCell(stock)}</td>
+      <td class="derived">${escape(stock.institutionalRisk?.riskTrend || '')}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="8" class="small">No action-required names currently.</td></tr>';
   initTableSort('pi-action-table');
+  initTableLayout('pi-action-table', { resetButtonId: 'pi-action-table-reset-columns' });
 
   const listRow = (symbol, reason) => { const s = bySymbol.get(symbol); return s ? `<div class="allocation-row" data-symbol="${escape(symbol)}"><span>${companyLink(symbol, s.name)}</span><span class="small">${escape(reason)}</span></div>` : ''; };
   const group = (label, list) => list.length ? `<div class="small" style="margin-top:10px"><b>${escape(label)}</b></div>${list.map(x => listRow(x.symbol, x.reason)).join('')}` : '';
@@ -1862,14 +2527,15 @@ function renderHealthRebalancing(data) {
     const s = r.stock;
     return `<tr data-symbol="${escape(r.symbol)}">
       <td>${companyLink(r.symbol, s.name)}</td>
-      <td class="num">${fmt(s.effectiveWeightPct)}%</td>
+      <td class="num derived">${fmt(s.effectiveWeightPct)}%</td>
       <td class="num">${s.targetWeightPct == null ? 'Equal' : `${fmt(s.targetWeightPct)}%`}</td>
-      <td>${escape(r.action)}</td>
-      <td class="num" title="${escape(actionScoreTitle(data.intelligence.actionScores[r.symbol]))}">${data.intelligence.actionScores[r.symbol] ? `${data.intelligence.actionScores[r.symbol].score}/100` : ''}</td>
-      <td>${escape(r.rationale)}</td>
+      <td class="derived">${escape(r.action)}</td>
+      <td class="num derived" title="${escape(actionScoreTitle(data.intelligence.actionScores[r.symbol]))}">${data.intelligence.actionScores[r.symbol] ? `${data.intelligence.actionScores[r.symbol].score}/100` : ''}</td>
+      <td class="derived">${escape(r.rationale)}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="6" class="small">No rebalancing suggestions currently.</td></tr>';
   initTableSort('rebalancing-table');
+  initTableLayout('rebalancing-table', { resetButtonId: 'rebalancing-table-reset-columns' });
 }
 
 // Phase 6 Portfolio Exposure Matrix: reads data.portfolio.exposureMatrix
@@ -1904,14 +2570,15 @@ function renderExposureMatrix(data) {
     const stock = c.stock;
     return `<tr data-symbol="${escape(c.symbol)}">
       <td>${companyLink(c.symbol, stock.name)}</td>
-      <td class="num"><span class="tag ${EXPOSURE_TIER_CLASS[c.interestRate.tier] || 'neutral'}">${c.interestRate.score ?? ''} &middot; ${escape(c.interestRate.tier)}</span></td>
-      <td>${escape(c.currency.direction)}</td>
-      <td class="num"><span class="tag ${EXPOSURE_TIER_CLASS[c.commodity.tier] || 'neutral'}">${c.commodity.score ?? ''} &middot; ${escape(c.commodity.tier)}</span></td>
-      <td class="num"><span class="tag ${EXPOSURE_TIER_CLASS[c.regulatory.tier] || 'neutral'}">${c.regulatory.score ?? ''} &middot; ${escape(c.regulatory.tier)}</span></td>
-      <td>${escape(c.economicCycle.label)}</td>
+      <td class="num derived"><span class="tag ${EXPOSURE_TIER_CLASS[c.interestRate.tier] || 'neutral'}">${c.interestRate.score ?? ''} &middot; ${escape(c.interestRate.tier)}</span></td>
+      <td class="derived">${escape(c.currency.direction)}</td>
+      <td class="num derived"><span class="tag ${EXPOSURE_TIER_CLASS[c.commodity.tier] || 'neutral'}">${c.commodity.score ?? ''} &middot; ${escape(c.commodity.tier)}</span></td>
+      <td class="num derived"><span class="tag ${EXPOSURE_TIER_CLASS[c.regulatory.tier] || 'neutral'}">${c.regulatory.score ?? ''} &middot; ${escape(c.regulatory.tier)}</span></td>
+      <td class="derived">${escape(c.economicCycle.label)}</td>
     </tr>`;
   }).join('') : '<tr><td colspan="6" class="small">Not available.</td></tr>';
   initTableSort('exposure-matrix-table');
+  initTableLayout('exposure-matrix-table', { resetButtonId: 'exposure-matrix-table-reset-columns' });
 }
 
 // Risks tab's Alerts sub-tab: severity-filtered, client-side only (the
@@ -1939,16 +2606,17 @@ function renderAlerts(data) {
     const stock = bySymbol.get(a.symbol);
     const companyCell = stock ? companyLink(a.symbol, stock.name) : escape(a.symbol === 'PORTFOLIO' ? 'Portfolio' : a.symbol);
     return `<tr data-symbol="${escape(a.symbol)}">
-      <td><span class="tag ${SEVERITY_TAG_CLASS[a.severity] || 'neutral'}">${escape(a.severity)}</span></td>
+      <td class="derived"><span class="tag ${SEVERITY_TAG_CLASS[a.severity] || 'neutral'}">${escape(a.severity)}</span></td>
       <td>${companyCell}</td>
-      <td>${escape(a.category)}</td>
-      <td>${escape(a.message)}</td>
-      <td>${escape(a.confidence)}</td>
+      <td class="derived">${escape(a.category)}</td>
+      <td class="derived">${escape(a.message)}</td>
+      <td class="derived">${escape(a.confidence)}</td>
       <td>${new Date(a.detectedAt).toLocaleString()}</td>
       <td><button type="button" class="icon-btn" data-ack-alert="${escape(a.id)}">Acknowledge</button></td>
     </tr>`;
   }).join('') : '<tr><td colspan="7" class="small">No unacknowledged alerts.</td></tr>';
   initTableSort('alerts-table');
+  initTableLayout('alerts-table', { resetButtonId: 'alerts-table-reset-columns' });
 }
 async function acknowledgeAlert(alertId) {
   const id = watchlistIndex.activeWatchlist;
@@ -2119,13 +2787,24 @@ function rankAllStocks(stocks, mode) {
   const unresolved = stocks.filter(s => s.unresolved);
   return [...rankStocks(resolved, mode), ...unresolved];
 }
+// Column sort layers on top of the existing "Sort:" (Rank by) control, same
+// coexistence as Overview's ranking dropdown + column sort: opportunitiesSort
+// picks the base order, a column click (if any) reorders that same row set.
+const OPPORTUNITIES_TABLE_SORT = {
+  company: s => s.name, sector: s => s.sector || null, cmp: s => s.price,
+  recommendation: s => RATING_RANK[s.signal] || null, upside: s => s.valuation?.upsidePct,
+  confidence: s => CONVICTION_RANK[s.valuation?.convictionLevel] || null, driver: s => keyCatalystFor(s) || null
+};
 function renderTopOpportunities(data) {
   const top = sortOpportunities(data.stocks, opportunitiesSort);
-  const rowsHtml = top.length ? top.map(stock => `<tr data-symbol="${escape(stock.symbol)}">
-      <td><button type="button" class="row-company-link" data-symbol="${escape(stock.symbol)}">${escape(stock.name)}</button></td><td>${escape(stock.sector || '')}</td><td>${fmt(stock.price)} ${escape(stock.currency || '')}</td>
-      <td>${signalTag(stock)}</td><td>${pct(stock.valuation?.upsidePct)}</td><td>${escape(stock.valuation?.convictionLevel || '')}</td><td>${escape(keyCatalystFor(stock))}</td>
+  const sorted = sortForTable('opportunities-table', top, OPPORTUNITIES_TABLE_SORT);
+  const rowsHtml = sorted.length ? sorted.map(stock => `<tr data-symbol="${escape(stock.symbol)}">
+      <td><button type="button" class="row-company-link" data-symbol="${escape(stock.symbol)}">${escape(stock.name)}</button></td><td>${escape(stock.sector || '')}</td><td class="num">${fmt(stock.price)} ${escape(stock.currency || '')}</td>
+      <td class="derived">${signalTag(stock)}</td><td class="num derived">${pct(stock.valuation?.upsidePct)}</td><td class="derived">${escape(stock.valuation?.convictionLevel || '')}</td><td class="derived">${escape(keyCatalystFor(stock))}</td>
     </tr>`).join('') : '<tr><td colspan="7" class="small">No data yet.</td></tr>';
   $('#opportunities-table tbody').innerHTML = rowsHtml;
+  initTableSort('opportunities-table');
+  initTableLayout('opportunities-table', { resetButtonId: 'opportunities-table-reset-columns' });
 }
 
 const IMPACT_CLASS = { High: 'sell', Medium: 'hold', Low: 'neutral' };
@@ -2168,17 +2847,18 @@ function renderEarningsIntelligence(data) {
     return `<tr data-symbol="${escape(stock.symbol)}">
       <td>${companyLink(stock.symbol, stock.name)}</td>
       <td>${escape(q.latestPeriod || '')}</td>
-      <td class="num">${pct(q.revenue.qoqPct)}</td>
-      <td class="num">${pct(q.revenue.yoyPct)}</td>
-      <td class="num">${pct(q.netProfit.qoqPct)}</td>
-      <td class="num">${pct(q.netProfit.yoyPct)}</td>
-      <td class="num">${q.operatingMargin.qoqDeltaPts == null ? '' : `${q.operatingMargin.qoqDeltaPts >= 0 ? '+' : ''}${q.operatingMargin.qoqDeltaPts}pp`}</td>
-      <td class="num">${q.operatingMargin.yoyDeltaPts == null ? '' : `${q.operatingMargin.yoyDeltaPts >= 0 ? '+' : ''}${q.operatingMargin.yoyDeltaPts}pp`}</td>
-      <td class="num">${pct(q.netProfit.deviationVsTrailingAvgPct)}</td>
+      <td class="num derived">${pct(q.revenue.qoqPct)}</td>
+      <td class="num derived">${pct(q.revenue.yoyPct)}</td>
+      <td class="num derived">${pct(q.netProfit.qoqPct)}</td>
+      <td class="num derived">${pct(q.netProfit.yoyPct)}</td>
+      <td class="num derived">${q.operatingMargin.qoqDeltaPts == null ? '' : `${q.operatingMargin.qoqDeltaPts >= 0 ? '+' : ''}${q.operatingMargin.qoqDeltaPts}pp`}</td>
+      <td class="num derived">${q.operatingMargin.yoyDeltaPts == null ? '' : `${q.operatingMargin.yoyDeltaPts >= 0 ? '+' : ''}${q.operatingMargin.yoyDeltaPts}pp`}</td>
+      <td class="num derived">${pct(q.netProfit.deviationVsTrailingAvgPct)}</td>
       <td><span class="tag neutral">${escape(ei.calendar?.status || 'Future Integration')}</span></td>
     </tr>`;
   }).join('') : '<tr><td colspan="10" class="small">This watchlist is empty.</td></tr>';
   initTableSort('earnings-intel-table');
+  initTableLayout('earnings-intel-table', { resetButtonId: 'earnings-intel-table-reset-columns' });
 
   const events = (data.eventCalendar || []).slice(0, 30);
   $('#event-calendar-list').innerHTML = events.length ? events.map(item => `<div class="news-item">
@@ -2310,33 +2990,103 @@ async function loadMacroIntelligence() {
   try { macroData = (await api('/api/macro')).data; }
   catch { macroData = null; }
   renderMacroIntelligence();
+  renderMacroTab();
   if (currentData) renderMorningBriefing(currentData); // Morning Briefing reuses macroData -- re-render once it lands, if the watchlist already rendered first
 }
-const MACRO_STATUS_CLASS = { Live: 'buy', Delayed: 'hold', Unavailable: 'sell', 'Future Integration': 'neutral', 'Credentials Required': 'hold', 'Token Expired': 'hold', 'Authentication Failed': 'sell', Connected: 'buy', Configured: 'hold', 'Not Configured': 'neutral', 'Provider Unavailable': 'sell' };
+const MACRO_STATUS_CLASS = { Live: 'buy', Delayed: 'hold', Unavailable: 'sell', Periodic: 'hold', 'Future Integration': 'neutral', 'Licensing Required': 'neutral', 'Not Programmatically Available': 'neutral', 'Credentials Required': 'hold', 'Token Expired': 'hold', 'Authentication Failed': 'sell', Connected: 'buy', Configured: 'hold', 'Not Configured': 'neutral', 'Provider Unavailable': 'sell' };
 const MACRO_DIRECTION_CLASS = { Rising: 'positive', Falling: 'negative', Flat: '', 'N/A': '' };
-// Presentation-only geography split across Market Intelligence's peer India
-// Macro / US Macro sub-tabs -- keyed off macroProvider.mjs's own `key` field,
-// which every indicator (fetched or disclosed-unavailable) already carries.
-// India: the rupee rate, India VIX, India Gold (Gold BeES ETF), and every
-// disclosed-unavailable indicator (all India-specific by definition --
-// RBI/G-Sec/CPI/IIP/PMI/power/ethanol/defence/banking liquidity/crude/nat
-// gas). US: the remaining indicators, each sourced via a US-benchmark ticker
-// (US 10Y Treasury, WTI crude, Henry Hub gas, COMEX gold). No data/
-// calculation change -- purely which table a row renders into.
-const MACRO_US_KEYS = new Set(['usTreasury10y', 'crudeOilWti', 'naturalGas', 'gold']);
+
+// Unified indicator + trend row (2026-09-08 merge, hoisted to module scope in
+// the Macro IA redesign so both renderMacroIntelligence() -- regime/data
+// quality only, scoped to Market Intelligence -- and renderMacroTab() below
+// -- every India/US/World indicator table on the new Macro workspace -- share
+// one row-rendering/sort implementation, never a second copy). One row per
+// indicator, Indicator Details/Performance columns unchanged, Trend
+// Parameters columns appended on the same <tr> reusing the exact dmaCell()/
+// dmaAlignmentLabel() helpers the Watchlist Research -> Technicals -> Trend
+// table already uses for equities -- a macro indicator's `dma20/50/100/200`/
+// `price` fields are shaped identically to a stock's `twenty/fifty/hundred/
+// twoHundred`/`price`, so the same alignment-counting/gap-% logic applies
+// unchanged via this adapter, not a second implementation. A monthly MoSPI
+// reading (CPI/IIP) carries `period`/`seriesLabel` -- market indicators
+// don't. Surfaced as a title tooltip on the Value cell (rather than a new
+// column, which would apply to zero of the other rows) so the actual
+// reporting period/series is genuinely visible, not just the fetch timestamp
+// already shown in "As of". A `calculated:true` row (the derived Gold ₹/10g
+// indicator, see data/watchlist/macro.mjs's toDerivedGoldIndicator()) also
+// gets the existing `.derived` fetched-vs-derived class on its Value cell
+// itself -- every other row's Value is a genuine fetched price, not derived.
+const macroPeriodTitle = ind => {
+  if (!ind.period?.year) return '';
+  const period = `${ind.period.month ?? ''} ${ind.period.year}`.trim();
+  const base = ind.baseYear ? ` (Base ${ind.baseYear}=100)` : '';
+  const series = ind.seriesLabel ? ` — ${ind.seriesLabel}` : '';
+  return ` title="Reporting period: ${escape(period)}${escape(base)}${escape(series)}"`;
+};
+// Shared by both the Macro workspace's DMA-style tables (an optional Source
+// column, e.g. macro-indicators-india's CPI/IIP/Power Demand rows) and the
+// Periodic/Policy table (every row) -- one canonical "Source" cell shape
+// (link when a URL exists, plain text otherwise, full citation in the hover
+// title) rather than two independently-drifting copies.
+function macroSourceCell(ind) {
+  return ind.sourceUrl
+    ? `<a href="${escape(ind.sourceUrl)}" target="_blank" rel="noopener" title="${escape(ind.source || '')}">${escape(ind.sourceLabel || ind.source || '')}</a>`
+    : `<span title="${escape(ind.source || '')}">${escape(ind.sourceLabel || ind.source || '')}</span>`;
+}
+function macroIndicatorRow(ind, { country, source } = {}) {
+  const asStock = { price: ind.value, twenty: ind.dma20, fifty: ind.dma50, hundred: ind.dma100, twoHundred: ind.dma200 };
+  return `
+    <tr>
+      ${country ? `<td>${escape(ind.country || '')}</td>` : ''}
+      <td>${escape(ind.label)}</td>
+      <td>${escape(ind.category)}</td>
+      ${source ? `<td class="small">${macroSourceCell(ind)}</td>` : ''}
+      <td class="num${ind.calculated ? ' derived' : ''}"${macroPeriodTitle(ind)}>${ind.value == null ? '' : `${fmt(ind.value)} ${escape(ind.unit || '')}`}</td>
+      <td class="num">${pct(ind.changePct)}</td>
+      <td class="num">${pct(ind.oneYearChangePct)}</td>
+      <td class="derived"><span class="${MACRO_DIRECTION_CLASS[ind.direction] || ''}">${escape(ind.direction)}</span></td>
+      <td class="derived"><span class="tag ${MACRO_STATUS_CLASS[ind.status] || 'neutral'}">${escape(ind.status)}</span></td>
+      <td>${ind.asOf ? new Date(ind.asOf).toLocaleString() : ''}</td>
+      <td class="derived">${escape(ind.trend || 'N/A')}</td>
+      <td class="num derived">${dmaCell(ind.value, ind.dma20)}</td>
+      <td class="num derived">${dmaCell(ind.value, ind.dma50)}</td>
+      <td class="num derived">${dmaCell(ind.value, ind.dma100)}</td>
+      <td class="num derived">${dmaCell(ind.value, ind.dma200)}</td>
+      <td class="derived">${dmaAlignmentLabel(asStock)}</td>
+    </tr>`;
+}
+// Shared by every macro-unified-table on the Macro workspace -- same row
+// shape, same lineage. Sort-only (allowReorder:false wherever this is used):
+// every one of these tables has a second colspan group-header row
+// ("Indicator Details"/"Performance"/"Trend Parameters") that a dragged
+// column would visually misalign.
+const MACRO_INDICATOR_SORT = {
+  country: ind => ind.country || null, label: ind => ind.label, category: ind => ind.category || null,
+  source: ind => ind.sourceLabel || ind.source || null, value: ind => ind.value,
+  change: ind => ind.changePct, change1y: ind => ind.oneYearChangePct,
+  direction: ind => ind.direction || null, status: ind => ind.status || null,
+  asOf: ind => ind.asOf ? new Date(ind.asOf).getTime() : null, trend: ind => ind.trend || null,
+  dma20: ind => ind.dma20, dma50: ind => ind.dma50, dma100: ind => ind.dma100, dma200: ind => ind.dma200,
+  dmaAlignment: ind => { const dmas = [ind.dma20, ind.dma50, ind.dma100, ind.dma200]; return Number.isFinite(ind.value) ? dmas.filter(d => Number.isFinite(d) && ind.value > d).length : null; }
+};
+// Renders one macro-unified-table (Indicator Details/Performance/Trend
+// Parameters columns) from a `groups.*` bucket -- one shared helper so every
+// new Macro workspace table (Indian Indices, Commodities, Macro Indicators,
+// US Indices, US Rates, World Asia, World Europe) is wired identically, never
+// a per-table copy-paste of sort/render/initTableLayout calls.
+function renderMacroIndicatorTable(tableId, resetButtonId, rows, { country, source } = {}) {
+  const sorted = sortForTable(tableId, rows || [], MACRO_INDICATOR_SORT);
+  const colspan = 14 + (country ? 1 : 0) + (source ? 1 : 0);
+  $(`#${tableId} tbody`).innerHTML = sorted.length
+    ? sorted.map(ind => macroIndicatorRow(ind, { country, source })).join('') : `<tr><td colspan="${colspan}" class="small">Not available.</td></tr>`;
+  initTableSort(tableId);
+  initTableLayout(tableId, { resetButtonId, allowReorder: false });
+}
+
 function renderMacroIntelligence() {
-  $('#macro-methodology-info-india').innerHTML = infoIcon('macroIndicator');
-  $('#macro-cpi-methodology-info').innerHTML = infoIcon('mospiCpiIndicator');
-  $('#macro-configgated-info').innerHTML = infoIcon('mospiIndicator');
-  $('#macro-methodology-info-us').innerHTML = infoIcon('macroIndicator');
-  $('#macro-trend-methodology-info-india').innerHTML = infoIcon('macroTrend');
-  $('#macro-trend-methodology-info-us').innerHTML = infoIcon('macroTrend');
   if (!macroData) {
     $('#macro-regime').innerHTML = '<p class="small">Not available.</p>';
     $('#macro-data-quality').innerHTML = '';
-    $('#macro-indicators-table-india tbody').innerHTML = '<tr><td colspan="14" class="small">Not available.</td></tr>';
-    $('#macro-indicators-table-us tbody').innerHTML = '<tr><td colspan="14" class="small">Not available.</td></tr>';
-    $('#macro-unavailable-table tbody').innerHTML = '';
     return;
   }
   const regime = macroData.regime || {};
@@ -2347,79 +3097,74 @@ function renderMacroIntelligence() {
 
   const dq = macroData.dataQuality || {};
   $('#macro-data-quality').innerHTML = [
-    card('Live', dq.live ?? 0, 'Fetched within the last 30 minutes', 'positive'),
+    card('Live', dq.live ?? 0, 'Fetched within the last 30 minutes (CPI/IIP: within their own 6-hour cache window)', 'positive'),
     card('Delayed', dq.delayed ?? 0, 'Serving a stale cached reading (fresh fetch failed)', dq.delayed ? 'amber' : ''),
     card('Unavailable', dq.unavailable ?? 0, 'Fetch failed and no cached reading exists', dq.unavailable ? 'amber' : ''),
-    card('Future Integration', dq.futureIntegration ?? 0, 'No data source configured for these indicators', 'neutral'),
-    card('Credentials Required', dq.credentialsRequired ?? 0, 'A real provider exists (MoSPI IIP) but needs your own credential — see Configuration. CPI Inflation no longer needs one.', dq.credentialsRequired ? 'amber' : '')
+    card('Periodic', dq.periodic ?? 0, 'Real, officially-sourced but annual/event-cadence reading with no live feed to refresh from', dq.periodic ? 'amber' : ''),
+    card('Future Integration', dq.futureIntegration ?? 0, 'No data source configured for these indicators', 'neutral')
   ].join('');
-
-  // Unified indicator + trend row (2026-09-08 merge): one row per indicator,
-  // Indicator Details/Performance columns unchanged, Trend Parameters columns
-  // appended on the same <tr> reusing the exact dmaCell()/dmaAlignmentLabel()
-  // helpers the Watchlist Research -> Technicals -> Trend table already uses
-  // for equities (script.js, ~line 1025) -- a macro indicator's `dma20/50/
-  // 100/200`/`price` fields are shaped identically to a stock's `twenty/
-  // fifty/hundred/twoHundred`/`price`, so the same alignment-counting/gap-%
-  // logic applies unchanged via this adapter, not a second implementation.
-  const indicatorRow = ind => {
-    const asStock = { price: ind.value, twenty: ind.dma20, fifty: ind.dma50, hundred: ind.dma100, twoHundred: ind.dma200 };
-    return `
-    <tr>
-      <td>${escape(ind.label)}</td>
-      <td>${escape(ind.category)}</td>
-      <td class="num">${ind.value == null ? '' : `${fmt(ind.value)} ${escape(ind.unit || '')}`}</td>
-      <td class="num">${pct(ind.changePct)}</td>
-      <td class="num">${pct(ind.oneYearChangePct)}</td>
-      <td><span class="${MACRO_DIRECTION_CLASS[ind.direction] || ''}">${escape(ind.direction)}</span></td>
-      <td><span class="tag ${MACRO_STATUS_CLASS[ind.status] || 'neutral'}">${escape(ind.status)}</span></td>
-      <td>${ind.asOf ? new Date(ind.asOf).toLocaleString() : ''}</td>
-      <td>${escape(ind.trend || 'N/A')}</td>
-      <td class="num">${dmaCell(ind.value, ind.dma20)}</td>
-      <td class="num">${dmaCell(ind.value, ind.dma50)}</td>
-      <td class="num">${dmaCell(ind.value, ind.dma100)}</td>
-      <td class="num">${dmaCell(ind.value, ind.dma200)}</td>
-      <td>${dmaAlignmentLabel(asStock)}</td>
-    </tr>`;
-  };
-  const indicators = macroData.indicators || [];
-  const indiaIndicators = indicators.filter(ind => !MACRO_US_KEYS.has(ind.key));
-  const usIndicators = indicators.filter(ind => MACRO_US_KEYS.has(ind.key));
-  $('#macro-indicators-table-india tbody').innerHTML = indiaIndicators.length
-    ? indiaIndicators.map(indicatorRow).join('') : '<tr><td colspan="14" class="small">Not available.</td></tr>';
-  $('#macro-indicators-table-us tbody').innerHTML = usIndicators.length
-    ? usIndicators.map(indicatorRow).join('') : '<tr><td colspan="14" class="small">Not available.</td></tr>';
-
-  $('#macro-unavailable-table tbody').innerHTML = (macroData.unavailable || []).map(ind =>
-    `<tr><td>${escape(ind.label)}</td><td>${escape(ind.category)}</td><td><span class="tag neutral">${escape(ind.status)}</span></td></tr>`
-  ).join('');
-
-  // MoSPI-backed IIP (2026-09-08; CPI moved off this credential-gated table
-  // the same day -- it now renders in the India indicators table above):
-  // period-over-period economic reading, not a priced instrument -- no
-  // changePct/DMA columns, per system.md §3.10.
-  const periodLabel = p => p?.year ? `${escape(String(p.month ?? ''))} ${escape(String(p.year))}`.trim() : '';
-  $('#macro-configgated-table tbody').innerHTML = (macroData.configGated || []).map(ind => `
-    <tr>
-      <td>${escape(ind.label)}</td>
-      <td>${escape(ind.category)}</td>
-      <td class="num">${ind.value == null ? '' : fmt(ind.value)}</td>
-      <td>${periodLabel(ind.period)}</td>
-      <td><span class="tag ${MACRO_STATUS_CLASS[ind.status] || 'neutral'}">${escape(ind.status)}</span></td>
-      <td>${ind.asOf ? new Date(ind.asOf).toLocaleString() : ''}</td>
-      <td><button type="button" class="icon-btn" data-jump-configuration="1">Configure</button></td>
-    </tr>`
-  ).join('') || '<tr><td colspan="7" class="small">Not available.</td></tr>';
 }
-// One-time delegated listeners for the two static jump-to-Configuration
-// affordances above -- the table/anchor elements themselves are static
-// (only their innerHTML is rebuilt by renderMacroIntelligence()), so a
-// single listener bound here survives every re-render, same pattern as
-// #wl-table tbody's own delegated click handler.
-$('#macro-configgated-jump')?.addEventListener('click', (e) => { e.preventDefault(); activateWorkspaceTab('configuration'); });
-$('#macro-configgated-table')?.addEventListener('click', (e) => {
-  if (e.target.closest('button[data-jump-configuration]')) activateWorkspaceTab('configuration');
-});
+
+// Macro workspace (IA redesign, 2026-09-23): India Macro (Indian Indices /
+// Commodities / Macro Indicators tabs) / US Macro / World -- extracted out of
+// Market Intelligence's old macro-india/macro-us sub-tabs into their own
+// top-level sidebar workspace, reading data/watchlist/macro.mjs's
+// buildMacroSnapshot()'s new `groups` bucketing directly (see that file's own
+// comment) instead of the retired client-side MACRO_US_KEYS split. Every
+// table below reuses macroIndicatorRow()/MACRO_INDICATOR_SORT/
+// renderMacroIndicatorTable() -- zero new row-rendering logic per table.
+function renderMacroTab() {
+  $('#macro-methodology-info-india-indices').innerHTML = infoIcon('macroIndicator');
+  $('#macro-trend-methodology-info-india-indices').innerHTML = infoIcon('macroTrend');
+  $('#macro-methodology-info-india-commodities').innerHTML = infoIcon('commodityInrDerived');
+  $('#macro-gold-derived-info').innerHTML = infoIcon('commodityInrDerived');
+  $('#macro-methodology-info-india-currencies').innerHTML = infoIcon('macroIndicator');
+  $('#macro-currency-cross-rate-info').innerHTML = infoIcon('currencyCrossRateInr');
+  $('#macro-cpi-methodology-info').innerHTML = infoIcon('mospiCpiIndicator');
+  $('#macro-iip-methodology-info').innerHTML = infoIcon('mospiIndicator');
+  $('#macro-periodic-methodology-info').innerHTML = infoIcon('periodicMacroIndicator');
+  $('#macro-methodology-info-us-indices').innerHTML = infoIcon('macroIndicator');
+  $('#macro-trend-methodology-info-us-indices').innerHTML = infoIcon('macroTrend');
+  $('#macro-methodology-info-us-rates').innerHTML = infoIcon('macroIndicator');
+  $('#macro-trend-methodology-info-us-rates').innerHTML = infoIcon('macroTrend');
+  $('#macro-methodology-info-us-commodities').innerHTML = infoIcon('macroIndicator');
+  $('#macro-methodology-info-world-asia').innerHTML = infoIcon('macroIndicator');
+  $('#macro-methodology-info-world-europe').innerHTML = infoIcon('macroIndicator');
+
+  const groups = macroData?.groups || {};
+  renderMacroIndicatorTable('macro-indices-india', 'macro-indices-india-reset-columns', groups.indiaIndices);
+  renderMacroIndicatorTable('macro-commodities-india', 'macro-commodities-india-reset-columns', groups.indiaCommodities);
+  renderMacroIndicatorTable('macro-currencies-india', 'macro-currencies-india-reset-columns', groups.currencies);
+  renderMacroIndicatorTable('macro-indicators-india', 'macro-indicators-india-reset-columns', groups.indiaMacroIndicators, { source: true });
+  renderMacroIndicatorTable('macro-indices-us', 'macro-indices-us-reset-columns', groups.usIndices);
+  renderMacroIndicatorTable('macro-rates-us', 'macro-rates-us-reset-columns', groups.usRates);
+  renderMacroIndicatorTable('macro-commodities-us', 'macro-commodities-us-reset-columns', groups.usCommodities);
+  renderMacroIndicatorTable('macro-world-asia', 'macro-world-asia-reset-columns', groups.worldAsia, { country: true });
+  renderMacroIndicatorTable('macro-world-europe', 'macro-world-europe-reset-columns', groups.worldEurope, { country: true });
+
+  // Periodic/Policy tab (2026-09-23 one-table-per-tab fix): the annual/event-
+  // cadence readings (macroData.periodic, e.g. Union Defence Budget) and the
+  // indicators with no data source at all (macroData.unavailable, "Future
+  // Integration") are two statuses of the same underlying concept -- a macro
+  // indicator with no live feed -- and share the same Indicator/Category/
+  // Status columns, so they render as one merged table instead of two
+  // separately-stacked tables in the same tab. An unavailable row simply has
+  // no Value/Period/As of/Source, which the missing-data blank convention
+  // (CLAUDE.md/system.md 2.6) already renders as an empty cell, not a guess.
+  const MACRO_PERIODIC_SORT = {
+    label: ind => ind.label, category: ind => ind.category || null, value: ind => ind.value,
+    period: ind => ind.period || null, status: ind => ind.status || null,
+    asOf: ind => ind.asOfDate ? new Date(ind.asOfDate).getTime() : null, source: ind => ind.sourceLabel || ind.source || null
+  };
+  const periodicRows = [...(macroData?.periodic || []), ...(macroData?.unavailable || [])];
+  const periodic = sortForTable('macro-periodic-table', periodicRows, MACRO_PERIODIC_SORT);
+  $('#macro-periodic-table tbody').innerHTML = periodic.map(ind => {
+    const statusTitle = ind.statusNote ? ` title="${escape(ind.statusNote)}"` : '';
+    return `<tr><td>${escape(ind.label)}</td><td>${escape(ind.category)}</td><td class="num">${ind.value == null ? '' : `${fmt(ind.value)} ${escape(ind.unit || '')}`}</td><td>${escape(ind.period || '')}</td><td class="derived"><span class="tag ${MACRO_STATUS_CLASS[ind.status] || 'neutral'}"${statusTitle}>${escape(ind.status)}</span></td><td>${ind.asOfDate ? new Date(ind.asOfDate).toLocaleDateString() : ''}</td><td class="small">${macroSourceCell(ind)}</td></tr>`;
+  }).join('');
+  initTableSort('macro-periodic-table');
+  initTableLayout('macro-periodic-table', { resetButtonId: 'macro-periodic-table-reset-columns' });
+}
 
 // ---- Configuration -> Integrations (2026-09-08): this app's first
 // credentialed external source (data/integrations/, GET /api/integrations).
@@ -2457,14 +3202,14 @@ function integrationCard(integ) {
     <p class="small">${escape(integ.providerDescription)}</p>
 
     <h4 style="margin:14px 0 6px">Public data <span class="tag buy">No credentials required</span></h4>
-    <p class="small">Works automatically, with zero MoSPI account or token &mdash; MoSPI's own CPI API User Manual documents unauthenticated access as intentional platform behavior ("without access token the APIs will fetch only the first 10 records"), not a workaround this app relies on. See the India Macro tab for the live value.</p>
+    <p class="small">Both datasets work automatically, with zero MoSPI account or token. CPI: MoSPI's own CPI API User Manual documents unauthenticated access as intentional platform behavior ("without access token the APIs will fetch only the first 10 records"). IIP: no dedicated manual exists, so this was independently live-tested (2026-09-09) rather than assumed from CPI's own case &mdash; it showed the exact same platform behavior. See the India Macro tab for the live values.</p>
     <table class="tech-table">
       <thead><tr><th>Dataset</th><th>Last successful fetch</th><th>Cached value available</th></tr></thead>
       <tbody>${publicDatasets.map(datasetRow).join('') || '<tr><td colspan="3" class="small">None.</td></tr>'}</tbody>
     </table>
 
     <h4 style="margin:18px 0 6px">Credential-gated data</h4>
-    <p class="small">The status badge above and the "Connection status"/Account/Token sections below describe this credentialed path only (currently: IIP) &mdash; they do not gate or affect the public CPI data above in any way.</p>
+    <p class="small">No MoSPI dataset in this app currently requires a credential &mdash; CPI and IIP are both public (above). The status badge above and the "Connection status"/Account/Token sections below describe this credentialed path only, kept as working infrastructure for any future MoSPI dataset that turns out to genuinely need one &mdash; they do not gate or affect the public data above in any way.</p>
     <table class="tech-table">
       <thead><tr><th>Dataset</th><th>Last successful fetch</th><th>Cached value available</th></tr></thead>
       <tbody>${credentialedDatasets.map(datasetRow).join('') || '<tr><td colspan="3" class="small">None.</td></tr>'}</tbody>
@@ -2478,10 +3223,12 @@ function integrationCard(integ) {
         <tr><td>Token</td><td>${integ.tokenPreview ? escape(integ.tokenPreview) : '—'}</td></tr>
         <tr><td>Token expires</td><td>${fmtDateTime(integ.tokenExpiresAt)}</td></tr>
         <tr><td>Last verified</td><td>${fmtDateTime(integ.lastVerifiedAt)}</td></tr>
+        <tr><td>TLS mode (CPI/IIP fetch)</td><td>${integ.tlsMode === 'legacy-renegotiation' ? 'Legacy compatibility (renegotiation enabled)' : 'Standard (secure)'}</td></tr>
         ${integ.lastError ? `<tr><td>Last error</td><td class="small">${escape(integ.lastError)}</td></tr>` : ''}
       </tbody>
     </table>
-    <p class="small">MoSPI's own manuals document a 15-minute access-token lifetime with no refresh-token mechanism &mdash; this app never stores your MoSPI password to auto-renew it, so sustained Live data needs you to reconnect periodically rather than staying connected indefinitely. "Connected" above is only ever set by a real successful dataset fetch, never by saving a token alone. This entire Account/Token workflow is optional unless you want IIP too &mdash; CPI Inflation never needs it.</p>
+    <p class="small">MoSPI's own manuals document a 15-minute access-token lifetime with no refresh-token mechanism &mdash; this app never stores your MoSPI password to auto-renew it. "Connected" above is only ever set by a real successful dataset fetch, never by saving a token alone. This entire Account/Token workflow is currently optional for every dataset this app uses &mdash; CPI Inflation and IIP are both public and never need it; it exists only for a possible future credentialed MoSPI dataset.</p>
+    <p class="small">TLS mode is set via the <code>MOSPI_TLS_MODE</code> environment variable (<code>standard</code>, the secure default, or <code>legacy-renegotiation</code>, a temporary compatibility exception for MoSPI's current server defect) and applies only to the public CPI/IIP fetches above &mdash; it never weakens TLS for Sign in/Register, which always use standard TLS regardless of this setting. Switching back to <code>standard</code> once MoSPI fixes its server needs a configuration change only, no code change.</p>
     <p class="small" data-integration-message></p>
 
     <h4 style="margin:18px 0 6px">Account</h4>
@@ -2752,18 +3499,19 @@ function renderSectorIntelligence() {
   $('#sector-intel-table tbody').innerHTML = sortedSectors.length ? sortedSectors.map(s => `
     <tr>
       <td>${escape(s.sector)}</td>
-      <td class="num">${s.companyCount}</td>
-      <td class="num">${s.avgCompositeScore == null ? '' : `${s.avgCompositeScore}/100`}</td>
-      <td class="num">${s.avgValuationScore == null ? '' : `${s.avgValuationScore}/100`}</td>
-      <td class="num">${s.avgTechnicalScore == null ? '' : `${s.avgTechnicalScore}/100`}</td>
-      <td class="num">${s.avgRiskScore == null ? '' : `${s.avgRiskScore}/100`}</td>
-      <td class="num">${pct(s.avgRelativeStrengthPct)}</td>
-      <td class="num">${pct(s.avgEpsCagr5yPct)}</td>
-      <td class="num">${s.regulatorySensitivity ?? ''}${s.sectorTagsMatched ? '' : ' <span class="small">(baseline)</span>'}</td>
-      <td class="num">${s.commoditySensitivity ?? ''}</td>
+      <td class="num derived">${s.companyCount}</td>
+      <td class="num derived">${s.avgCompositeScore == null ? '' : `${s.avgCompositeScore}/100`}</td>
+      <td class="num derived">${s.avgValuationScore == null ? '' : `${s.avgValuationScore}/100`}</td>
+      <td class="num derived">${s.avgTechnicalScore == null ? '' : `${s.avgTechnicalScore}/100`}</td>
+      <td class="num derived">${s.avgRiskScore == null ? '' : `${s.avgRiskScore}/100`}</td>
+      <td class="num derived">${pct(s.avgRelativeStrengthPct)}</td>
+      <td class="num derived">${pct(s.avgEpsCagr5yPct)}</td>
+      <td class="num derived">${s.regulatorySensitivity ?? ''}${s.sectorTagsMatched ? '' : ' <span class="small">(baseline)</span>'}</td>
+      <td class="num derived">${s.commoditySensitivity ?? ''}</td>
       <td>${Object.entries(s.ratingCounts || {}).map(([r, n]) => `<span class="tag ${tagClass(r)}">${escape(r)} ${n}</span>`).join(' ')}</td>
     </tr>`).join('') : '<tr><td colspan="11" class="small">No companies in any saved watchlist yet.</td></tr>';
   initTableSort('sector-intel-table');
+  initTableLayout('sector-intel-table', { resetButtonId: 'sector-intel-table-reset-columns' });
 
   const covered = (label) => sectors.some(s => PRIORITY_SECTOR_PATTERNS.find(p => p.label === label)?.pattern.test(s.sector));
   const gaps = PRIORITY_SECTOR_PATTERNS.map(p => p.label).filter(label => !covered(label));
@@ -2855,9 +3603,10 @@ function render(data) {
     const downside200 = downside200Of(stock);
     const downsideLow = downsideLowOf(stock);
     const thesis = thesisBySymbol[stock.symbol];
-    return `<tr data-symbol="${escape(stock.symbol)}">${prefixCells(stock)}<td>${suffixed(m.interestCoverage, 'x')}</td><td>${scoreText(c.financial, true)}</td><td>${scoreText(c.business, true)}</td><td>${scoreText(c.market, true)}</td><td>${scoreText(c.sector, true)}</td><td>${scoreText(c.governance, true)}</td><td>${pct(downside200)}</td><td>${pct(downsideLow)}</td><td><span class="tag ${r.compositeRiskScore > 65 ? 'hold' : 'buy'}">${fmt(r.compositeRiskScore)}/100</span></td><td>${escape(r.riskTrend || '')}</td><td>${thesis ? `<span class="tag ${thesis.status === 'Broken' ? 'sell' : thesis.status === 'Weakening' ? 'reduce' : thesis.status === 'Improving' ? 'buy' : 'hold'}">${escape(thesis.status)}</span>` : ''}</td></tr>`;
+    return `<tr data-symbol="${escape(stock.symbol)}">${prefixCells(stock)}<td class="derived">${suffixed(m.interestCoverage, 'x')}</td><td class="derived">${scoreText(c.financial, true)}</td><td class="derived">${scoreText(c.business, true)}</td><td class="derived">${scoreText(c.market, true)}</td><td class="derived">${scoreText(c.sector, true)}</td><td class="derived">${scoreText(c.governance, true)}</td><td class="derived">${pct(downside200)}</td><td class="derived">${pct(downsideLow)}</td><td class="derived"><span class="tag ${r.compositeRiskScore > 65 ? 'hold' : 'buy'}">${fmt(r.compositeRiskScore)}/100</span></td><td class="derived">${escape(r.riskTrend || '')}</td><td class="derived">${thesis ? `<span class="tag ${thesis.status === 'Broken' ? 'sell' : thesis.status === 'Weakening' ? 'reduce' : thesis.status === 'Improving' ? 'buy' : 'hold'}">${escape(thesis.status)}</span>` : ''}</td></tr>`;
   }).join('') : '<tr><td colspan="15" class="small">This watchlist is empty.</td></tr>';
   initTableSort('risk-table');
+  initTableLayout('risk-table', { resetButtonId: 'risk-table-reset-columns' });
   renderRiskDetail(data);
   $('#risk-summary').textContent = eligible.length ? `The composite risk score for ${data.watchlistName} blends Financial, Business, Market, Sector and Governance risk for each company, shown above alongside two price-based downside scenarios (reversion to the 200-day average and to the 52-week low). Sector risk is a static, disclosed qualitative lookup, not a live feed; several Business/Governance sub-items have no data source and are not estimated -- see the deep-dive panel below. These are comparative screening indicators, not predictions.` : 'Risk analysis will appear once the watchlist has companies.';
   renderAlerts(data);
@@ -2872,6 +3621,7 @@ function render(data) {
   // lighter fetch than a watchlist's research payload and often wins the
   // race). This just re-applies already-fetched macroData to the DOM.
   renderMacroIntelligence();
+  renderMacroTab();
   renderSectorIntelligence();
 
   renderWatchlistsTab(data);
@@ -3055,22 +3805,22 @@ function renderWlTable(data) {
       <td>${escape(stock.sector || '')}</td>
       <td class="num">${fmt(stock.price)}</td>
       <td class="num">${fmt(stock.pe)}</td>
-      <td>${stock.unresolved ? '' : signalTag(stock)}</td>
-      <td>${escape(stock.recommendation?.confidence || '')}</td>
+      <td class="derived">${stock.unresolved ? '' : signalTag(stock)}</td>
+      <td class="derived">${escape(stock.recommendation?.confidence || '')}</td>
       <td class="num"><input type="number" class="weight-input" min="0" max="100" step="1" placeholder="Equal" value="${stock.targetWeightPct ?? ''}" data-symbol="${escape(stock.symbol)}" title="Target allocation weight % (blank = equal-weight share of the remainder)"></td>
       <td class="num">${stock.marketCap == null ? '' : `${compact(stock.marketCap)} ${escape(stock.marketCapUnit || '')}`}</td>
       <td class="num">${pct(stock.roe)}</td>
       <td class="num">${pct(stock.roce)}</td>
-      <td class="num">${pct(stock.metrics?.revenueCagr3y)}</td>
-      <td class="num">${scoreText(stock.institutionalRisk?.compositeRiskScore, true)}</td>
+      <td class="num derived">${pct(stock.metrics?.revenueCagr3y)}</td>
+      <td class="num derived">${scoreText(stock.institutionalRisk?.compositeRiskScore, true)}</td>
       <td>${escape(wlLastUpdatedText(stock))}</td>
-      <td class="num" title="${escape(actionScoreTitle(action))}">${action ? `${action.score}/100` : ''}</td>
-      <td>${actionScoreBadge(action)}</td>
-      <td class="num">${fairValueGapCell(stock)}</td>
-      <td>${escape(stock.institutionalRisk?.riskTrend || '')}</td>
-      <td>${escape(stock.technicalScorecard?.regime || '')}</td>
-      <td class="num">${alertCount}</td>
-      <td>${escape(lastChangeLabel)}</td>
+      <td class="num derived" title="${escape(actionScoreTitle(action))}">${action ? `${action.score}/100` : ''}</td>
+      <td class="derived">${actionScoreBadge(action)}</td>
+      <td class="num derived">${fairValueGapCell(stock)}</td>
+      <td class="derived">${escape(stock.institutionalRisk?.riskTrend || '')}</td>
+      <td class="derived">${escape(stock.technicalScorecard?.regime || '')}</td>
+      <td class="num derived">${alertCount}</td>
+      <td class="derived">${escape(lastChangeLabel)}</td>
       <td class="wl-notes-cell"><input type="text" class="wl-notes-input" placeholder="Add note" value="${escape(stock.notes || '')}" data-symbol="${escape(stock.symbol)}"></td>
       <td class="company-row-actions">
         <button type="button" class="icon-btn" data-action="refresh-one" data-symbol="${escape(stock.symbol)}" title="Refresh this company">&#8635;</button>
@@ -3084,6 +3834,13 @@ function renderWlTable(data) {
   $('#wl-select-all').checked = stocks.length > 0 && stocks.every(s => wlSelected.has(s.symbol));
   $('#wl-bulk-bar').hidden = wlSelected.size === 0;
   $('#wl-bulk-count').textContent = `${wlSelected.size} selected`;
+  // Resize/reorder/persist/reset only -- this table's own bespoke sort
+  // (wlSortColumn/wlSortDir, above) stays exactly as-is; the generic engine
+  // only touches <th data-sort> DOM/width/order state, so it layers on
+  // safely regardless of which mechanism drives row order. The leading
+  // checkbox column and trailing Notes/Actions columns have no `data-sort`,
+  // so they're naturally excluded and stay pinned at their current ends.
+  initTableLayout('wl-table', { resetButtonId: 'wl-table-reset-columns' });
 }
 function renderWatchlistsTab(data) {
   if (data.watchlistId !== wlLastWatchlistId) {
@@ -3103,6 +3860,7 @@ function renderWatchlistsTab(data) {
   renderWlSummary(data);
   renderWlFilterOptions(data);
   renderWlTable(data);
+  renderWlCustomTable(data);
 }
 
 async function switchWatchlist(id) {

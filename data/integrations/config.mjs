@@ -76,3 +76,39 @@ export const MOSPI = {
 };
 
 export const CREDENTIAL_STORE_PATH = 'data/config/mospi.local.json';
+
+// ---- Configurable TLS mode (2026-09-24 task) ----
+//
+// MOSPI's own server requires legacy TLS renegotiation
+// (ERR_SSL_UNSAFE_LEGACY_RENEGOTIATION_DISABLED under Node's default,
+// standard TLS stack -- see mospiClient.mjs's describeNetworkError()) to
+// reach its public CPI/IIP endpoints at all. This is a defect on MoSPI's own
+// server (also present in the official nso-india reference client, which
+// works around it the same way -- config.mjs's top comment), not something
+// this app can fix. Rather than hard-coding that workaround permanently, the
+// TLS posture for those two calls is a runtime setting so it can be flipped
+// back the moment MoSPI's server is fixed, with no code change:
+//
+//   MOSPI_TLS_MODE=standard              (default, secure -- normal Node TLS)
+//   MOSPI_TLS_MODE=legacy-renegotiation  (explicit opt-in compatibility mode)
+//
+// STANDARD is the default specifically so this app never silently weakens
+// TLS -- an operator who does nothing gets full, unweakened security, and
+// today's live MoSPI CPI/IIP calls simply fail with a clear "Provider
+// Unavailable" reason (describeNetworkError()) until they opt in.
+//
+// Scope: this setting affects ONLY fetchCpiPublic()/fetchIipPublic() in
+// mospiClient.mjs (via requestPublic()'s resolvePublicAgent()) -- the two
+// calls that were already using the narrowly-scoped legacyRenegotiationAgent
+// before this setting existed. It has zero effect on login/signup/
+// fetchCpiIndex() (mospiClient.mjs's request(), built on plain global
+// `fetch`), which never use this agent regardless of MOSPI_TLS_MODE --
+// those carry a real account password and the 2026-09-24 decision was to
+// keep them on standard TLS unconditionally rather than let this setting
+// (built for two public, passwordless endpoints) also govern a
+// password-carrying one. It also has zero effect on any other HTTPS call in
+// this app (Yahoo/Screener.in/News/MoSPI-unrelated) -- those never import
+// this agent at all.
+const VALID_TLS_MODES = ['standard', 'legacy-renegotiation'];
+const rawTlsMode = String(process.env.MOSPI_TLS_MODE || 'standard').trim().toLowerCase();
+export const MOSPI_TLS_MODE = VALID_TLS_MODES.includes(rawTlsMode) ? rawTlsMode : 'standard';

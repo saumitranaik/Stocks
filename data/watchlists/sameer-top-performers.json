@@ -1,0 +1,54 @@
+{
+  "id": "sameer-top-performers",
+  "name": "Sameer Top Performers",
+  "createdAt": "2026-09-26T09:53:32.360Z",
+  "updatedAt": "2026-09-27T03:24:27.749Z",
+  "companies": [
+    {
+      "symbol": "JYOTICNC.NS",
+      "name": "Jyoti CNC Automation Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Industrial Products",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-26T09:53:48.951Z"
+    },
+    {
+      "symbol": "NEULANDLAB.NS",
+      "name": "Neuland Laboratories Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Healthcare",
+      "industry": "Pharmaceuticals",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-26T09:54:41.101Z"
+    },
+    {
+      "symbol": "GRAPHITE.NS",
+      "name": "Graphite India Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Electrodes & Refractories",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-26T09:54:56.495Z"
+    },
+    {
+      "symbol": "SHANKESH.NS",
+      "name": "Shankesh Jewellers Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Durables",
+      "industry": "Gems, Jewellery And Watches",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-26T10:53:50.928Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}

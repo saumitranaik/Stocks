@@ -48,11 +48,15 @@ const routes = [
   { method: 'GET', pattern: /^\/api\/macro$/, handler: async (req, res) => send(res, 200, await buildMacroSnapshot()) },
   // Configuration → Integrations (2026-09-08): this app's first credentialed
   // external source (data/integrations/, see config.mjs's top comment for
-  // why). CPI (a same-day follow-on task) turned out to work unauthenticated
-  // and no longer touches this credential lifecycle at all -- see
-  // data/integrations/mospiProvider.mjs's getCpiPublicSnapshot(), reached via
-  // GET /api/macro above, not any route below. IIP remains credentialed;
-  // these routes describe its lifecycle only. Route handlers below
+  // why). Both datasets this app consumes ended up not needing it: CPI
+  // (2026-09-08 follow-on) and IIP (2026-09-09, an independent investigation
+  // that did not assume IIP would behave like CPI) each turned out to work
+  // fully unauthenticated -- see data/integrations/mospiProvider.mjs's
+  // getCpiPublicSnapshot()/getIipPublicSnapshot(), both reached via GET
+  // /api/macro above, not any route below. The routes below describe the
+  // credential lifecycle only, kept as working infrastructure for any future
+  // MoSPI dataset that genuinely requires one -- currently unpopulated (see
+  // mospiProvider.mjs's CREDENTIALED_DATASETS). Route handlers below
   // deliberately never log req bodies -- every one of them can carry a MoSPI
   // account password, which must never reach this process's logs (the
   // credential itself is never persisted by this app either; see

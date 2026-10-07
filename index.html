@@ -16,6 +16,7 @@
       <button type="button" class="sidebar-item" data-tab="watchlists" title="Watchlists"><span class="sidebar-mono">Wl</span><span class="sidebar-label">Watchlists</span></button>
       <button type="button" class="sidebar-item" data-tab="company-research" title="Company Research — one company at a time"><span class="sidebar-mono">Cr</span><span class="sidebar-label">Company Research</span></button>
       <button type="button" class="sidebar-item" data-tab="watchlist-research" title="Watchlist Research — compare every company in the active watchlist"><span class="sidebar-mono">Wr</span><span class="sidebar-label">Watchlist Research</span></button>
+      <button type="button" class="sidebar-item" data-tab="macro" title="Macro — India, US and World market &amp; economic context"><span class="sidebar-mono">Ma</span><span class="sidebar-label">Macro</span></button>
       <button type="button" class="sidebar-item" data-tab="portfolio" title="Portfolio Analysis"><span class="sidebar-mono">Po</span><span class="sidebar-label">Portfolio Analysis</span></button>
       <button type="button" class="sidebar-item" data-tab="reports" title="Reports"><span class="sidebar-mono">Rp</span><span class="sidebar-label">Reports</span></button>
       <button type="button" class="sidebar-item" data-tab="market-intelligence" title="Market Intelligence"><span class="sidebar-mono">Mi</span><span class="sidebar-label">Market Intelligence</span></button>
@@ -77,6 +78,12 @@
 
     <div id="wl-limits-banner" class="notice amber" hidden>Recommended portfolio size is 20 companies. Larger portfolios may reduce analytical focus and refresh performance.</div>
 
+    <nav class="subtabs" role="tablist" aria-label="Watchlists sections">
+      <button type="button" role="tab" data-subtab="wl-all">All companies</button>
+      <button type="button" role="tab" data-subtab="wl-custom">Custom</button>
+    </nav>
+
+    <div class="subsection" data-subtab="wl-all" role="tabpanel">
     <article class="card">
       <h3>Portfolio summary</h3>
       <div class="grid four" id="wl-summary"></div>
@@ -113,6 +120,7 @@
           <input id="wl-search" placeholder="Search company or ticker" aria-label="Search companies">
           <select id="wl-filter-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
           <select id="wl-filter-recommendation" aria-label="Filter by recommendation"><option value="">All recommendations</option></select>
+          <button type="button" id="wl-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button>
         </div>
       </div>
       <div class="pill-row" id="wl-intel-filters">
@@ -136,30 +144,67 @@
           <thead>
             <tr>
               <th><input type="checkbox" id="wl-select-all" aria-label="Select all companies"></th>
-              <th data-sort="name">Company</th>
-              <th data-sort="sector">Sector</th>
-              <th class="num" data-sort="price">CMP (Rs.)</th>
-              <th class="num" data-sort="pe">P/E</th>
-              <th data-sort="signal">Recommendation</th>
-              <th data-sort="confidence">Confidence</th>
-              <th class="num" data-sort="weight">Weight %</th>
-              <th class="num" data-sort="marketCap">Market Cap</th>
-              <th class="num" data-sort="roe">ROE</th>
-              <th class="num" data-sort="roce">ROCE</th>
-              <th class="num" data-sort="growth">Growth</th>
-              <th class="num" data-sort="risk">Risk</th>
-              <th data-sort="updated">Last Updated</th>
-              <th class="num" data-sort="actionScore">Action Score</th>
-              <th data-sort="action">Action</th>
-              <th class="num" data-sort="fvGap">Fair Value Gap</th>
-              <th data-sort="riskTrend">Risk Trend</th>
-              <th data-sort="techTrend">Technical Trend</th>
-              <th class="num" data-sort="alertCount">Alerts</th>
-              <th data-sort="lastChange">Last Change</th>
+              <th data-sort="name">Company<span class="col-resize-handle"></span></th>
+              <th data-sort="sector">Sector<span class="col-resize-handle"></span></th>
+              <th class="num" data-sort="price">CMP (Rs.)<span class="col-resize-handle"></span></th>
+              <th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th>
+              <th class="col-derived" data-sort="signal">Recommendation<span class="col-resize-handle"></span></th>
+              <th class="col-derived" data-sort="confidence">Confidence<span class="col-resize-handle"></span></th>
+              <th class="num" data-sort="weight">Weight %<span class="col-resize-handle"></span></th>
+              <th class="num" data-sort="marketCap">Market Cap<span class="col-resize-handle"></span></th>
+              <th class="num" data-sort="roe">ROE<span class="col-resize-handle"></span></th>
+              <th class="num" data-sort="roce">ROCE<span class="col-resize-handle"></span></th>
+              <th class="num col-derived" data-sort="growth">Growth<span class="col-resize-handle"></span></th>
+              <th class="num col-derived" data-sort="risk">Risk<span class="col-resize-handle"></span></th>
+              <th data-sort="updated">Last Updated<span class="col-resize-handle"></span></th>
+              <th class="num col-derived" data-sort="actionScore">Action Score<span class="col-resize-handle"></span></th>
+              <th class="col-derived" data-sort="action">Action<span class="col-resize-handle"></span></th>
+              <th class="num col-derived" data-sort="fvGap">Fair Value Gap<span class="col-resize-handle"></span></th>
+              <th class="col-derived" data-sort="riskTrend">Risk Trend<span class="col-resize-handle"></span></th>
+              <th class="col-derived" data-sort="techTrend">Technical Trend<span class="col-resize-handle"></span></th>
+              <th class="num col-derived" data-sort="alertCount">Alerts<span class="col-resize-handle"></span></th>
+              <th class="col-derived" data-sort="lastChange">Last Change<span class="col-resize-handle"></span></th>
               <th>Notes</th>
               <th>Actions</th>
             </tr>
           </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+    </div>
+    </div>
+
+    <div class="subsection" data-subtab="wl-custom" role="tabpanel">
+    <article class="card card-table-fill">
+      <div class="columns-toolbar">
+        <h3>Custom watchlist view</h3>
+        <div class="columns-toolbar-controls">
+          <div class="columns-menu">
+            <button type="button" id="wl-custom-columns-btn" class="icon-btn columns-btn" aria-haspopup="true" aria-expanded="false">Columns <span id="wl-custom-columns-count"></span></button>
+            <div id="wl-custom-columns-popover" class="columns-popover" hidden>
+              <div class="columns-popover-head">
+                <span>Columns</span>
+                <span id="wl-custom-columns-count-popover" class="small"></span>
+              </div>
+              <p class="small columns-locked-note">Company, Sector, CMP and P/E are always shown.</p>
+              <input type="search" id="wl-custom-columns-search" class="columns-search" placeholder="Search columns..." aria-label="Search columns" autocomplete="off">
+              <div id="wl-custom-field-selector" class="columns-list"></div>
+              <div class="columns-popover-actions">
+                <button type="button" id="wl-custom-select-all" class="icon-btn">Select all</button>
+                <button type="button" id="wl-custom-clear-all" class="icon-btn">Clear all</button>
+              </div>
+            </div>
+          </div>
+          <button type="button" id="wl-custom-reset-columns" class="icon-btn" title="Restore the default visible columns, order and widths for this table">Reset layout</button>
+          <span class="info-icon" tabindex="0">&#9432;<span class="info-popover">Select columns to display. Drag table headers to reorder (or focus a header and press Alt+&larr;/&rarr;). Drag column edges to resize. Click a header to sort. Same companies, search, filters and monitoring pills as the All companies tab.</span></span>
+        </div>
+        <span id="wl-custom-columns-total" class="small"></span>
+      </div>
+      <p class="small">EBITDA margin and Operating margin show the same reported figure — Screener.in doesn't expose a separate line to distinguish them (see Watchlist Research → Fundamentals → Profitability for the same disclosed limitation).</p>
+      <div class="scroll">
+        <table id="wl-custom-table" class="tech-table sticky-thead-native">
+          <thead></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -179,7 +224,7 @@
       <button type="button" role="tab" data-subtab="watchlist-snapshot">Watchlist snapshot</button>
       <button type="button" role="tab" data-subtab="key-risks">Key risks</button>
     </nav>
-    <p class="small">Full Macro Intelligence, Sector Intelligence, Earnings &amp; Events and News &amp; Catalysts detail moved to the <b>Market Intelligence</b> workspace &mdash; Morning Briefing below still gives the condensed daily version of each.</p>
+    <p class="small">Full India/US/World Macro detail moved to the <b>Macro</b> workspace; Sector Intelligence, Earnings &amp; Events and News &amp; Catalysts detail moved to the <b>Market Intelligence</b> workspace &mdash; Morning Briefing below still gives the condensed daily version of each.</p>
 
     <div class="subsection" data-subtab="morning-briefing" role="tabpanel">
       <p class="small">A daily roll-up over data already computed elsewhere on this page &mdash; nothing here is calculated independently. Set as the default Dashboard view.</p>
@@ -248,10 +293,11 @@
             <option value="quality">Sort: Quality</option>
             <option value="technical">Sort: Technical strength</option>
           </select>
+          <button type="button" id="opportunities-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button>
         </div>
         <div class="scroll">
           <table id="opportunities-table">
-            <thead><tr><th>Company</th><th>Sector</th><th>CMP</th><th>Recommendation</th><th>Upside %</th><th>Confidence</th><th>Primary driver</th></tr></thead>
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="recommendation">Recommendation<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="upside">Upside %<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="confidence">Confidence<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="driver">Primary driver<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -285,10 +331,10 @@
       <div class="grid four" id="pi-kpis"></div>
       <div class="scroll-body">
       <article class="card">
-        <h3>Action Required</h3>
+        <h3>Action Required <button type="button" id="pi-action-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3>
         <div class="scroll">
           <table id="pi-action-table" class="tech-table thead-sticky-1">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th data-sort="action">Action</th><th class="num" data-sort="actionScore">Action Score</th><th data-sort="confidence">Confidence</th><th data-sort="driver">Primary driver</th><th class="num" data-sort="fvGap">Fair value gap</th><th data-sort="riskTrend">Risk trend</th></tr></thead>
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="action">Action<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="actionScore">Action Score<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="confidence">Confidence<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="driver">Primary driver<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="fvGap">Fair value gap<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="riskTrend">Risk trend<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -442,20 +488,23 @@
       <article class="card card-table-fill">
         <div class="section-head">
           <h3>Screening matrix</h3>
-          <select id="wr-ranking-sort" aria-label="Rank by">
-            <option value="recommendation">Rank by: Overall (recommendation)</option>
-            <option value="upside">Rank by: Upside</option>
-            <option value="conviction">Rank by: Confidence</option>
-            <option value="valuation">Rank by: Valuation</option>
-            <option value="growth">Rank by: Growth</option>
-            <option value="quality">Rank by: Quality</option>
-            <option value="technical">Rank by: Technical strength</option>
-          </select>
+          <div style="display:flex;gap:10px;align-items:center">
+            <select id="wr-ranking-sort" aria-label="Rank by">
+              <option value="recommendation">Rank by: Overall (recommendation)</option>
+              <option value="upside">Rank by: Upside</option>
+              <option value="conviction">Rank by: Confidence</option>
+              <option value="valuation">Rank by: Valuation</option>
+              <option value="growth">Rank by: Growth</option>
+              <option value="quality">Rank by: Quality</option>
+              <option value="technical">Rank by: Technical strength</option>
+            </select>
+            <button type="button" id="wr-overview-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button>
+          </div>
         </div>
-        <p class="small">Headline recommendation, valuation, technical and risk read per company &mdash; every figure below is already computed elsewhere on this page; nothing here is a new calculation. Reorder with <b>Rank by</b>, off the same unified recommendation engine every other table on this page reads. For roster management (add/remove/rename/reorder/weights) and the full monitoring table with every filter, use <b>Watchlists</b>.</p>
+        <p class="small">Headline recommendation, valuation, technical and risk read per company &mdash; every figure below is already computed elsewhere on this page; nothing here is a new calculation. Reorder with <b>Rank by</b>, off the same unified recommendation engine every other table on this page reads. For roster management (add/remove/rename/reorder/weights) and the full monitoring table with every filter, use <b>Watchlists</b>. Columns with a &#9670; header are derived/calculated, not fetched directly &mdash; drag a header to rearrange columns (or focus it and press Alt+&larr;/&rarr;), drag its right edge to resize, click to sort, and use <b>Reset columns</b> to restore the default layout; all three persist in this browser.</p>
         <div class="scroll">
           <table id="wr-overview-table" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="change">Change</th><th data-sort="recommendation">Recommendation</th><th title="The recommendation bucket furthest from neutral -- the main driver behind the rating" data-sort="driver">Primary driver</th><th data-sort="confidence">Confidence</th><th class="num" data-sort="composite">Composite score</th><th class="num" title="Upside to the in-house Target Price" data-sort="upside">Upside %</th><th title="Rule-based label combining ADX trend strength, multi-timeframe alignment and volatility" data-sort="regime">Regime</th><th class="num" title="0-100, higher = higher risk" data-sort="riskScore">Risk score</th><th title="Portfolio Action Score band, from data/decision/actionScore.mjs -- blends Recommendation with portfolio fit (weight drift, sector concentration, correlation), so it can differ from Recommendation" data-sort="action">Action</th><th class="num" title="Weighted average of business/financial-strength/profitability/growth/cash-flow/balance-sheet/management/industry-position factors -- measures the underlying business, independent of price" data-sort="companyQuality">Company Quality</th><th class="num" title="Weighted average of valuation/risk-profile/technical-trend/momentum-volume factors -- measures whether today's price/setup is attractive, independent of business quality" data-sort="stockAttractiveness">Stock Attractiveness</th><th title="Quality+Valuation+Risk buckets only, no Technical -- so a weak chart can never masquerade as a business-quality read" data-sort="fundamentalView">Fundamental View</th><th title="The Technical bucket plus the technical regime label" data-sort="marketView">Market View</th><th class="num" title="Institutional 6-factor framework (Value/Quality/Growth/Momentum/Risk/Size), sector-relative percentile blend. A distinct signal from Recommendation -- never overrides it" data-sort="factorScore">Factor score</th></tr></thead>
+            <thead><tr><th data-sort="company" style="width:200px">Company<span class="col-resize-handle"></span></th><th data-sort="sector" style="width:130px">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp" style="width:90px">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe" style="width:70px">P/E<span class="col-resize-handle"></span></th><th class="num" data-sort="change" style="width:90px">Change<span class="col-resize-handle"></span></th><th class="col-derived" title="Derived: calculated by the app, not fetched directly." data-sort="recommendation" style="width:140px">Recommendation<span class="col-resize-handle"></span></th><th class="col-derived" title="The recommendation bucket furthest from neutral -- the main driver behind the rating. Derived: calculated by the app." data-sort="driver" style="width:170px">Primary driver<span class="col-resize-handle"></span></th><th class="col-derived" title="Derived: calculated by the app, not fetched directly." data-sort="confidence" style="width:110px">Confidence<span class="col-resize-handle"></span></th><th class="num col-derived" title="Derived: calculated by the app, not fetched directly." data-sort="composite" style="width:120px">Composite score<span class="col-resize-handle"></span></th><th class="num col-derived" title="Upside to the in-house Target Price. Derived: calculated by the app." data-sort="upside" style="width:100px">Upside %<span class="col-resize-handle"></span></th><th class="col-derived" title="Rule-based label combining ADX trend strength, multi-timeframe alignment and volatility. Derived: calculated by the app." data-sort="regime" style="width:160px">Regime<span class="col-resize-handle"></span></th><th class="num col-derived" title="0-100, higher = higher risk. Derived: calculated by the app." data-sort="riskScore" style="width:110px">Risk score<span class="col-resize-handle"></span></th><th class="col-derived" title="Portfolio Action Score band, from data/decision/actionScore.mjs -- blends Recommendation with portfolio fit (weight drift, sector concentration, correlation), so it can differ from Recommendation. Derived: calculated by the app." data-sort="action" style="width:150px">Action<span class="col-resize-handle"></span></th><th class="num col-derived" title="Weighted average of business/financial-strength/profitability/growth/cash-flow/balance-sheet/management/industry-position factors -- measures the underlying business, independent of price. Derived: calculated by the app." data-sort="companyQuality" style="width:140px">Company Quality<span class="col-resize-handle"></span></th><th class="num col-derived" title="Weighted average of valuation/risk-profile/technical-trend/momentum-volume factors -- measures whether today's price/setup is attractive, independent of business quality. Derived: calculated by the app." data-sort="stockAttractiveness" style="width:150px">Stock Attractiveness<span class="col-resize-handle"></span></th><th class="col-derived" title="Quality+Valuation+Risk buckets only, no Technical -- so a weak chart can never masquerade as a business-quality read. Derived: calculated by the app." data-sort="fundamentalView" style="width:150px">Fundamental View<span class="col-resize-handle"></span></th><th class="col-derived" title="The Technical bucket plus the technical regime label. Derived: calculated by the app." data-sort="marketView" style="width:150px">Market View<span class="col-resize-handle"></span></th><th class="num col-derived" title="Institutional 6-factor framework (Value/Quality/Growth/Momentum/Risk/Size), sector-relative percentile blend. A distinct signal from Recommendation -- never overrides it. Derived: calculated by the app." data-sort="factorScore" style="width:120px">Factor score<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -480,9 +529,10 @@
 
             <div class="subsection" data-subtab="wr-valuation-table" role="tabpanel">
               <article class="card card-table-fill">
+                <button type="button" id="valuation-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button>
                 <div class="scroll">
                   <table id="valuation-table" class="tech-table sticky-thead-native">
-                    <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="forwardPe">Forward P/E</th><th class="num" data-sort="pb">P/B</th><th class="num" data-sort="evEbitda">EV/EBITDA</th><th class="num" data-sort="peg">PEG</th><th class="num" data-sort="fairValue">Fair value</th><th class="num" data-sort="targetPrice">Target price</th><th class="num" data-sort="upside">Upside</th><th class="num" data-sort="marginOfSafety">Margin of safety</th><th title="Confidence in the Fair Value/Target Price heuristic itself: completeness of the P/E-P/B reversion inputs, watchlist peer sample size, and how far this stock's own multiple already sits from the peer average it's reverting to" data-sort="confidence">Confidence</th><th data-sort="sectorPremium">Sector premium/discount</th><th data-sort="earningsYield">Earnings yield</th><th data-sort="fcfYield">FCF yield</th><th title="Rank by ROCE (falling back to ROE) among same-sector watchlist peers" data-sort="sectorRank">Sector rank</th><th class="num" title="Blend of relative valuation, sector-normalized and multi-factor peer scores" data-sort="relativeAttractiveness">Relative attractiveness</th><th title="Strong (6+ same-sector peers) / Adequate (3-5) / Weak (1-2) / Unavailable (0) -- below 3, relative-valuation scores are withheld rather than shown as a misleading self-comparison" data-sort="peerCompleteness">Peer completeness</th></tr></thead>
+                    <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num" data-sort="forwardPe">Forward P/E<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="pb">P/B<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="evEbitda">EV/EBITDA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="peg">PEG<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="fairValue">Fair value<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="targetPrice">Target price<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="upside">Upside<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="marginOfSafety">Margin of safety<span class="col-resize-handle"></span></th><th class="col-derived" title="Confidence in the Fair Value/Target Price heuristic itself: completeness of the P/E-P/B reversion inputs, watchlist peer sample size, and how far this stock's own multiple already sits from the peer average it's reverting to" data-sort="confidence">Confidence<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="sectorPremium">Sector premium/discount<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="earningsYield">Earnings yield<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="fcfYield">FCF yield<span class="col-resize-handle"></span></th><th class="col-derived" title="Rank by ROCE (falling back to ROE) among same-sector watchlist peers" data-sort="sectorRank">Sector rank<span class="col-resize-handle"></span></th><th class="num col-derived" title="Blend of relative valuation, sector-normalized and multi-factor peer scores" data-sort="relativeAttractiveness">Relative attractiveness<span class="col-resize-handle"></span></th><th class="col-derived" title="Strong (6+ same-sector peers) / Adequate (3-5) / Weak (1-2) / Unavailable (0) -- below 3, relative-valuation scores are withheld rather than shown as a misleading self-comparison" data-sort="peerCompleteness">Peer completeness<span class="col-resize-handle"></span></th></tr></thead>
                     <tbody></tbody>
                   </table>
                 </div>
@@ -509,30 +559,30 @@
 
             <div class="subsection" data-subtab="wr-profitability" role="tabpanel">
               <p class="small">Gross margin is left blank: Screener.in does not expose a separate cost-of-goods-sold line to derive it from. EBITDA margin and operating margin show the same reported figure. Full DuPont ROE decomposition is on Company Research &rarr; Fundamentals &rarr; Business quality, per company.</p>
-              <article class="card card-table-fill"><h3>Profitability</h3><div class="scroll"><table id="profitability-table" class="tech-table sticky-thead-native">
-                <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" title="Not available: this data source exposes no separate cost-of-goods-sold line to derive it from">Gross margin</th><th class="num" data-sort="ebitdaMargin">EBITDA margin</th><th class="num" title="Same reported figure as EBITDA margin -- this data source does not distinguish the two">Operating margin</th><th class="num" data-sort="netMargin">Net margin</th><th class="num" data-sort="roe">ROE</th><th class="num" data-sort="roce">ROCE</th><th class="num" data-sort="roa">ROA</th><th class="num" data-sort="earningsQuality">Earnings quality</th></tr></thead><tbody></tbody>
+              <article class="card card-table-fill"><h3>Profitability <button type="button" id="profitability-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="profitability-table" class="tech-table sticky-thead-native">
+                <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num" title="Not available: this data source exposes no separate cost-of-goods-sold line to derive it from">Gross margin</th><th class="num col-derived" data-sort="ebitdaMargin">EBITDA margin<span class="col-resize-handle"></span></th><th class="num col-derived" title="Same reported figure as EBITDA margin -- this data source does not distinguish the two" data-sort="operatingMargin">Operating margin<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="netMargin">Net margin<span class="col-resize-handle"></span></th><th class="num" data-sort="roe">ROE<span class="col-resize-handle"></span></th><th class="num" data-sort="roce">ROCE<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="roa">ROA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="earningsQuality">Earnings quality<span class="col-resize-handle"></span></th></tr></thead><tbody></tbody>
               </table></div></article>
             </div>
 
             <div class="subsection" data-subtab="wr-balance-sheet" role="tabpanel">
               <p class="small">Interest coverage and solvency indicators (Piotroski F-Score, Altman Z-Score) are risk metrics and are shown on the Risk &amp; Opportunity sub-tab instead.</p>
-              <article class="card card-table-fill"><h3>Balance sheet</h3><div class="scroll"><table id="balance-sheet-table" class="tech-table sticky-thead-native">
-                <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="debt">Total debt (Rs Cr)</th><th class="num" data-sort="cash">Cash</th><th class="num" data-sort="netDebt">Net debt</th><th class="num" data-sort="debtToEquity">Debt / equity</th><th class="num" data-sort="currentRatio">Current ratio</th><th class="num" data-sort="quickRatio">Quick ratio</th><th class="num" data-sort="wcDays">Working capital (days)</th><th data-sort="capitalStructure">Capital structure</th></tr></thead><tbody></tbody>
+              <article class="card card-table-fill"><h3>Balance sheet <button type="button" id="balance-sheet-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="balance-sheet-table" class="tech-table sticky-thead-native">
+                <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num" data-sort="debt">Total debt (Rs Cr)<span class="col-resize-handle"></span></th><th class="num" data-sort="cash">Cash<span class="col-resize-handle"></span></th><th class="num" data-sort="netDebt">Net debt<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="debtToEquity">Debt / equity<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="currentRatio">Current ratio<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="quickRatio">Quick ratio<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="wcDays">Working capital (days)<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="capitalStructure">Capital structure<span class="col-resize-handle"></span></th></tr></thead><tbody></tbody>
               </table></div></article>
             </div>
 
             <div class="subsection" data-subtab="wr-ownership" role="tabpanel">
               <p class="small">Ownership fields are shown only when supplied by a public source (India only in this phase).</p>
-              <article class="card card-table-fill"><h3>Ownership</h3><div class="scroll"><table id="ownership-table" class="tech-table sticky-thead-native">
-                <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="promoter">Promoter holding</th><th data-sort="promoterTrend">Promoter trend</th><th class="num" data-sort="fii">FII holding</th><th class="num" data-sort="dii">DII holding</th><th class="num" data-sort="mf">Mutual fund holding</th><th class="num" data-sort="institutional">Institutional ownership</th><th class="num" data-sort="concentration">Ownership concentration</th></tr></thead><tbody></tbody>
+              <article class="card card-table-fill"><h3>Ownership <button type="button" id="ownership-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="ownership-table" class="tech-table sticky-thead-native">
+                <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num" data-sort="promoter">Promoter holding<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="promoterTrend">Promoter trend<span class="col-resize-handle"></span></th><th class="num" data-sort="fii">FII holding<span class="col-resize-handle"></span></th><th class="num" data-sort="dii">DII holding<span class="col-resize-handle"></span></th><th class="num" data-sort="mf">Mutual fund holding<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="institutional">Institutional ownership<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="concentration">Ownership concentration<span class="col-resize-handle"></span></th></tr></thead><tbody></tbody>
               </table></div></article>
             </div>
           </div>
         </div>
 
         <div class="subsection" data-subtab="wr-growth" role="tabpanel">
-          <article class="card card-table-fill"><h3>Growth</h3><div class="scroll"><table id="growth-table" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="revenue3y">Revenue growth 3Y</th><th class="num" data-sort="revenue5y">Revenue growth 5Y</th><th class="num" data-sort="ebitda3y">EBITDA growth 3Y</th><th class="num" data-sort="ebitda5y">EBITDA growth 5Y</th><th class="num" data-sort="profit3y">Profit growth 3Y</th><th class="num" data-sort="profit5y">Profit growth 5Y</th><th class="num" data-sort="eps5y">EPS CAGR</th><th class="num" data-sort="bookValue">Book value CAGR</th><th class="num" data-sort="fcf">FCF CAGR</th></tr></thead><tbody></tbody>
+          <article class="card card-table-fill"><h3>Growth <button type="button" id="growth-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="growth-table" class="tech-table sticky-thead-native">
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="revenue3y">Revenue growth 3Y<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="revenue5y">Revenue growth 5Y<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="ebitda3y">EBITDA growth 3Y<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="ebitda5y">EBITDA growth 5Y<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="profit3y">Profit growth 3Y<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="profit5y">Profit growth 5Y<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="eps5y">EPS CAGR<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="bookValue">Book value CAGR<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="fcf">FCF CAGR<span class="col-resize-handle"></span></th></tr></thead><tbody></tbody>
           </table></div></article>
         </div>
       </div>
@@ -550,38 +600,38 @@
           <button type="button" role="tab" data-subtab="signals">Signals</button>
         </nav>
         <div class="subsection" data-subtab="trend" role="tabpanel">
-          <article class="card card-table-fill"><h3>Trend</h3><div class="scroll"><table id="technical-table-trend" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th title="50/200-DMA alignment vs. price" data-sort="trend">Trend</th><th class="num" data-sort="dma20">20 DMA</th><th class="num" data-sort="dma50">50 DMA</th><th class="num" data-sort="dma100">100 DMA</th><th class="num" data-sort="dma200">200 DMA</th><th title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA alignment</th><th class="num" data-sort="trendScore">Trend score</th><th class="num" title="Wilder's Average Directional Index (14): trend strength, not direction. DI+/DI- show which direction is dominant. Bands: &lt;20 no trend, 20-25 developing, 25-50 strong, &gt;50 very strong" data-sort="adx">ADX (14)</th><th class="num" title="Directional Movement +: strength of upward price movement" data-sort="diPlus">DI+</th><th class="num" title="Directional Movement -: strength of downward price movement" data-sort="diMinus">DI-</th><th class="num" title="Heuristic support level off real prices (DMAs, 52W range) -- not a literal pivot-point or order-book level" data-sort="support">Support</th><th class="num" title="Heuristic resistance level off real prices -- not a literal pivot-point or order-book level" data-sort="resistance">Resistance</th></tr></thead>
+          <article class="card card-table-fill"><h3>Trend <button type="button" id="technical-table-trend-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="technical-table-trend" class="tech-table sticky-thead-native">
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="col-derived" title="50/200-DMA alignment vs. price" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA alignment<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="trendScore">Trend score<span class="col-resize-handle"></span></th><th class="num col-derived" title="Wilder's Average Directional Index (14): trend strength, not direction. DI+/DI- show which direction is dominant. Bands: &lt;20 no trend, 20-25 developing, 25-50 strong, &gt;50 very strong" data-sort="adx">ADX (14)<span class="col-resize-handle"></span></th><th class="num col-derived" title="Directional Movement +: strength of upward price movement" data-sort="diPlus">DI+<span class="col-resize-handle"></span></th><th class="num col-derived" title="Directional Movement -: strength of downward price movement" data-sort="diMinus">DI-<span class="col-resize-handle"></span></th><th class="num col-derived" title="Heuristic support level off real prices (DMAs, 52W range) -- not a literal pivot-point or order-book level" data-sort="support">Support<span class="col-resize-handle"></span></th><th class="num col-derived" title="Heuristic resistance level off real prices -- not a literal pivot-point or order-book level" data-sort="resistance">Resistance<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="momentum" role="tabpanel">
-          <article class="card card-table-fill"><h3>Momentum</h3><div class="scroll"><table id="technical-table-momentum" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="rsi">RSI (14)</th><th title="RSI-based read: Strong (RSI>=60) / Neutral (>=45) / Weak" data-sort="momentum">RSI state</th><th class="num" data-sort="momentumScore">Momentum score</th><th class="num" title="Momentum/trend relationship between moving averages: 12/26-period EMA difference" data-sort="macdLine">MACD line</th><th class="num" title="9-period EMA of the MACD line" data-sort="signalLine">Signal line</th><th class="num" title="MACD line minus Signal line" data-sort="histogram">Histogram</th></tr></thead>
+          <article class="card card-table-fill"><h3>Momentum <button type="button" id="technical-table-momentum-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="technical-table-momentum" class="tech-table sticky-thead-native">
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="rsi">RSI (14)<span class="col-resize-handle"></span></th><th class="col-derived" title="RSI-based read: Strong (RSI>=60) / Neutral (>=45) / Weak" data-sort="momentum">RSI state<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="momentumScore">Momentum score<span class="col-resize-handle"></span></th><th class="num col-derived" title="Momentum/trend relationship between moving averages: 12/26-period EMA difference" data-sort="macdLine">MACD line<span class="col-resize-handle"></span></th><th class="num col-derived" title="9-period EMA of the MACD line" data-sort="signalLine">Signal line<span class="col-resize-handle"></span></th><th class="num col-derived" title="MACD line minus Signal line" data-sort="histogram">Histogram<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="volume" role="tabpanel">
-          <article class="card card-table-fill"><h3>Volume</h3><div class="scroll"><table id="technical-table-volume" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th data-sort="volumeTrend">Volume trend</th><th class="num" data-sort="volume">Volume</th><th class="num" data-sort="avgVolume20">Avg. volume (20D)</th><th class="num" title="On-Balance Volume: cumulative volume-flow indicator based on price direction" data-sort="obv">OBV</th><th title="OBV trend read" data-sort="obvTrend">OBV trend</th><th class="num" title="Accumulation/Distribution: cumulative indicator of buying vs. selling pressure" data-sort="accDist">Accumulation/Distribution</th><th title="Accumulation/Distribution trend read" data-sort="accDistTrend">A/D trend</th></tr></thead>
+          <article class="card card-table-fill"><h3>Volume <button type="button" id="technical-table-volume-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="technical-table-volume" class="tech-table sticky-thead-native">
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="volumeTrend">Volume trend<span class="col-resize-handle"></span></th><th class="num" data-sort="volume">Volume<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="avgVolume20">Avg. volume (20D)<span class="col-resize-handle"></span></th><th class="num col-derived" title="On-Balance Volume: cumulative volume-flow indicator based on price direction" data-sort="obv">OBV<span class="col-resize-handle"></span></th><th class="col-derived" title="OBV trend read" data-sort="obvTrend">OBV trend<span class="col-resize-handle"></span></th><th class="num col-derived" title="Accumulation/Distribution: cumulative indicator of buying vs. selling pressure" data-sort="accDist">Accumulation/Distribution<span class="col-resize-handle"></span></th><th class="col-derived" title="Accumulation/Distribution trend read" data-sort="accDistTrend">A/D trend<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="relative-strength" role="tabpanel">
-          <article class="card card-table-fill"><h3>Relative strength</h3><div class="scroll"><table id="technical-table-relative-strength" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="stock1y">1Y return</th><th class="num" data-sort="benchmark1y">Benchmark 1Y return</th><th class="num" title="Company's trailing-1Y return minus the benchmark's" data-sort="relativeStrength">Relative strength</th><th data-sort="benchmark">Benchmark</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations, not an assumed integer year count" data-sort="cagr3y">3Y CAGR</th><th class="num" title="Price-series CAGR over the actual elapsed time between observations" data-sort="cagr5y">5Y CAGR</th><th class="num" title="Largest peak-to-trough price decline (weekly series)" data-sort="maxDrawdown">Max drawdown</th><th class="num" title="Proxy risk-adjusted return: (return - risk-free rate) / volatility. Not a conventional-methodology Sharpe ratio -- this app has no dividend-inclusive total-return data source" data-sort="sharpeLike">Sharpe-like</th><th class="num" title="Proxy risk-adjusted return using downside deviation instead of total volatility. Not a conventional-methodology Sortino ratio" data-sort="sortinoLike">Sortino-like</th></tr></thead>
+          <article class="card card-table-fill"><h3>Relative strength <button type="button" id="technical-table-relative-strength-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="technical-table-relative-strength" class="tech-table sticky-thead-native">
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="stock1y">1Y return<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="benchmark1y">Benchmark 1Y return<span class="col-resize-handle"></span></th><th class="num col-derived" title="Company's trailing-1Y return minus the benchmark's" data-sort="relativeStrength">Relative strength<span class="col-resize-handle"></span></th><th data-sort="benchmark">Benchmark<span class="col-resize-handle"></span></th><th class="num col-derived" title="Price-series CAGR over the actual elapsed time between observations, not an assumed integer year count" data-sort="cagr3y">3Y CAGR<span class="col-resize-handle"></span></th><th class="num col-derived" title="Price-series CAGR over the actual elapsed time between observations" data-sort="cagr5y">5Y CAGR<span class="col-resize-handle"></span></th><th class="num col-derived" title="Largest peak-to-trough price decline (weekly series)" data-sort="maxDrawdown">Max drawdown<span class="col-resize-handle"></span></th><th class="num col-derived" title="Proxy risk-adjusted return: (return - risk-free rate) / volatility. Not a conventional-methodology Sharpe ratio -- this app has no dividend-inclusive total-return data source" data-sort="sharpeLike">Sharpe-like<span class="col-resize-handle"></span></th><th class="num col-derived" title="Proxy risk-adjusted return using downside deviation instead of total volatility. Not a conventional-methodology Sortino ratio" data-sort="sortinoLike">Sortino-like<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="volatility" role="tabpanel">
-          <article class="card card-table-fill"><h3>Volatility</h3><div class="scroll"><table id="technical-table-volatility" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" title="Annualized realized volatility of weekly returns" data-sort="volatilityPct">Volatility %</th><th class="num" title="In-house 0-100 screening score, higher = more volatile (not necessarily worse)" data-sort="volatilityScore">Volatility score</th><th class="num" title="Wilder's Average True Range (14): average trading range, an absolute volatility measure in price units" data-sort="atr">ATR (14)</th><th class="num" title="ATR divided by price -- makes ATR comparable across stocks at very different price levels" data-sort="atrPct">ATR % of price</th></tr></thead>
+          <article class="card card-table-fill"><h3>Volatility <button type="button" id="technical-table-volatility-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="technical-table-volatility" class="tech-table sticky-thead-native">
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num col-derived" title="Annualized realized volatility of weekly returns" data-sort="volatilityPct">Volatility %<span class="col-resize-handle"></span></th><th class="num col-derived" title="In-house 0-100 screening score, higher = more volatile (not necessarily worse)" data-sort="volatilityScore">Volatility score<span class="col-resize-handle"></span></th><th class="num col-derived" title="Wilder's Average True Range (14): average trading range, an absolute volatility measure in price units" data-sort="atr">ATR (14)<span class="col-resize-handle"></span></th><th class="num col-derived" title="ATR divided by price -- makes ATR comparable across stocks at very different price levels" data-sort="atrPct">ATR % of price<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
         <div class="subsection" data-subtab="signals" role="tabpanel">
-          <article class="card card-table-fill"><h3>Signals</h3><div class="scroll"><table id="technical-table-signals" class="tech-table sticky-thead-native">
-            <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" title="In-house 0-100 screening score off resistance proximity, ADX and volume surge -- not a statistically calibrated probability" data-sort="breakoutScore">Breakout score</th><th title="ADX trend strength + multi-timeframe alignment + volatility" data-sort="regime">Regime</th><th title="Data completeness + multi-timeframe corroboration" data-sort="signalConfidence">Signal confidence</th><th title="Wilder ADX bands: <20 no trend, 20-25 developing, 25-50 strong, >50 very strong" data-sort="adxInterpretation">ADX interpretation</th></tr></thead>
+          <article class="card card-table-fill"><h3>Signals <button type="button" id="technical-table-signals-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3><div class="scroll"><table id="technical-table-signals" class="tech-table sticky-thead-native">
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num col-derived" title="In-house 0-100 screening score off resistance proximity, ADX and volume surge -- not a statistically calibrated probability" data-sort="breakoutScore">Breakout score<span class="col-resize-handle"></span></th><th class="col-derived" title="ADX trend strength + multi-timeframe alignment + volatility" data-sort="regime">Regime<span class="col-resize-handle"></span></th><th class="col-derived" title="Data completeness + multi-timeframe corroboration" data-sort="signalConfidence">Signal confidence<span class="col-resize-handle"></span></th><th class="col-derived" title="Wilder ADX bands: <20 no trend, 20-25 developing, 25-50 strong, >50 very strong" data-sort="adxInterpretation">ADX interpretation<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table></div></article>
         </div>
@@ -599,10 +649,10 @@
         <div class="subsection" data-subtab="wr-risk-overview" role="tabpanel">
           <div class="grid four" id="risk-cards"></div>
           <article class="card card-table-fill">
-            <h3>Stock-by-stock risk matrix</h3>
+            <h3>Stock-by-stock risk matrix <button type="button" id="risk-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3>
             <div class="scroll">
               <table id="risk-table" class="sticky-thead-native">
-                <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th data-sort="cmp">CMP</th><th data-sort="pe">P/E</th><th data-sort="interestCoverage">Interest coverage</th><th data-sort="financial">Financial</th><th data-sort="business">Business</th><th data-sort="market">Market</th><th data-sort="sectorRisk">Sector</th><th data-sort="governance">Governance</th><th data-sort="downside200">Scenario: downside to 200-DMA</th><th data-sort="downsideLow">Scenario: downside to 52W low</th><th data-sort="composite">Composite</th><th data-sort="trend">Trend</th><th title="Intact / Improving / Weakening / Broken -- run-over-run classification off recommendation, risk and technical direction since the last genuine data refresh" data-sort="thesisStatus">Thesis status</th></tr></thead>
+                <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="interestCoverage">Interest coverage<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="financial">Financial<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="business">Business<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="market">Market<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="sectorRisk">Sector<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="governance">Governance<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="downside200">Scenario: downside to 200-DMA<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="downsideLow">Scenario: downside to 52W low<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="composite">Composite<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="col-derived" title="Intact / Improving / Weakening / Broken -- run-over-run classification off recommendation, risk and technical direction since the last genuine data refresh" data-sort="thesisStatus">Thesis status<span class="col-resize-handle"></span></th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
@@ -615,7 +665,7 @@
         <div class="subsection" data-subtab="wr-risk-alerts" role="tabpanel">
           <p class="small">Rule-based severity off fixed thresholds &mdash; see <span id="alerts-methodology-info"></span>. Standing conditions keep firing until the condition clears or the alert is acknowledged; crossing events fire once, off the persisted run-over-run snapshot.</p>
           <div class="section-head">
-            <h3>Unacknowledged alerts</h3>
+            <h3>Unacknowledged alerts <button type="button" id="alerts-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3>
             <div class="pill-row" id="alerts-severity-filter">
               <button type="button" class="pill active" data-severity="">All</button>
               <button type="button" class="pill" data-severity="Critical">Critical</button>
@@ -627,7 +677,7 @@
           <div class="scroll-body">
           <div class="scroll">
             <table id="alerts-table" class="tech-table thead-sticky-2">
-              <thead><tr><th data-sort="severity">Severity</th><th data-sort="company">Company</th><th data-sort="category">Category</th><th data-sort="alert">Alert</th><th data-sort="confidence">Confidence</th><th data-sort="time">Time</th><th>Acknowledge</th></tr></thead>
+              <thead><tr><th class="col-derived" data-sort="severity">Severity<span class="col-resize-handle"></span></th><th data-sort="company">Company<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="category">Category<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="alert">Alert<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="confidence">Confidence<span class="col-resize-handle"></span></th><th data-sort="time">Time<span class="col-resize-handle"></span></th><th>Acknowledge</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -663,11 +713,11 @@
       <div class="grid four" id="portfolio-kpis"></div>
       <div class="two-col">
         <article class="card card-table-fill">
-          <h3>Screen-derived model allocation</h3>
+          <h3>Screen-derived model allocation <button type="button" id="portfolio-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3>
           <p class="small">Weights favor stronger composite screens and are capped to avoid concentration. Rows follow the watchlist's own order &mdash; this tab does not re-rank your companies. This is an illustrative research output, not personalized investment advice.</p>
           <div class="scroll">
             <table id="portfolio-table" class="tech-table sticky-thead-native">
-              <thead><tr><th data-sort="company">Company</th><th data-sort="sector">Sector</th><th class="num" data-sort="cmp">CMP</th><th class="num" data-sort="pe">P/E</th><th class="num" data-sort="quality">Quality score</th><th class="num" data-sort="weight">Target weight</th><th data-sort="bucket">Bucket</th></tr></thead>
+              <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num" data-sort="cmp">CMP<span class="col-resize-handle"></span></th><th class="num" data-sort="pe">P/E<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="quality">Quality score<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="weight">Target weight<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="bucket">Bucket<span class="col-resize-handle"></span></th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -786,10 +836,10 @@
       </div>
       <div class="scroll-body">
       <article class="card">
-        <h3>Rebalancing suggestions <span id="rebalancing-info"></span></h3>
+        <h3>Rebalancing suggestions <span id="rebalancing-info"></span> <button type="button" id="rebalancing-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3>
         <div class="scroll">
           <table id="rebalancing-table" class="tech-table thead-sticky-1">
-            <thead><tr><th data-sort="company">Company</th><th class="num" data-sort="currentWeight">Current weight</th><th class="num" data-sort="targetWeight">Target weight</th><th data-sort="action">Suggested action</th><th class="num" data-sort="actionScore">Action Score</th><th data-sort="rationale">Rationale</th></tr></thead>
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="currentWeight">Current weight<span class="col-resize-handle"></span></th><th class="num" data-sort="targetWeight">Target weight<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="action">Suggested action<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="actionScore">Action Score<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="rationale">Rationale<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -802,10 +852,10 @@
       <div class="grid four" id="exposure-portfolio-kpis"></div>
       <div class="scroll-body">
       <article class="card">
-        <h3>Per-company exposure</h3>
+        <h3>Per-company exposure <button type="button" id="exposure-matrix-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button></h3>
         <div class="scroll">
           <table id="exposure-matrix-table" class="tech-table thead-sticky-1">
-            <thead><tr><th data-sort="company">Company</th><th class="num" data-sort="interestRate">Interest-rate</th><th data-sort="currency">Currency</th><th class="num" data-sort="commodity">Commodity</th><th class="num" data-sort="regulatory">Regulatory</th><th data-sort="economicCycle">Economic cycle</th></tr></thead>
+            <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="interestRate">Interest-rate<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="currency">Currency<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="commodity">Commodity<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="regulatory">Regulatory<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="economicCycle">Economic cycle<span class="col-resize-handle"></span></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -838,13 +888,219 @@
     </div>
   </section>
 
-  <section class="tab" id="market-intelligence">
-    <h2 class="workspace-title">Market Intelligence</h2>
-    <p class="small"><b>Indian Equity Market</b> — macro, sector, earnings and news context, independent of any single company or watchlist selection.</p>
-    <nav class="subtabs" role="tablist" aria-label="Market Intelligence sections">
-      <button type="button" role="tab" data-subtab="macro-intelligence">Market Intelligence</button>
+  <section class="tab" id="macro">
+    <h2 class="workspace-title">Macro</h2>
+    <p class="small">India, US and World market &amp; economic context &mdash; watchlist-independent, fetched from Yahoo Finance's public chart/quote feed (plus MoSPI's public eSankhyiki API for India CPI/IIP) on its own schedule. Every figure is either a real fetched value or an explicitly disclosed derived/unavailable state &mdash; never an estimate.</p>
+    <nav class="subtabs" role="tablist" aria-label="Macro sections">
       <button type="button" role="tab" data-subtab="macro-india">India Macro</button>
       <button type="button" role="tab" data-subtab="macro-us">US Macro</button>
+      <button type="button" role="tab" data-subtab="macro-world">World</button>
+    </nav>
+
+    <div class="subsection" data-subtab="macro-india" role="tabpanel">
+      <div class="subtab-root" id="india-macro-detail">
+        <nav class="subtabs subtabs-secondary" data-section-label="India Macro" role="tablist" aria-label="India Macro sections">
+          <button type="button" role="tab" data-subtab="india-macro-indices">Indian Indices</button>
+          <button type="button" role="tab" data-subtab="india-macro-commodities">Commodities</button>
+          <button type="button" role="tab" data-subtab="india-macro-indicators">Macro Indicators</button>
+          <button type="button" role="tab" data-subtab="india-macro-periodic">Periodic / Policy</button>
+          <button type="button" role="tab" data-subtab="india-macro-currencies">Currencies</button>
+        </nav>
+
+        <div class="subsection" data-subtab="india-macro-indices" role="tabpanel">
+          <p class="small">Broad Indian equity benchmarks, in order: NIFTY, BANKNIFTY, MIDCAP, SENSEX, India VIX &mdash; see <span id="macro-methodology-info-india-indices"></span>. Trend/moving-average columns reuse the same real trailing daily-close history and calculation this app already uses for every equity &mdash; see <span id="macro-trend-methodology-info-india-indices"></span>.</p>
+          <article class="card card-table-fill">
+            <h3>Indian Indices</h3>
+            <div class="scroll">
+              <table id="macro-indices-india" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-indices-india-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="india-macro-commodities" role="tabpanel">
+          <p class="small">Gold, Crude Oil (WTI) and Natural Gas (Henry Hub), converted to INR &mdash; see <span id="macro-methodology-info-india-commodities"></span>. Every row here is <b>derived</b> from the raw USD source price (shown unconverted under <b>US Macro &rarr; Commodities</b>) &times; USD/INR (the same canonical FX rate shown on the <b>Currencies</b> tab) &mdash; Gold additionally applies &times; (10 &divide; 31.1034768) to convert troy ounces to ₹/10g &mdash; see <span id="macro-gold-derived-info"></span>. The separate India Gold Rate (Gold BeES ETF, NSE) is a genuine, directly fetched NSE market price, not derived &mdash; clearly distinguished from the derived rows above it by carrying no derived styling.</p>
+          <article class="card card-table-fill">
+            <h3>Commodities</h3>
+            <div class="scroll">
+              <table id="macro-commodities-india" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-commodities-india-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="india-macro-indicators" role="tabpanel">
+          <p class="small">CPI Inflation, IIP (Index of Industrial Production) and All-India Power Demand are all public, unauthenticated readings (MoSPI for CPI/IIP, National Power Portal for Power Demand) &mdash; no daily change/DMA, since none is a continuously-priced instrument &mdash; see <span id="macro-cpi-methodology-info"></span> / <span id="macro-iip-methodology-info"></span>. None needs any Configuration/credential step. The Source column names the exact provider for each row.</p>
+          <article class="card card-table-fill">
+            <h3>Macro Indicators</h3>
+            <div class="scroll">
+              <table id="macro-indicators-india" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="4">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th data-sort="source">Source<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-indicators-india-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="india-macro-periodic" role="tabpanel">
+          <p class="small">Indicators with no live daily feed: an annual/event-cadence official figure (<span class="tag hold">Periodic</span>, e.g. the Union Defence Budget or Ethanol Blending Rate &mdash; a dated one-time reading, not a continuously-updating market price), or no source this app can legitimately fetch programmatically today &mdash; <span class="tag neutral">Not Programmatically Available</span> (a real official source exists, but only as a browsable web page/portal, never a stable API/feed) or <span class="tag neutral">Licensing Required</span> (a real source exists but requires a paid subscription or a signed license/ToS agreement this app does not have) &mdash; never estimated or fabricated, shown with a blank Value. The Source column names the exact authoritative provider (RBI, FBIL/CCIL, S&amp;P Global, PPAC, MCX, &hellip;) even for an unavailable row; hover the status badge for the specific access-limitation reason. See <span id="macro-periodic-methodology-info"></span>.</p>
+          <article class="card card-table-fill">
+            <h3>Periodic / Policy</h3>
+            <div class="scroll">
+              <table id="macro-periodic-table" class="tech-table sticky-thead-native">
+                <thead><tr><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th data-sort="period">Period<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th data-sort="source">Source<span class="col-resize-handle"></span></th></tr></thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-periodic-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="india-macro-currencies" role="tabpanel">
+          <p class="small">1 unit of foreign currency = ₹, for the 12 currencies most relevant to an Indian investor &mdash; see <span id="macro-methodology-info-india-currencies"></span>. USD/INR is the one canonical FX rate this app fetches &mdash; the same value reused (never refetched) by every derived conversion on the <b>Commodities</b> tab. Russian Ruble has no direct Yahoo quote and is <b>derived</b> via a USD/INR &divide; USD/RUB cross-rate &mdash; see <span id="macro-currency-cross-rate-info"></span>. Vietnamese Dong is shown per 1,000 units (its raw per-unit ₹ value is too small to round meaningfully) &mdash; the unit column always discloses the scale applied.</p>
+          <article class="card card-table-fill">
+            <h3>Currencies</h3>
+            <div class="scroll">
+              <table id="macro-currencies-india" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="label">Currency<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">INR rate<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-currencies-india-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection" data-subtab="macro-us" role="tabpanel">
+      <div class="subtab-root" id="us-macro-detail">
+        <nav class="subtabs subtabs-secondary" data-section-label="US Macro" role="tablist" aria-label="US Macro sections">
+          <button type="button" role="tab" data-subtab="us-macro-indices">Major Indices</button>
+          <button type="button" role="tab" data-subtab="us-macro-rates">Rates</button>
+          <button type="button" role="tab" data-subtab="us-macro-commodities">Commodities</button>
+        </nav>
+
+        <div class="subsection" data-subtab="us-macro-indices" role="tabpanel">
+          <p class="small">Major US equity benchmarks &mdash; see <span id="macro-methodology-info-us-indices"></span>. Trend/moving-average columns reuse the same real trailing daily-close history and calculation this app already uses for every equity &mdash; see <span id="macro-trend-methodology-info-us-indices"></span>.</p>
+          <article class="card card-table-fill">
+            <h3>US major indices</h3>
+            <div class="scroll">
+              <table id="macro-indices-us" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-indices-us-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="us-macro-rates" role="tabpanel">
+          <p class="small">The US 10-Year Treasury yield &mdash; see <span id="macro-methodology-info-us-rates"></span>. Trend/moving-average columns reuse the same real trailing daily-close history and calculation this app already uses for every equity &mdash; see <span id="macro-trend-methodology-info-us-rates"></span>.</p>
+          <article class="card card-table-fill">
+            <h3>US rates</h3>
+            <div class="scroll">
+              <table id="macro-rates-us" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-rates-us-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="us-macro-commodities" role="tabpanel">
+          <p class="small">Gold (USD/troy oz), Crude Oil (WTI, USD/bbl) and Natural Gas (Henry Hub, USD/MMBtu) &mdash; the raw, unconverted global source prices &mdash; see <span id="macro-methodology-info-us-commodities"></span>. India Macro &rarr; Commodities shows the INR-derived conversion of these same three fetched values, not a second independent price.</p>
+          <article class="card card-table-fill">
+            <h3>Commodities</h3>
+            <div class="scroll">
+              <table id="macro-commodities-us" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-commodities-us-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection" data-subtab="macro-world" role="tabpanel">
+      <div class="subtab-root" id="world-macro-detail">
+        <nav class="subtabs subtabs-secondary" data-section-label="World" role="tablist" aria-label="World sections">
+          <button type="button" role="tab" data-subtab="world-macro-asia">Asia</button>
+          <button type="button" role="tab" data-subtab="world-macro-europe">Europe</button>
+        </nav>
+
+        <div class="subsection" data-subtab="world-macro-asia" role="tabpanel">
+          <p class="small">Major Asian equity benchmarks &mdash; see <span id="macro-methodology-info-world-asia"></span>. US indices are covered on the <b>US Macro</b> tab, not duplicated here.</p>
+          <article class="card card-table-fill">
+            <h3>Asia</h3>
+            <div class="scroll">
+              <table id="macro-world-asia" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="4">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="country">Country<span class="col-resize-handle"></span></th><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-world-asia-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+
+        <div class="subsection" data-subtab="world-macro-europe" role="tabpanel">
+          <p class="small">Major European equity benchmarks &mdash; see <span id="macro-methodology-info-world-europe"></span>. US indices are covered on the <b>US Macro</b> tab, not duplicated here.</p>
+          <article class="card card-table-fill">
+            <h3>Europe</h3>
+            <div class="scroll">
+              <table id="macro-world-europe" class="tech-table macro-unified-table sticky-thead-native">
+                <thead>
+                  <tr class="table-group-row"><th colspan="4">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
+                  <tr><th data-sort="country">Country<span class="col-resize-handle"></span></th><th data-sort="label">Indicator<span class="col-resize-handle"></span></th><th data-sort="category">Category<span class="col-resize-handle"></span></th><th class="num" data-sort="value">Value<span class="col-resize-handle"></span></th><th class="num" data-sort="change">Change<span class="col-resize-handle"></span></th><th class="num" data-sort="change1y">1Y change<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="direction">Direction<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="status">Status<span class="col-resize-handle"></span></th><th data-sort="asOf">As of<span class="col-resize-handle"></span></th><th class="col-derived" data-sort="trend">Trend<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma20">20 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma50">50 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma100">100 DMA<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="dma200">200 DMA<span class="col-resize-handle"></span></th><th class="col-derived" title="How many of the 4 DMAs price currently sits above" data-sort="dmaAlignment">DMA Alignment<span class="col-resize-handle"></span></th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <button type="button" id="macro-world-europe-reset-columns" class="icon-btn" title="Restore the default column widths for this table">Reset columns</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab" id="market-intelligence">
+    <h2 class="workspace-title">Market Intelligence</h2>
+    <p class="small"><b>Indian Equity Market</b> — sector, earnings and news context, independent of any single company or watchlist selection.</p>
+    <nav class="subtabs" role="tablist" aria-label="Market Intelligence sections">
+      <button type="button" role="tab" data-subtab="macro-intelligence">Market Intelligence</button>
       <button type="button" role="tab" data-subtab="sector-intelligence">Sector Intelligence</button>
       <button type="button" role="tab" data-subtab="upcoming-earnings">Earnings &amp; Events</button>
       <button type="button" role="tab" data-subtab="news-catalysts">News &amp; Catalysts</button>
@@ -852,7 +1108,7 @@
     <p class="small">External market/event context layered over the existing research platform &mdash; every figure below is either a real fetched indicator or a disclosed rule-based read over already-computed analytics, never a new calculation engine.</p>
 
     <div class="subsection" data-subtab="macro-intelligence" role="tabpanel">
-      <p class="small">Market-wide regime read and macro data-feed health &mdash; independent of any single indicator. See India Macro / US Macro for the underlying indicator values.</p>
+      <p class="small">Market-wide regime read and macro data-feed health &mdash; independent of any single indicator. See the <b>Macro</b> workspace for the underlying indicator values.</p>
       <article class="card">
         <div class="section-head">
           <h3>Market regime</h3>
@@ -862,61 +1118,6 @@
       <article class="card">
         <h3>Data Quality</h3>
         <div class="grid five" id="macro-data-quality"></div>
-      </article>
-    </div>
-
-    <div class="subsection" data-subtab="macro-india" role="tabpanel">
-      <p class="small">Watchlist-independent: macro indicators are fetched from Yahoo Finance's public chart/quote feed on their own schedule, not tied to any watchlist's refresh. Indicators with no free public data source render an explicit "Future Integration" status rather than an estimate &mdash; see <span id="macro-methodology-info-india"></span>. Trend/moving-average columns reuse the same real trailing daily-close history and calculation this app already uses for every equity &mdash; see <span id="macro-trend-methodology-info-india"></span>. CPI Inflation is a public, unauthenticated MoSPI reading (no daily change/DMA &mdash; a monthly index, not a priced instrument) &mdash; see <span id="macro-cpi-methodology-info"></span>.</p>
-      <article class="card">
-        <h3>India macro indicators</h3>
-        <div class="scroll">
-          <table id="macro-indicators-table-india" class="tech-table macro-unified-table">
-            <thead>
-              <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
-              <tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th class="num">Change</th><th class="num">1Y change</th><th>Direction</th><th>Status</th><th>As of</th><th>Trend</th><th class="num">20 DMA</th><th class="num">50 DMA</th><th class="num">100 DMA</th><th class="num">200 DMA</th><th title="How many of the 4 DMAs price currently sits above">DMA Alignment</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-      <article class="card">
-        <div class="section-head">
-          <h3>Economic indicators (credential-gated) <span id="macro-configgated-info"></span></h3>
-          <a href="#" id="macro-configgated-jump">Manage in Configuration &rarr;</a>
-        </div>
-        <p class="small">CPI Inflation is now a public, unauthenticated indicator &mdash; see the India macro indicators table above (Category: Inflation). Index of Industrial Production (IIP) has a real, working provider (MoSPI's official eSankhyiki API) that still needs your own credential to start returning data &mdash; a period-over-period economic reading, not a priced instrument, so no daily change/DMA columns apply here. See <a href="https://www.mospi.gov.in/" target="_blank" rel="noopener">MoSPI</a>.</p>
-        <div class="scroll">
-          <table id="macro-configgated-table" class="tech-table">
-            <thead><tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th>Period</th><th>Status</th><th>As of</th><th>Action</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-      <article class="card">
-        <h3>Not available (Future Integration)</h3>
-        <p class="small">No free, unauthenticated, machine-readable public source exists for these today &mdash; never estimated or fabricated.</p>
-        <div class="scroll">
-          <table id="macro-unavailable-table" class="tech-table">
-            <thead><tr><th>Indicator</th><th>Category</th><th>Status</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </article>
-    </div>
-
-    <div class="subsection" data-subtab="macro-us" role="tabpanel">
-      <p class="small">US-benchmarked and globally-priced indicators (USD-denominated rates/commodities that move Indian equities via import costs, capital flows and rate differentials) &mdash; see <span id="macro-methodology-info-us"></span>. Trend/moving-average columns reuse the same real trailing daily-close history and calculation this app already uses for every equity &mdash; see <span id="macro-trend-methodology-info-us"></span>.</p>
-      <article class="card">
-        <h3>US macro indicators</h3>
-        <div class="scroll">
-          <table id="macro-indicators-table-us" class="tech-table macro-unified-table">
-            <thead>
-              <tr class="table-group-row"><th colspan="3">Indicator Details</th><th colspan="5">Performance</th><th colspan="6" title="Uptrend: price &gt; 50 DMA &gt; 200 DMA. Downtrend: price &lt; 50 DMA &lt; 200 DMA. Otherwise Sideways/Mixed. Blank where a period doesn't yet have enough trading days.">Trend Parameters (Moving Averages)</th></tr>
-              <tr><th>Indicator</th><th>Category</th><th class="num">Value</th><th class="num">Change</th><th class="num">1Y change</th><th>Direction</th><th>Status</th><th>As of</th><th>Trend</th><th class="num">20 DMA</th><th class="num">50 DMA</th><th class="num">100 DMA</th><th class="num">200 DMA</th><th title="How many of the 4 DMAs price currently sits above">DMA Alignment</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
       </article>
     </div>
 
@@ -934,9 +1135,10 @@
             <h3>Sector rollups</h3>
             <div class="scroll">
               <table id="sector-intel-table" class="tech-table sticky-thead-native">
-                <thead><tr><th data-sort="sector">Sector</th><th class="num" data-sort="companies">Companies</th><th class="num" data-sort="composite">Composite</th><th class="num" data-sort="valuation">Valuation</th><th class="num" data-sort="technical">Technical</th><th class="num" data-sort="risk">Risk</th><th class="num" data-sort="relStrength">Rel. strength</th><th class="num" data-sort="epsCagr">EPS CAGR 5Y</th><th class="num" data-sort="regulatorySens">Regulatory sens.</th><th class="num" data-sort="commoditySens">Commodity sens.</th><th>Ratings</th></tr></thead>
+                <thead><tr><th data-sort="sector">Sector<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="companies">Companies<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="composite">Composite<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="valuation">Valuation<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="technical">Technical<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="risk">Risk<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="relStrength">Rel. strength<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="epsCagr">EPS CAGR 5Y<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="regulatorySens">Regulatory sens.<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="commoditySens">Commodity sens.<span class="col-resize-handle"></span></th><th title="Multiple ratings per sector -- no single natural sort order, so this column is not sortable">Ratings</th></tr></thead>
                 <tbody></tbody>
               </table>
+              <button type="button" id="sector-intel-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button>
             </div>
           </article>
         </div>
@@ -965,9 +1167,10 @@
             <h3>Earnings Intelligence</h3>
             <div class="scroll">
               <table id="earnings-intel-table" class="tech-table sticky-thead-native">
-                <thead><tr><th data-sort="company">Company</th><th data-sort="latestPeriod">Latest quarter</th><th class="num" data-sort="revenueQoq">Revenue QoQ</th><th class="num" data-sort="revenueYoy">Revenue YoY</th><th class="num" data-sort="profitQoq">Net profit QoQ</th><th class="num" data-sort="profitYoy">Net profit YoY</th><th class="num" data-sort="marginQoq">Op. margin QoQ</th><th class="num" data-sort="marginYoy">Op. margin YoY</th><th class="num" data-sort="deviation">Vs. trailing avg</th><th data-sort="calendarStatus">Next earnings date</th></tr></thead>
+                <thead><tr><th data-sort="company">Company<span class="col-resize-handle"></span></th><th data-sort="latestPeriod">Latest quarter<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="revenueQoq">Revenue QoQ<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="revenueYoy">Revenue YoY<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="profitQoq">Net profit QoQ<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="profitYoy">Net profit YoY<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="marginQoq">Op. margin QoQ<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="marginYoy">Op. margin YoY<span class="col-resize-handle"></span></th><th class="num col-derived" data-sort="deviation">Vs. trailing avg<span class="col-resize-handle"></span></th><th data-sort="calendarStatus">Next earnings date<span class="col-resize-handle"></span></th></tr></thead>
                 <tbody></tbody>
               </table>
+              <button type="button" id="earnings-intel-table-reset-columns" class="icon-btn" title="Restore the default column order and widths for this table">Reset columns</button>
             </div>
           </article>
         </div>

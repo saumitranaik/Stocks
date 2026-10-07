@@ -116,7 +116,7 @@
      container's -- Chrome only holds a sticky cell fully in place while the
      container is tall enough to contain it undamped. */
   .card-table-fill>.scroll{flex:1;min-height:120px;overflow:auto}
-}.empty{min-height:50vh;display:grid;place-content:center;text-align:center;gap:9px;color:var(--muted)}.empty b{color:var(--text);font-size:17px}.grid{display:grid;gap:16px;margin:16px 0}.four{grid-template-columns:repeat(4,1fr)}.two-col{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:16px 0}.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:18px;overflow:hidden}.card h3{color:var(--muted);font-size:14px;margin:0 0 12px}.card p{line-height:1.65}.kpi{font-size:29px;font-weight:800;margin:8px 0}.positive{color:var(--green)}.amber{color:var(--amber)}.blue{color:var(--blue)}.score{display:flex;align-items:center;gap:12px}.score-circle{width:63px;height:63px;border-radius:50%;display:grid;place-items:center;border:5px solid var(--green);font-weight:800;font-size:20px}.progress,.bar{height:9px;border-radius:99px;background:#0e1627;border:1px solid var(--border);overflow:hidden}.progress i,.bar i{height:100%;display:block;background:var(--green)}.progress i.blue{background:var(--blue)}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--border);white-space:nowrap}th{color:#c9d6f2;background:#10192b}tr:hover{background:#13203a}.scroll{overflow:auto}.tag{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800}.tag-lg{padding:6px 12px;font-size:12px;letter-spacing:.02em}.buy{color:var(--green);background:#16c78422}.hold{color:var(--amber);background:#f5b94222}.neutral{color:var(--muted);background:#9fb0d122}.donut{width:180px;height:180px;margin:15px auto;background:conic-gradient(var(--green) 0 42%,var(--blue) 42% 72%,var(--amber) 72% 88%,var(--red) 88%);border-radius:50%;display:grid;place-items:center}.donut:before{content:'';position:absolute;width:118px;height:118px;border-radius:50%;background:var(--panel2)}.donut span{z-index:1;text-align:center;font-size:13px;font-weight:800;max-width:95px}.news-list{display:grid;gap:9px}.news-item{border-bottom:1px solid var(--border);padding:11px 0;display:flex;justify-content:space-between;gap:14px}.news-item a{color:var(--text);text-decoration:none;font-weight:700}.news-item small{color:var(--muted);white-space:nowrap}.industry-pe{color:var(--muted)}.tech-table th.num,.tech-table td.num{text-align:right}.risk{padding:16px}.risk .bar i{background:var(--green)}.risk.medium .bar i{background:var(--amber)}.risk.high .bar i{background:var(--red)}.disclaimer{font-size:12px;color:var(--muted)}ul{line-height:1.8;padding-left:20px}@media(max-width:900px){.four{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.title{align-items:flex-start;flex-direction:column}.container{padding:16px}}@media(max-width:540px){form{flex-wrap:wrap}form input{flex-basis:100%}.four{grid-template-columns:1fr}.title h1{font-size:22px}}.strong-buy{color:var(--green);background:#16c78440;font-weight:900}.accumulate{color:var(--blue);background:#4da3ff22}.reduce{color:var(--amber);background:#f5b94240}.sell{color:var(--red);background:#ff5c5c22}.limited-data{display:inline-block;margin-bottom:8px}.pill-row{display:flex;gap:8px;overflow:auto;margin:0 0 16px;padding-bottom:4px}.pill{font-size:12px;padding:8px 12px;border-radius:999px;white-space:nowrap}.pill.active{color:#08111f;background:var(--blue);border-color:var(--blue)}.grid.five{grid-template-columns:repeat(5,1fr)}.rec-badges{display:flex;gap:8px;align-items:center;margin:8px 0}@media(max-width:900px){.grid.five{grid-template-columns:repeat(2,1fr)}}@media(max-width:540px){.grid.five{grid-template-columns:1fr}}
+}.empty{min-height:50vh;display:grid;place-content:center;text-align:center;gap:9px;color:var(--muted)}.empty b{color:var(--text);font-size:17px}.grid{display:grid;gap:16px;margin:16px 0}.four{grid-template-columns:repeat(4,1fr)}.two-col{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:16px 0}.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:16px;padding:18px;overflow:hidden}.card h3{color:var(--muted);font-size:14px;margin:0 0 12px}.card p{line-height:1.65}.kpi{font-size:29px;font-weight:800;margin:8px 0}.positive{color:var(--green)}.amber{color:var(--amber)}.blue{color:var(--blue)}.score{display:flex;align-items:center;gap:12px}.score-circle{width:63px;height:63px;border-radius:50%;display:grid;place-items:center;border:5px solid var(--green);font-weight:800;font-size:20px}.progress,.bar{height:9px;border-radius:99px;background:#0e1627;border:1px solid var(--border);overflow:hidden}.progress i,.bar i{height:100%;display:block;background:var(--green)}.progress i.blue{background:var(--blue)}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--border);white-space:nowrap}th{color:#c9d6f2;background:#10192b}tr:hover{background:#13203a}.scroll{overflow:auto}.tag{padding:4px 7px;border-radius:999px;font-size:10px;font-weight:800}.tag-lg{padding:6px 12px;font-size:12px;letter-spacing:.02em}.buy{color:var(--green);background:#16c78422}.hold{color:var(--amber);background:#f5b94222}.neutral{color:var(--muted);background:#9fb0d122}.donut{width:180px;height:180px;margin:15px auto;background:conic-gradient(var(--green) 0 42%,var(--blue) 42% 72%,var(--amber) 72% 88%,var(--red) 88%);border-radius:50%;display:grid;place-items:center}.donut:before{content:'';position:absolute;width:118px;height:118px;border-radius:50%;background:var(--panel2)}.donut span{z-index:1;text-align:center;font-size:13px;font-weight:800;max-width:95px}.news-list{display:grid;gap:9px}.news-item{border-bottom:1px solid var(--border);padding:11px 0;display:flex;justify-content:space-between;gap:14px}.news-item a{color:var(--text);text-decoration:none;font-weight:700}.news-item small{color:var(--muted);white-space:nowrap}.industry-pe{color:var(--muted)}.tech-table th.num,.tech-table td.num{text-align:right}.risk{padding:16px}.risk .bar i{background:var(--green)}.risk.medium .bar i{background:var(--amber)}.risk.high .bar i{background:var(--red)}.disclaimer{font-size:12px;color:var(--muted)}ul{line-height:1.8;padding-left:20px}@media(max-width:900px){.four{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.title{align-items:flex-start;flex-direction:column}.container{padding:16px}}@media(max-width:540px){form{flex-wrap:wrap}form input{flex-basis:100%}.four{grid-template-columns:1fr}.title h1{font-size:22px}}.strong-buy{color:var(--green);background:#16c78440;font-weight:900}.accumulate{color:var(--blue);background:#4da3ff22}.reduce{color:var(--amber);background:#f5b94240}.sell{color:var(--red);background:#ff5c5c22}.limited-data{display:inline-block;margin-bottom:8px}.pill-row{display:flex;gap:8px;overflow:auto;margin:0 0 16px;padding-bottom:4px}.pill{font-size:12px;padding:8px 12px;border-radius:999px;white-space:nowrap}.pill.active{color:#08111f;background:var(--blue);border-color:var(--blue)}.rec-badges{display:flex;gap:8px;align-items:center;margin:8px 0}
 .empty[hidden]{display:none}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}.toolbar select{flex:1;min-width:200px}button.primary{color:#08111f;background:var(--blue);border-color:var(--blue)}
 .add-company{position:relative}.add-company input{width:100%}
@@ -207,6 +207,9 @@ th.sorted-desc:after{content:' \25BC';font-size:9px;opacity:1}
 .grid.three{grid-template-columns:repeat(3,1fr)}
 @media(max-width:900px){.grid.three{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:540px){.grid.three{grid-template-columns:1fr}}
+.grid.five{grid-template-columns:repeat(5,1fr)}
+@media(max-width:900px){.grid.five{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.grid.five{grid-template-columns:1fr}}
 /* Section sub-tabs: second-level navigation within a main tab (script.js
    initSubtabs/applySubtabState). Bounded viewport shell (2026-09-05): nav
    bars are plain non-scrolling flex children of their owning .tab/
@@ -396,10 +399,136 @@ header .title h1{font-size:19px}
    Scoped to just these tables (border-spacing:0 keeps cells visually flush,
    same as collapse) rather than changing every table's border rendering. */
 .sticky-thead-native{border-collapse:separate;border-spacing:0}
-.sticky-thead-native thead th{position:sticky;top:0;z-index:1}
+/* thead tr:last-child (not a blanket thead th) -- every sticky-thead-native
+   table before the Macro workspace has a single header row, where this is
+   equivalent to the old thead-th selector. */
+.sticky-thead-native thead:not(:has(.table-group-row)) tr:last-child th{position:sticky;top:0;z-index:1}
+/* Two-row thead (every macro-unified-table on the Macro workspace, scoped via
+   :has() so every single-row-thead table above is completely untouched):
+   .table-group-row is a second, earlier row (a colspan label row --
+   "Indicator Details"/"Performance"/"Trend Parameters") above the real
+   column-header row. An earlier pass pinned only the real (last) row at
+   top:0 and let the group row scroll away -- found live (scrolling the World
+   Asia/Europe tables) to read as a defect, not a simplification: a "Trend
+   Parameters" column group with no visible group label once scrolled is
+   ambiguous, and a professional fixed-header data table keeps its whole
+   header, not half of it. Fixed by stacking both rows instead of picking
+   one: the group row pins at top:0, the real header row pins immediately
+   below it at exactly the group row's own rendered height, so together they
+   read as one continuous frozen header block with no gap/overlap. That
+   height is fixed by explicit `line-height` below (25px: 6px+6px padding +
+   12px line-height + the 1px border-bottom every th/td already carries)
+   rather than left to the browser's own default line-height, which is
+   otherwise unspecified/font-dependent -- this way the two rules can share
+   the exact same number instead of one guessing at the other's rendered
+   size. */
+.sticky-thead-native thead:has(.table-group-row) tr.table-group-row th{position:sticky;top:0;z-index:2}
+.sticky-thead-native thead:has(.table-group-row) tr:last-child th{position:sticky;top:25px;z-index:1}
 .floating-thead{position:fixed;overflow:hidden;z-index:5;display:none;box-shadow:0 3px 8px rgba(0,0,0,.4)}
 .floating-thead.visible{display:block}
 .floating-thead table{margin:0}
+.col-resize-handle{position:absolute;top:0;right:0;bottom:0;width:7px;cursor:col-resize;touch-action:none}
+.col-resize-handle:hover,.col-resize-handle:active{background:var(--blue)}
+/* Generic reusable table-layout standard (script.js's initTableLayout):
+   drag-to-resize, drag-to-reorder, persisted order/widths, a fetched-vs-
+   derived data-lineage cue and a "Reset columns" control, applied to every
+   comparison table in the app via one shared marker class added by JS the
+   first time a table is bound (table.classList.add('table-layout-managed'))
+   -- generalized from what was originally Watchlist Research -> Overview's
+   table-only treatment. table-layout:fixed makes a dragged width
+   authoritative (auto layout would just re-grow a column to fit its
+   content, defeating a narrow resize); th/td get overflow:hidden/ellipsis
+   truncation since a narrower fixed column can no longer rely on the
+   table's own horizontal scroll to keep one cell's long text on one line
+   the way the auto-layout table did. */
+.table-layout-managed{table-layout:fixed}
+.table-layout-managed th,.table-layout-managed td{overflow:hidden;text-overflow:ellipsis}
+/* The resize handle's own position:absolute needs a positioned ancestor.
+   Many of these tables also carry .sticky-thead-native (thead th{position:
+   sticky}) -- position:sticky is itself already a valid containing block for
+   an absolutely-positioned descendant, same as position:relative would be,
+   so this deliberately excludes those tables: setting position:relative on
+   the same th there would out-specificity (both target the same th; a class
+   selector loses to another class selector only by source order, and an
+   explicit :not() exclusion is more robust than relying on that) and
+   silently defeat the sticky rule, breaking that table's native sticky
+   header (confirmed live during the original Overview-only implementation
+   -- caught by a resize-drag test whose target coordinates were off-screen
+   at position:relative's un-stuck scroll offset). Non-sticky-native tables
+   (the floating-header-clone ones, e.g. wl-table/pi-action-table) get
+   position:relative here instead. */
+.table-layout-managed:not(.sticky-thead-native) th{position:relative}
+/* Derived/calculated columns (recommendation, scoring, decision-layer and
+   quant output -- everything computed in data/analytics|scoring|decision|
+   quant, never a raw fetched field) get a subtle indigo tint plus a small
+   diamond glyph in the header, deliberately a different hue from every
+   semantic color already in use here (green/blue/amber/red for positive-
+   negative and rating/action bands) so the lineage cue never reads as a
+   semantic one. Fetched/sourced columns are untouched -- each table's
+   existing default look. */
+.table-layout-managed th.col-derived{background:#1a213c}
+.table-layout-managed th.col-derived::before{content:'\25C6';display:inline-block;margin-right:4px;font-size:7px;color:#9382ff;opacity:.7}
+.table-layout-managed td.derived{background:rgba(147,130,255,.06)}
+/* Column drag-to-reorder (script.js's initTableColumnDragGeneric): a subtle
+   grab cursor plus an inset blue edge marking which side of the hovered
+   header the dragged column will land on -- box-shadow rather than a border
+   so it doesn't shift layout or collide with .col-resize-handle's own
+   absolutely-positioned strip on the same edge. */
+.table-layout-managed th.col-draggable{cursor:grab}
+.table-layout-managed th.col-dragging{opacity:.4}
+.table-layout-managed th.col-drop-before{box-shadow:inset 3px 0 0 var(--blue)}
+.table-layout-managed th.col-drop-after{box-shadow:inset -3px 0 0 var(--blue)}
+/* Watchlists -> Custom: compact table toolbar (Columns popover + Reset
+   layout + help icon), replacing the former permanently-visible checkbox
+   panel. Reuses .icon-btn/.info-icon/.info-popover/.small -- no new button
+   or tooltip component. */
+.columns-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.columns-toolbar h3{margin:0}
+.columns-toolbar-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.columns-menu{position:relative}
+.columns-btn{display:inline-flex;align-items:center;gap:5px}
+/* .card's own overflow:hidden (rounded-corner clipping, base .card rule)
+   would clip this dropdown below the 901px bounded-shell breakpoint (only
+   .card.card-table-fill gets overflow:visible there, and only at
+   min-width:901px) -- scoped to just the one card that actually holds a
+   .columns-popover, not a blanket override of every card's corner clip. */
+.card:has(.columns-popover){overflow:visible}
+/* Professionalized 2026-09-23: fixed-width (was a narrow 300px stack), two-
+   column checklist grid, header/search/footer fixed with only .columns-list
+   scrolling. .align-right/.align-above are toggled by positionWlCustomColumns
+   Popover() in script.js when the default bottom-left anchor would clip
+   against the viewport -- CSS alone can't know the button's on-screen
+   position, so this is the one bit of JS this redesign needed. */
+.columns-popover{position:absolute;top:calc(100% + 6px);left:0;width:400px;max-width:92vw;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:0 16px 32px rgba(0,0,0,.45);z-index:20;display:flex;flex-direction:column;gap:10px}
+.columns-popover[hidden]{display:none}
+.columns-popover.align-right{left:auto;right:0}
+.columns-popover.align-above{top:auto;bottom:calc(100% + 6px)}
+.columns-popover-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.columns-popover-head>span:first-child{font-size:13px;font-weight:700;color:var(--text)}
+.columns-popover-head .small{color:var(--muted);font-weight:600;white-space:nowrap}
+.columns-locked-note{margin:-4px 0 0;padding-bottom:10px;border-bottom:1px solid var(--border);line-height:1.4}
+.columns-search{width:100%;padding:8px 10px;font-size:12px;border-radius:8px}
+.columns-list{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1px 8px;max-height:300px;overflow-y:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.columns-list::-webkit-scrollbar{width:6px}
+.columns-list::-webkit-scrollbar-track{background:transparent}
+.columns-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+.columns-list::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.columns-item{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:6px;font-size:12px;cursor:pointer;line-height:1.3;min-width:0}
+.columns-item:hover{background:var(--panel2)}
+/* The global input{flex:1;min-width:200px}/input,select{padding:11px 12px;
+   border:1px solid var(--border);background:var(--panel)} rules (top of this
+   file) target every <input>, checkboxes included -- without resetting them
+   here a checkbox inflates to a ~200px-wide padded box, which blew grid rows
+   out to ~185px tall (confirmed live via CDP measurement before this fix). */
+.columns-item input{margin:0;flex:none;width:14px;height:14px;min-width:0;padding:0;border:1px solid var(--border);background:var(--panel2);border-radius:3px;accent-color:var(--blue)}
+.columns-item span{overflow-wrap:break-word;min-width:0}
+.columns-empty{grid-column:1/-1;padding:6px 4px;margin:0}
+.columns-popover-actions{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding-top:10px;margin-top:2px}
+.columns-popover-actions .icon-btn{flex:1;text-align:center}
+@media(max-width:480px){
+  .columns-popover{width:94vw}
+  .columns-list{grid-template-columns:1fr}
+}
 /* Macro Intelligence unified table (2026-09-08): the India/US Macro indicator
    + trend-parameter tables were merged into one table per tab, so a plain
    2-row <thead> (a colspan group row above the real column-header row) shows
@@ -411,7 +540,7 @@ header .title h1{font-size:19px}
    change needed in script.js's existing row-builder. These tables stay
    un-sticky (no .sticky-thead-native/.floating-thead) matching this app's
    own prior, still-valid exemption for macro's short (<=7 row) tables. */
-.table-group-row th{text-align:center;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--panel2);padding:6px 9px}
+.table-group-row th{text-align:center;font-size:10px;line-height:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--panel2);padding:6px 9px}
 .table-group-row th:nth-child(2),.table-group-row th:nth-child(3){border-left:2px solid var(--border)}
 .macro-unified-table th:nth-child(4),.macro-unified-table td:nth-child(4),
 .macro-unified-table th:nth-child(9),.macro-unified-table td:nth-child(9){border-left:2px solid var(--border)}

@@ -1,6 +1,6 @@
-import { MOSPI } from './config.mjs';
+import { MOSPI, MOSPI_TLS_MODE } from './config.mjs';
 import { readCredential, saveToken, markVerified, recordError, clearCredential, isTokenExpired, maskToken } from './credentialStore.mjs';
-import { signup, login, fetchIipMonthly, fetchCpiPublic, MospiAuthError, MospiUpstreamError } from './mospiClient.mjs';
+import { signup, login, fetchCpiPublic, fetchIipPublic, MospiAuthError, MospiUpstreamError } from './mospiClient.mjs';
 import { mospiCache } from '../watchlist/diskCache.mjs';
 
 // Orchestrates the MoSPI integration for both consumers: the Configuration
@@ -8,37 +8,51 @@ import { mospiCache } from '../watchlist/diskCache.mjs';
 // Macro panel (per-dataset CPI/IIP status, data/watchlist/macro.mjs). Owns
 // the data-fetch cache; credentialStore.mjs owns the credential itself.
 //
-// Two datasets, two genuinely different access models (2026-09-08 CPI-
-// without-credentials task) -- kept as separate lists rather than one
-// DATASETS array with a per-row flag, so a future reader can't miss that
-// PUBLIC_DATASETS never touches readCredential()/the token lifecycle at all:
-//   - PUBLIC_DATASETS (CPI): unauthenticated, see getCpiPublicSnapshot()
-//     below -- works with zero MoSPI credentials configured.
-//   - CREDENTIALED_DATASETS (IIP): unchanged from the original integration,
-//     gated on a valid access token via getDatasetSnapshot() below.
+// Two datasets, kept as separate lists (rather than one DATASETS array with
+// a per-row flag) so a future reader can't miss that PUBLIC_DATASETS never
+// touches readCredential()/the token lifecycle at all:
+//   - PUBLIC_DATASETS (CPI, IIP): unauthenticated, see getCpiPublicSnapshot()/
+//     getIipPublicSnapshot() below -- both work with zero MoSPI credentials
+//     configured. IIP joined this list 2026-09-09: a from-scratch
+//     investigation (explicitly instructed not to assume IIP behaves like
+//     CPI) independently live-tested IIP's own endpoint and found the exact
+//     same platform behavior CPI already used -- see mospiClient.mjs's
+//     fetchIipPublic() and its comment above legacyRenegotiationAgent for the
+//     full live-tested evidence, and docs/authoritative/system.md §3.10 for
+//     the dated write-up.
+//   - CREDENTIALED_DATASETS: currently empty -- every MoSPI dataset this app
+//     consumes today is public. Kept as a real (not deleted) mechanism via
+//     getDatasetSnapshot() below for any future MoSPI dataset that turns out
+//     to genuinely require a token (e.g. WPI, corroborated only as a sibling
+//     manual in config.mjs's citations, not built here) -- not dead code,
+//     just currently unpopulated.
 export const PUBLIC_DATASETS = [
-  { key: 'cpiInflation', label: 'CPI Inflation (Consumer Food Price Index)' }
+  { key: 'cpiInflation', label: 'CPI Inflation (Consumer Food Price Index)' },
+  { key: 'iip', label: 'Index of Industrial Production (IIP)' }
 ];
-export const CREDENTIALED_DATASETS = [
-  { key: 'iip', label: 'Index of Industrial Production (IIP)', fetch: fetchIip }
-];
+export const CREDENTIALED_DATASETS = [];
 // Kept for any caller that still wants "every MoSPI dataset" in one list
 // (none in this app after this change, besides getIntegrationStatus() below,
 // which needs both) -- not used to gate access, since PUBLIC_DATASETS
 // entries have no `fetch(token)` signature.
 export const DATASETS = [...PUBLIC_DATASETS, ...CREDENTIALED_DATASETS];
 
-// The MoSPI manuals document request parameters exhaustively but never show
-// the response body's actual field names as text (only screenshots this
-// audit could not read) -- so this parser is intentionally shape-detecting
-// rather than hardcoded to guessed field names. It looks for a records array
-// under a few plausible top-level shapes, then a numeric value under a few
-// plausible field-name candidates (case-insensitive). If nothing matches, it
-// returns null (Provider Unavailable / "response shape not recognized")
-// rather than pick a wrong field and display it as a real value -- per
-// CLAUDE.md's "never guess a sourced field". This must be confirmed against
-// a real authenticated response before this integration can be trusted
-// end-to-end; see the completion report's Real integration validation note.
+// Generic shape-detecting parser for a hypothetical future CREDENTIALED
+// dataset (see this file's own top comment -- CREDENTIALED_DATASETS is
+// currently empty, so nothing calls this today). The MoSPI manuals document
+// request parameters exhaustively but never show the response body's actual
+// field names as text (only screenshots this audit could not read) -- so
+// this parser is intentionally shape-detecting rather than hardcoded to
+// guessed field names. It looks for a records array under a few plausible
+// top-level shapes, then a numeric value under a few plausible field-name
+// candidates (case-insensitive). If nothing matches, it returns null
+// (Provider Unavailable / "response shape not recognized") rather than pick
+// a wrong field and display it as a real value -- per CLAUDE.md's "never
+// guess a sourced field". Kept and still covered by this module's own tests
+// as ready-to-use infrastructure, not because any dataset currently exercises
+// it -- CPI and IIP both went through the very different, live-confirmed
+// findCpiRecord()/findIipRecord() path below instead once each was proven
+// public (their exact response shape is known, not merely shape-detected).
 const VALUE_FIELD_CANDIDATES = ['index', 'value', 'inflation', 'general_index', 'cpi_index', 'iip_index', 'growth'];
 const PERIOD_FIELD_CANDIDATES_YEAR = ['year', 'yr'];
 const PERIOD_FIELD_CANDIDATES_MONTH = ['month', 'month_code', 'mon'];
@@ -92,11 +106,6 @@ export function parseMospiSeries(payload) {
   const yearField = findField(latest, PERIOD_FIELD_CANDIDATES_YEAR);
   const monthField = findField(latest, PERIOD_FIELD_CANDIDATES_MONTH);
   return { value, period: { year: yearField?.value ?? null, month: monthField?.value ?? null }, fieldUsed: valueField?.key ?? null };
-}
-
-async function fetchIip(token) {
-  const { data } = await fetchIipMonthly({}, token);
-  return parseMospiSeries(data);
 }
 
 // ---- Public CPI (2026-09-08 CPI-without-credentials task) ----
@@ -185,16 +194,92 @@ export async function getCpiPublicSnapshot() {
   }
 }
 
+// ---- Public IIP (2026-09-09 independent IIP investigation) ----
+//
+// Same shape of finding as CPI above, arrived at by testing IIP's own
+// endpoint from scratch rather than assuming it -- this task's own explicit
+// instruction. A live unauthenticated GET against /api/iip/getIIPMonthly
+// returns real, current General IIP data (base year 2022-23, e.g. index
+// 124.8 / growth 6.7% for July 2026, captured during this task's own
+// verification pass): { data: [ {base_year, year, month, type, category,
+// sub_category, index, growth_rate}, ... ], meta_data: {page, totalRecords,
+// totalPages, recordPerPage}, msg, statusCode } -- structurally identical to
+// CPI's own response envelope. Every documented query filter is likewise
+// silently ignored for anonymous callers (live-confirmed: repeated calls
+// with different Year/category params returned byte-identical output), and
+// the fixed ~10-record anonymous slice consistently placed the headline
+// General/General record (type: "General", category: "General") first --
+// exactly the "official General IIP / Overall IIP" series this app's brief
+// asked to prefer, never a sub-series (Manufacturing/Mining/Electricity)
+// silently substituted in its place. Unlike CPI, this is the actual
+// requested headline series, not a fallback -- no selection ambiguity to
+// disclose.
+const IIP_TARGET_TYPE_HINT = 'general';
+const IIP_TARGET_CATEGORY_HINT = 'general';
+
+export function findIipRecord(payload) {
+  const records = Array.isArray(payload?.data) ? payload.data : null;
+  if (!records || records.length === 0) return null;
+  const hit = records.find(r =>
+    String(r?.type ?? '').toLowerCase().includes(IIP_TARGET_TYPE_HINT) &&
+    String(r?.category ?? '').toLowerCase().includes(IIP_TARGET_CATEGORY_HINT)
+  );
+  if (!hit) return null;
+  // Same null-before-Number() discipline as findCpiRecord() above --
+  // Number(null) is 0, not NaN, so a genuinely missing field must be
+  // excluded before conversion or it would silently read as a real zero.
+  const index = hit.index != null ? Number(hit.index) : NaN;
+  const growthYoY = hit.growth_rate != null ? Number(hit.growth_rate) : NaN;
+  if (!Number.isFinite(index) && !Number.isFinite(growthYoY)) return null;
+  return {
+    index: Number.isFinite(index) ? index : null,
+    // MoSPI's own directly-supplied "growth_rate" field. No dedicated IIP
+    // manual exists to cite for this (unlike CPI's documented "inflation"
+    // field), but MoSPI's own published IIP press releases report this
+    // figure as Year-on-Year (index vs. the same month one year earlier) --
+    // the standard convention for this series. Used as-is, never
+    // recomputed, for the same reason as CPI's inflationYoY: this app
+    // cannot independently reconstruct a 12-months-prior data point from a
+    // filter-less, unauthenticated response.
+    growthYoY: Number.isFinite(growthYoY) ? growthYoY : null,
+    period: { year: hit.year ?? null, month: hit.month ?? null },
+    baseYear: hit.base_year ?? null,
+    seriesLabel: [hit.type, hit.category, hit.sub_category].filter(Boolean).join(' — ')
+  };
+}
+
+// Cache-first, fetch-if-stale -- identical shape to getCpiPublicSnapshot()
+// above, never gated on a credential.
+export async function getIipPublicSnapshot() {
+  const cached = await mospiCache.read('iip');
+  if (cached && !mospiCache.isStale(cached, MOSPI.dataCacheTtlMs)) {
+    return { status: 'Live', ...cached };
+  }
+  try {
+    const payload = await fetchIipPublic();
+    const record = findIipRecord(payload);
+    if (!record) throw new MospiUpstreamError('MoSPI\'s unauthenticated IIP response did not include a recognizable General IIP series -- see findIipRecord().');
+    const bundle = { ...record, fetchedAt: new Date().toISOString() };
+    await mospiCache.write('iip', bundle);
+    return { status: 'Live', ...bundle };
+  } catch (err) {
+    if (cached) return { status: 'Delayed', ...cached, error: err.message };
+    return { status: 'Unavailable', index: null, growthYoY: null, period: null, baseYear: null, seriesLabel: null, error: err.message };
+  }
+}
+
 // Integration-level status for the Configuration page. The 7-state model
-// below now describes only the credentialed half of this integration (IIP)
-// -- CPI's own status is always independently "live-or-not" (see
-// PUBLIC_DATASETS' entry in the `datasets` array below, `authRequired:
-// false`) and never gated by, or folded into, this credential state machine.
+// below describes the credentialed path only -- currently unpopulated (see
+// CREDENTIALED_DATASETS above), kept for any future MoSPI dataset that
+// genuinely requires one. CPI and IIP's own status is always independently
+// "live-or-not" (see PUBLIC_DATASETS' entries in the `datasets` array below,
+// `authRequired: false`) and never gated by, or folded into, this credential
+// state machine.
 // Not Configured / Credentials Required / Configured / Connected /
 // Authentication Failed / Token Expired / Provider Unavailable. "Credentials
 // Required" here means the credential file has nothing usable *and* the
-// last attempt (if any) wasn't an auth failure -- mirrored, in simpler form,
-// on IIP's own macro-indicator status.
+// last attempt (if any) wasn't an auth failure. No currently-active dataset
+// reads this state today -- both CPI and IIP are public.
 export async function getIntegrationStatus() {
   const credential = await readCredential();
   const hasToken = !!credential.accessToken;
@@ -212,18 +297,20 @@ export async function getIntegrationStatus() {
   else if (hasToken && credential.lastError) status = 'Provider Unavailable';
   else if (hasToken) status = 'Configured';
 
-  // Public (CPI) and credentialed (IIP) rows are built differently: a public
-  // row's cache bundle carries `index`/`inflationYoY` (findCpiRecord()'s
-  // shape), never `value` (parseMospiSeries()'s shape) -- so
-  // `hasCachedValue` checks whichever field that dataset's own snapshot
-  // function actually writes, rather than assuming one shape for both.
+  // Public rows are built generically since CPI and IIP write slightly
+  // different cache-bundle shapes (findCpiRecord()'s `inflationYoY` vs.
+  // findIipRecord()'s `growthYoY`, both alongside a shared `index`) --
+  // `hasCachedValue` checks every field either snapshot function actually
+  // writes, rather than assuming one shape for both. A future credentialed
+  // dataset's `value` (parseMospiSeries()'s shape) is checked separately
+  // below.
   const datasetStatus = await Promise.all([
     ...PUBLIC_DATASETS.map(async d => {
       const cached = await mospiCache.read(d.key);
       return {
         key: d.key, label: d.label, authRequired: false,
         lastSuccessfulFetch: cached?.fetchedAt ?? null,
-        hasCachedValue: cached?.index != null || cached?.inflationYoY != null
+        hasCachedValue: cached?.index != null || cached?.inflationYoY != null || cached?.growthYoY != null
       };
     }),
     ...CREDENTIALED_DATASETS.map(async d => {
@@ -241,6 +328,12 @@ export async function getIntegrationStatus() {
     providerName: MOSPI.providerName,
     providerDescription: MOSPI.providerDescription,
     manageAccountUrl: MOSPI.manageAccountUrl,
+    // Reported here (not just read from config.mjs directly by the UI) so
+    // the Configuration page always shows the mode this process is actually
+    // running with -- see config.mjs's MOSPI_TLS_MODE comment. Applies only
+    // to the public CPI/IIP fetches below; login/signup are unconditionally
+    // standard TLS regardless of this value.
+    tlsMode: MOSPI_TLS_MODE,
     datasets: datasetStatus,
     status,
     credentialStatus: hasToken ? 'Present' : 'Missing',
@@ -356,16 +449,19 @@ export async function disconnect() {
 
 // "Test connection" action -- attempts one real dataset fetch using the
 // stored token rather than a dedicated no-op endpoint (none is documented).
-// Tests IIP (2026-09-08: was CPI until this task moved CPI off the
-// credential-gated path entirely -- testing CPI here would no longer prove
-// anything about the stored token, since getCpiPublicSnapshot() never reads
-// it). Updates lastVerifiedAt/lastError as a side effect via
-// getDatasetSnapshot()'s own cache write.
+// 2026-09-09: IIP (the last remaining credentialed dataset) was independently
+// investigated and proven public -- see PUBLIC_DATASETS' top comment --
+// leaving CREDENTIALED_DATASETS empty. There is currently nothing this
+// action can honestly test; it says so rather than faking a pass against a
+// dataset that no longer needs a token, or silently testing something else.
 export async function testConnection() {
+  if (CREDENTIALED_DATASETS.length === 0) {
+    return { success: false, error: 'No MoSPI dataset in this app currently requires a credential -- CPI and IIP are both public. This action is kept for a possible future credentialed MoSPI dataset.' };
+  }
   const credential = await readCredential();
   if (!credential.accessToken) return { success: false, error: 'No token configured.' };
   if (isTokenExpired(credential)) return { success: false, error: 'Token expired.' };
-  const snapshot = await getDatasetSnapshot('iip');
+  const snapshot = await getDatasetSnapshot(CREDENTIALED_DATASETS[0].key);
   if (snapshot.status === 'Live') return { success: true }; // getDatasetSnapshot() already called markVerified() on this success path
   if (snapshot.error) await recordError(snapshot.error);
   return { success: false, error: snapshot.error || `Test fetch returned status ${snapshot.status}` };

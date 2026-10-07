@@ -1,0 +1,43 @@
+{
+  "id": "uptrend",
+  "name": "Uptrend",
+  "createdAt": "2026-09-12T14:07:37.485Z",
+  "updatedAt": "2026-09-12T14:08:08.238Z",
+  "companies": [
+    {
+      "symbol": "RADHIKAJWE.NS",
+      "name": "Radhika Jeweltech Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Durables",
+      "industry": "Gems, Jewellery And Watches",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T14:07:53.977Z"
+    },
+    {
+      "symbol": "BLS.NS",
+      "name": "BLS International Services Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Consumer Services",
+      "industry": "Tour, Travel Related Services",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T14:08:00.229Z"
+    },
+    {
+      "symbol": "RMDRIP.NS",
+      "name": "R M Drip and Sprinklers Systems Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Capital Goods",
+      "industry": "Plastic Products - Industrial",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-09-12T14:08:06.362Z"
+    }
+  ],
+  "cashTargetPct": 0,
+  "acknowledgedAlertIds": []
+}
