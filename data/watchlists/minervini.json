@@ -2,7 +2,7 @@
   "id": "minervini",
   "name": "Minervini",
   "createdAt": "2026-10-04T07:44:11.435Z",
-  "updatedAt": "2026-10-04T07:49:04.724Z",
+  "updatedAt": "2026-10-08T01:53:14.171Z",
   "companies": [
     {
       "symbol": "ONEPOINT.NS",
@@ -124,6 +124,17 @@
       "notes": null,
       "targetWeightPct": null,
       "addedAt": "2026-10-04T07:46:53.472Z"
+    },
+    {
+      "symbol": "SBC.NS",
+      "name": "SBC Exports Limited",
+      "exchange": "NSE",
+      "market": "India",
+      "sector": "Textiles",
+      "industry": "Garments & Apparels",
+      "notes": null,
+      "targetWeightPct": null,
+      "addedAt": "2026-10-08T01:53:12.846Z"
     }
   ],
   "cashTargetPct": 0,
